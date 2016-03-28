@@ -27,13 +27,8 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
       numToKeep defaults.numBuildsToKeep
     }
 
-    // concurrent builds allowed for pr e2e job
     if (isPR) {
-      concurrentBuild()
-      throttleConcurrentBuilds {
-        maxPerNode(1)
-        maxTotal(3)
-      }
+      runConcurrent()
     }
 
     publishers {

@@ -22,4 +22,14 @@ defaults = [
   numBuildsToKeep: 42,
   bumpverCommitCmd: 'git commit -a -m "chore(versions): ci bumped versions via ${BUILD_URL}" || true',
   testJob: [master: 'workflow-test', pr: 'workflow-test-pr'],
+  maxBuildsPerNode: 1,
+  maxTotalConcurrentBuilds: 3,
 ]
+
+runConcurrent = {
+  concurrentBuild()
+  throttleConcurrentBuilds {
+    maxPerNode(defaults.maxBuildsPerNode)
+    maxTotal(defaults.maxTotalConcurrentBuilds)
+  }
+}
