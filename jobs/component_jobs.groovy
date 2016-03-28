@@ -28,6 +28,10 @@ repos.each { Map repo ->
         }
       }
 
+      if (isPR) {
+        runConcurrent()
+      }
+
       publishers {
         slackNotifications {
           projectChannel("#${repo.slackChannel}")
