@@ -25,11 +25,3 @@ defaults = [
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
 ]
-
-runConcurrent = {
-  concurrentBuild()
-  throttleConcurrentBuilds {
-    maxPerNode(defaults.maxBuildsPerNode)
-    maxTotal(defaults.maxTotalConcurrentBuilds)
-  }
-}

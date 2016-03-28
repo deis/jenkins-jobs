@@ -29,7 +29,11 @@ repos.each { Map repo ->
       }
 
       if (isPR) {
-        runConcurrent()
+        concurrentBuild()
+        throttleConcurrentBuilds {
+          maxPerNode(defaults.maxBuildsPerNode)
+          maxTotal(defaults.maxTotalConcurrentBuilds)
+        }
       }
 
       publishers {
