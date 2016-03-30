@@ -57,7 +57,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
        }
 
        archiveArtifacts {
-         pattern('logs/**')
+         pattern('logs/${BUILD_NUMBER}/**')
          onlyIfSuccessful(false)
          fingerprint(false)
        }
