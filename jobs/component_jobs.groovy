@@ -88,6 +88,10 @@ repos.each { Map repo ->
         }
       }
 
+      triggers {
+        githubPush()
+      }
+
       wrappers {
         timestamps()
         colorizeOutput 'xterm'
