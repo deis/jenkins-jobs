@@ -10,8 +10,8 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
   job(defaults.testJob[config.type]) {
     description """<ol>
-    <li>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against an updated deis-dev chart</li>
-    <li>using the immutable deis_component images created by a ${config.type} commit in said deis_component repo</li>
+    <li>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against an updated workflow-dev chart</li>
+    <li>Using the immutable deis_component images created by a ${config.type} commit in said deis_component repo</li>
   </ol>"""
     scm {
       git {
