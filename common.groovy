@@ -24,4 +24,5 @@ defaults = [
   testJob: [master: 'workflow-test', pr: 'workflow-test-pr'],
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
+  workflowChart: 'workflow-dev',
 ]

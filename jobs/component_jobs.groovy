@@ -10,12 +10,16 @@ repos.each { Map repo ->
     isPR = config.type == 'pr'
 
     name = isMaster ? repo.name : "${repo.name}-pr"
+    downstreamJobName = defaults.testJob[config.type]
 
     job(name) {
-      description """<ol>
-      <li>Watches the ${repo.name} repo for a ${config.type} commit</li>
-      <li>Kicks off downstream ${defaults.testJob[config.type]} job to vet changes</li>
-    </ol>"""
+      description """
+        <ol>
+          <li>Watches the ${repo.name} repo for a ${config.type} commit</li>
+          <li>Kicks off downstream ${downstreamJobName} job to vet changes</li>
+        </ol>
+      """.stripIndent().trim()
+
       scm {
         git {
           remote {
@@ -36,14 +40,6 @@ repos.each { Map repo ->
         }
       }
 
-      publishers {
-        slackNotifications {
-          projectChannel("#${repo.slackChannel}")
-          notifyAborted()
-          notifyFailure()
-         }
-      }
-
       logRotator {
         numToKeep defaults.numBuildsToKeep
       }
@@ -57,19 +53,15 @@ repos.each { Map repo ->
             triggerPhrase('OK to test')
             orgWhitelist(['deis'])
             allowMembersOfWhitelistedOrgsAsAdmin()
-            // TODO: configure commit status messaging
-            // extensions {
-            //   commitStatus {
-            //     context('deploy to staging site')
-            //       triggeredStatus('starting deployment to staging site...')
-            //       startedStatus('deploying to staging site...')
-            //       statusUrl('http://mystatussite.com/prs')
-            //       completedStatus('SUCCESS', 'All is well')
-            //       completedStatus('FAILURE', 'Something went wrong. Investigate!')
-            //       completedStatus('PENDING', 'still in progress...')
-            //       completedStatus('ERROR', 'Something went really wrong. Investigate!')
-            //     }
-            //   }
+            extensions {
+              commitStatus {
+                context("Testing ${repo.name} PR")
+                triggeredStatus("After ${repo.name} build/deploy, kicking off tests via ${downstreamJobName}")
+                completedStatus('SUCCESS', 'All tests have passed!')
+                completedStatus('FAILURE', 'Build/deploy or tests have returned failure(s).')
+                completedStatus('ERROR', 'Something went wrong. Investigate!')
+              }
+            }
           }
         }
       }
@@ -123,9 +115,14 @@ repos.each { Map repo ->
         // do not run e2e tests for workflow-manager at this time
         if (repo.name != 'workflow-manager') {
           downstreamParameterized {
-            trigger("${defaults.testJob[config.type]}") {
+            trigger(downstreamJobName) {
               parameters {
-                predefinedProp(repo.commitEnvVar, '${GIT_COMMIT}')
+                predefinedProps([
+                  "${repo.commitEnvVar}": '${GIT_COMMIT}',
+                  'UPSTREAM_BUILD_NUMBER': '${BUILD_NUMBER}',
+                  'UPSTREAM_JOB_NAME': "${name}",
+                  'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
+                ])
               }
               block {
                 buildStepFailure('FAILURE')
