@@ -10,7 +10,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
   job(defaults.testJob[config.type]) {
     description """
-      <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${workflowChart}">${workflowChart}</a> chart</p>
+      <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflowChart}">${defaults.workflowChart}</a> chart</p>
     """.stripIndent().trim()
 
     scm {
