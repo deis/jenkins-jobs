@@ -9,10 +9,10 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
   isPR = config.type == 'pr'
 
   job(defaults.testJob[config.type]) {
-    description """<ol>
-    <li>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against an updated workflow-dev chart</li>
-    <li>Using the immutable deis_component images created by a ${config.type} commit in said deis_component repo</li>
-  </ol>"""
+    description """
+      <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${workflowChart}">${workflowChart}</a> chart</p>
+    """.stripIndent().trim()
+
     scm {
       git {
         remote {
@@ -37,12 +37,16 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     publishers {
       slackNotifications {
-        // TODO: solution to send to appropriate channel
-        projectChannel("#testing")
+        projectChannel('#${UPSTREAM_SLACK_CHANNEL}')
+        customMessage("""
+          Test Report: ${JENKINS_URL}job/${name}/\${BUILD_NUMBER}/testReport
+          Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}
+        """.stripIndent().trim())
         notifyAborted()
         notifyFailure()
         notifySuccess()
-        notifyBackToNormal()
+        showCommitList()
+        includeTestSummary()
        }
 
        if (isMaster) {
@@ -72,7 +76,9 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     triggers {
       cron('@daily')
-      githubPush()
+      if (isMaster) {
+        githubPush()
+      }
     }
 
     wrappers {
