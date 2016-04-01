@@ -13,7 +13,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
   testReportMsg = "Test Report: ${JENKINS_URL}job/${defaults.testJob[config.type]}/\${BUILD_NUMBER}/testReport"
   upstreamJobMsg = "Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}"
   slackConfig = [
-    channel: isParallel ? 'testing' : '${UPSTREAM_SLACK_CHANNEL}',
+    channel: isParallel ? defaults.slack['channel'] : '#${UPSTREAM_SLACK_CHANNEL}',
     message: isParallel ? testReportMsg : testReportMsg + upstreamJobMsg,
   ]
 
@@ -46,7 +46,9 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     publishers {
       slackNotifications {
-        projectChannel("#${slackConfig.channel}")
+        teamDomain(defaults.slack['teamDomain'])
+        integrationToken(defaults.slack['integrationToken'])
+        projectChannel(slackConfig.channel)
         customMessage(slackConfig.message)
         notifyAborted()
         notifyFailure()

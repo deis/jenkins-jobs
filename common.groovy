@@ -25,4 +25,9 @@ defaults = [
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
   workflowChart: 'workflow-dev',
+  slack: [
+    teamDomain: 'deis',
+    integrationToken: 'bjgJFzVasJtMgP63KiYCfVPE',
+    channel: '#testing',
+  ],
 ]
