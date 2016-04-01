@@ -1,12 +1,21 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
 [
-  // create a workflow-test-master and workflow-test-pr job
   [type: 'master'],
   [type: 'pr'],
+  // TODO: remove parallel logic when test jobs run parallel by default
+  [type: 'parallel'],
 ].each { Map config ->
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
+  isParallel = config.type == 'parallel'
+
+  testReportMsg = "Test Report: ${JENKINS_URL}job/${defaults.testJob[config.type]}/\${BUILD_NUMBER}/testReport"
+  upstreamJobMsg = "Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}"
+  slackConfig = [
+    channel: isParallel ? 'testing' : '${UPSTREAM_SLACK_CHANNEL}',
+    message: isParallel ? testReportMsg : testReportMsg + upstreamJobMsg,
+  ]
 
   job(defaults.testJob[config.type]) {
     description """
@@ -37,11 +46,8 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     publishers {
       slackNotifications {
-        projectChannel('#${UPSTREAM_SLACK_CHANNEL}')
-        customMessage("""
-          Test Report: ${JENKINS_URL}job/${name}/\${BUILD_NUMBER}/testReport
-          Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}
-        """.stripIndent().trim())
+        projectChannel("#${slackConfig.channel}")
+        customMessage(slackConfig.message)
         notifyAborted()
         notifyFailure()
         notifySuccess()
@@ -75,7 +81,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
     }
 
     triggers {
-      cron('@daily')
+      cron(isParallel ? '@hourly': '@daily')
       if (isMaster) {
         githubPush()
       }
@@ -91,6 +97,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     environmentVariables {
       env('COMMIT', isMaster)
+      env('PARALLEL_TESTS', isParallel)
     }
 
     steps {
