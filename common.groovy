@@ -19,7 +19,7 @@ repos.each { Map repo ->
 }
 
 defaults = [
-  numBuildsToKeep: 42,
+  numBuildsToKeep: 10,
   bumpverCommitCmd: 'git commit -a -m "chore(versions): ci bumped versions via ${BUILD_URL}" || true',
   testJob: [master: 'workflow-test', pr: 'workflow-test-pr'],
   maxBuildsPerNode: 1,
