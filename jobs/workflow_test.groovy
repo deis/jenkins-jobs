@@ -14,7 +14,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
   upstreamJobMsg = "Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}"
   slackConfig = [
     channel: isParallel ? defaults.slack['channel'] : '#${UPSTREAM_SLACK_CHANNEL}',
-    message: isParallel ? testReportMsg : testReportMsg + upstreamJobMsg,
+    message: isParallel ? testReportMsg : [testReportMsg, upstreamJobMsg].join('\n'),
   ]
 
   job(defaults.testJob[config.type]) {
