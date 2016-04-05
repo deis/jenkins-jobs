@@ -46,9 +46,12 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     publishers {
       slackNotifications {
-        teamDomain(defaults.slack['teamDomain'])
-        integrationToken(defaults.slack['integrationToken'])
-        projectChannel(slackConfig.channel)
+        // TODO: re-enable once integrationToken can make use of Jenkins'
+        // secure credentials handling:
+        // https://github.com/jenkinsci/slack-plugin/pull/208
+        // teamDomain(defaults.slack['teamDomain'])
+        // integrationToken('${SLACK_INTEGRATION_TOKEN}')
+        // projectChannel(slackConfig.channel)
         customMessage(slackConfig.message)
         notifyAborted()
         notifyFailure()

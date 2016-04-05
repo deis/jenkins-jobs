@@ -27,7 +27,6 @@ defaults = [
   workflowChart: 'workflow-dev',
   slack: [
     teamDomain: 'deis',
-    integrationToken: 'bjgJFzVasJtMgP63KiYCfVPE',
     channel: '#testing',
   ],
 ]
