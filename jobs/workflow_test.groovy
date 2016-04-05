@@ -90,6 +90,12 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
     }
 
     wrappers {
+      timeout {
+        // TODO: reduce amount appropriately once parallel run default
+        // https://github.com/deis/jenkins-jobs/issues/17
+        absolute(40)
+        failBuild()
+      }
       timestamps()
       colorizeOutput 'xterm'
       credentialsBinding {
