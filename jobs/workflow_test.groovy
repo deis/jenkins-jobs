@@ -3,19 +3,12 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 [
   [type: 'master'],
   [type: 'pr'],
-  // TODO: remove parallel logic when test jobs run parallel by default
-  [type: 'parallel'],
 ].each { Map config ->
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
-  isParallel = config.type == 'parallel'
 
   testReportMsg = "Test Report: ${JENKINS_URL}job/${defaults.testJob[config.type]}/\${BUILD_NUMBER}/testReport"
   upstreamJobMsg = "Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}"
-  slackConfig = [
-    channel: isParallel ? defaults.slack['channel'] : '#${UPSTREAM_SLACK_CHANNEL}',
-    message: isParallel ? testReportMsg : [testReportMsg, upstreamJobMsg].join('\n'),
-  ]
 
   job(defaults.testJob[config.type]) {
     description """
@@ -51,8 +44,8 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
         // https://github.com/jenkinsci/slack-plugin/pull/208
         // teamDomain(defaults.slack['teamDomain'])
         // integrationToken('${SLACK_INTEGRATION_TOKEN}')
-        // projectChannel(slackConfig.channel)
-        customMessage(slackConfig.message)
+        // projectChannel('#${UPSTREAM_SLACK_CHANNEL}')
+        customMessage([testReportMsg, upstreamJobMsg].join('\n'))
         notifyAborted()
         notifyFailure()
         notifySuccess()
@@ -86,7 +79,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
     }
 
     triggers {
-      cron(isParallel ? '@hourly': '@daily')
+      cron('@daily')
       if (isMaster) {
         githubPush()
       }
@@ -94,9 +87,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     wrappers {
       timeout {
-        // TODO: reduce amount appropriately once parallel run default
-        // https://github.com/deis/jenkins-jobs/issues/17
-        absolute(40)
+        absolute(25)
         failBuild()
       }
       timestamps()
@@ -108,7 +99,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
     environmentVariables {
       env('COMMIT', isMaster)
-      env('PARALLEL_TESTS', isParallel)
+      env('PARALLEL_TESTS', true)
     }
 
     steps {
