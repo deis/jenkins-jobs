@@ -69,6 +69,22 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
          onlyIfSuccessful(false)
          fingerprint(false)
        }
+
+       def statuses = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error']]
+       postBuildScripts {
+         steps {
+           statuses.each { buildStatus, commitStatus ->
+             conditionalSteps {
+               condition {
+                 status(buildStatus, buildStatus)
+                 steps {
+                   shell curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repo.name)
+                 }
+               }
+             }
+           }
+         }
+       }
      }
 
     parameters {

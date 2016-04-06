@@ -18,10 +18,12 @@ repos.each { Map repo ->
   repo.commitEnvVar = "${repo.name.toUpperCase().replaceAll('-', '_')}_SHA"
 }
 
+TEST_JOB_ROOT_NAME = 'workflow-test'
+
 defaults = [
   numBuildsToKeep: 42,
   bumpverCommitCmd: 'git commit -a -m "chore(versions): ci bumped versions via ${BUILD_URL}" || true',
-  testJob: [master: 'workflow-test', pr: 'workflow-test-pr'],
+  testJob: [master: "${TEST_JOB_ROOT_NAME}", pr: "${TEST_JOB_ROOT_NAME}-pr"],
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
   workflowChart: 'workflow-dev',
@@ -29,4 +31,25 @@ defaults = [
     teamDomain: 'deis',
     channel: '#testing',
   ],
+  git: [
+    user: 'deis-admin',
+    context: 'ci/jenkins',
+  ],
 ]
+
+def curlStatus(Map args) {
+  """
+    #!/usr/bin/env bash
+
+    set -eo pipefail
+
+    curl\
+      --user ${defaults.git['user']}:"\${GITHUB_ACCESS_TOKEN}"\
+      --data '{\
+        "state":"${args.commitStatus}",\
+        "target_url":"'"\${BUILD_URL}"'",\
+        "description":"${args.jobName} job ${args.buildStatus}, current status: ${args.commitStatus}",\
+        "context":"${defaults.git['context']}"}'\
+      "https://api.github.com/repos/deis/${args.repoName}/statuses/\${GIT_COMMIT}"
+  """.stripIndent().trim()
+}
