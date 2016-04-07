@@ -7,10 +7,14 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
 
-  testReportMsg = "Test Report: ${JENKINS_URL}job/${defaults.testJob[config.type]}/\${BUILD_NUMBER}/testReport"
+  name = defaults.testJob[config.type]
+  repoName = 'charts'
+
+  testReportMsg = "Test Report: ${JENKINS_URL}job/${name}/\${BUILD_NUMBER}/testReport"
   upstreamJobMsg = "Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}"
 
-  job(defaults.testJob[config.type]) {
+
+  job(name) {
     description """
       <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflowChart}">${defaults.workflowChart}</a> chart</p>
     """.stripIndent().trim()
@@ -18,7 +22,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
     scm {
       git {
         remote {
-          github("deis/charts")
+          github("deis/${repoName}")
           credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
         }
         branch('master')
@@ -78,7 +82,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
                condition {
                  status(buildStatus, buildStatus)
                  steps {
-                   shell curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repo.name)
+                   shell curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repoName)
                  }
                }
              }
