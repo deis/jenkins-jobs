@@ -74,15 +74,19 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
          fingerprint(false)
        }
 
-       def statuses = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error']]
-       postBuildScripts {
-         steps {
-           statuses.each { buildStatus, commitStatus ->
-             conditionalSteps {
-               condition {
-                 status(buildStatus, buildStatus)
-                 steps {
-                   shell curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repoName)
+       if (isPR) {
+         def statuses = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error']]
+         postBuildScripts {
+           onlyIfBuildSucceeds(false)
+           steps {
+             statuses.each { buildStatus, commitStatus ->
+               conditionalSteps {
+                 condition {
+                   status(buildStatus, buildStatus)
+                   steps {
+                     shell(
+                       curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repoName))
+                   }
                  }
                }
              }
@@ -114,6 +118,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
       colorizeOutput 'xterm'
       credentialsBinding {
         string("GCLOUD_CREDENTIALS", "246d6550-569b-4925-8cda-e11a4f0d6803")
+        string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
       }
     }
 
