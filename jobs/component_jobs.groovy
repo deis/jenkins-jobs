@@ -24,6 +24,7 @@ repos.each { Map repo ->
         git {
           remote {
             github("deis/${repo.name}")
+            credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
             if (isPR) {
               refspec('+refs/pull/*:refs/remotes/origin/pr/*')
             }
@@ -47,21 +48,12 @@ repos.each { Map repo ->
       if (isPR) { // set up GitHubPullRequest build trigger
         triggers {
           pullRequest {
-            admin('deis-admin')
+            admin(defaults.git['user'])
             cron('H/5 * * * *')
             useGitHubHooks()
             triggerPhrase('OK to test')
             orgWhitelist(['deis'])
             allowMembersOfWhitelistedOrgsAsAdmin()
-            extensions {
-              commitStatus {
-                context("Testing ${repo.name} PR")
-                triggeredStatus("After ${repo.name} build/deploy, kicking off tests via ${downstreamJobName}")
-                completedStatus('SUCCESS', 'All tests have passed!')
-                completedStatus('FAILURE', 'Build/deploy or tests have returned failure(s).')
-                completedStatus('ERROR', 'Something went wrong. Investigate!')
-              }
-            }
           }
         }
       }
@@ -87,10 +79,27 @@ repos.each { Map repo ->
       wrappers {
         timestamps()
         colorizeOutput 'xterm'
-        if (isPR) { // we'll be pushing images
-          credentialsBinding {
-            string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
-            string("QUAY_PASSWORD", "c67dc0a1-c8c4-4568-a73d-53ad8530ceeb")
+        credentialsBinding {
+          string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
+          string("QUAY_PASSWORD", "c67dc0a1-c8c4-4568-a73d-53ad8530ceeb")
+          string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
+        }
+      }
+
+      publishers {
+        def statuses = [['SUCCESS', 'pending'],['FAILURE', 'failure'],['ABORTED', 'error']]
+        postBuildScripts {
+          steps {
+            statuses.each { buildStatus, commitStatus ->
+              conditionalSteps {
+                condition {
+                  status(buildStatus, buildStatus)
+                  steps {
+                    shell curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repo.name)
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -123,11 +132,6 @@ repos.each { Map repo ->
                   'UPSTREAM_JOB_NAME': "${name}",
                   'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
                 ])
-              }
-              block {
-                buildStepFailure('FAILURE')
-                failure('FAILURE')
-                unstable('UNSTABLE')
               }
             }
           }
