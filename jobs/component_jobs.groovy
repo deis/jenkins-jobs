@@ -1,5 +1,7 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
+import utilities.StatusUpdater
+
 repos.each { Map repo ->
   [
     // for each repo, create a <repo.name>-master and <repo.name>-pr job
@@ -48,12 +50,24 @@ repos.each { Map repo ->
       if (isPR) { // set up GitHubPullRequest build trigger
         triggers {
           pullRequest {
-            admin(defaults.git['user'])
+            admin('deis-admin')
             cron('H/5 * * * *')
             useGitHubHooks()
             triggerPhrase('OK to test')
             orgWhitelist(['deis'])
             allowMembersOfWhitelistedOrgsAsAdmin()
+            // this plugin will update PR status no matter what,
+            // so until we fix this, here are our default messages:
+            extensions {
+              commitStatus {
+                context('ci/jenkins/pr')
+                triggeredStatus("Triggering ${repo.name} build/deploy...")
+                startedStatus("Starting ${repo.name} build/deploy...")
+                completedStatus('SUCCESS', "Merge with caution! Test job(s) may still be in progress...")
+                completedStatus('FAILURE', 'Build/deploy returned failure(s).')
+                completedStatus('ERROR', 'Something went wrong.')
+              }
+            }
           }
         }
       }
@@ -87,15 +101,19 @@ repos.each { Map repo ->
       }
 
       publishers {
-        def statuses = [['SUCCESS', 'pending'],['FAILURE', 'failure'],['ABORTED', 'error']]
-        postBuildScripts {
-          steps {
-            statuses.each { buildStatus, commitStatus ->
-              conditionalSteps {
-                condition {
-                  status(buildStatus, buildStatus)
-                  steps {
-                    shell curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repo.name)
+        if (isPR) {
+          def statuses = [['SUCCESS', 'pending'],['FAILURE', 'failure'],['ABORTED', 'error']]
+          postBuildScripts {
+            onlyIfBuildSucceeds(false)
+            steps {
+              statuses.each { buildStatus, commitStatus ->
+                conditionalSteps {
+                  condition {
+                    status(buildStatus, buildStatus)
+                    steps {
+                      shell StatusUpdater.updateStatus(
+                        buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repo.name, commitSHA: '${GIT_COMMIT}')
+                    }
                   }
                 }
               }
@@ -127,10 +145,12 @@ repos.each { Map repo ->
             trigger(downstreamJobName) {
               parameters {
                 predefinedProps([
+                  // TODO remove this and use canonical COMPONENT_COMMIT
                   "${repo.commitEnvVar}": '${GIT_COMMIT}',
-                  'UPSTREAM_BUILD_NUMBER': '${BUILD_NUMBER}',
-                  'UPSTREAM_JOB_NAME': "${name}",
+                  'UPSTREAM_BUILD_URL': '${BUILD_URL}',
                   'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
+                  'COMPONENT_REPO': "${repo.name}",
+                  'COMPONENT_COMMIT': '${GIT_COMMIT}',
                 ])
               }
             }
