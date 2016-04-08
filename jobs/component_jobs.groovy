@@ -47,6 +47,31 @@ repos.each { Map repo ->
         numToKeep defaults.numBuildsToKeep
       }
 
+      if (isPR) { // set up GitHubPullRequest build trigger
+        triggers {
+          pullRequest {
+            admin('deis-admin')
+            cron('H/5 * * * *')
+            useGitHubHooks()
+            triggerPhrase('OK to test')
+            orgWhitelist(['deis'])
+            allowMembersOfWhitelistedOrgsAsAdmin()
+            // this plugin will update PR status no matter what,
+            // so until we fix this, here are our default messages:
+            extensions {
+              commitStatus {
+                context('ci/jenkins/pr')
+                triggeredStatus("Triggering ${repo.name} build/deploy...")
+                startedStatus("Starting ${repo.name} build/deploy...")
+                completedStatus('SUCCESS', "Merge with caution! Test job(s) may still be in progress...")
+                completedStatus('FAILURE', 'Build/deploy returned failure(s).')
+                completedStatus('ERROR', 'Something went wrong.')
+              }
+            }
+          }
+        }
+      }
+
       if (isMaster) { // used for remote build trigger (from TravisCI)
         authenticationToken('5ISZbTayHuC0nHV')
       }
