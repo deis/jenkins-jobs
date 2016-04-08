@@ -21,7 +21,7 @@ repos.each { Map repo ->
 TEST_JOB_ROOT_NAME = 'workflow-test'
 
 defaults = [
-  numBuildsToKeep: 42,
+  numBuildsToKeep: 10,
   bumpverCommitCmd: 'git commit -a -m "chore(versions): ci bumped versions via ${BUILD_URL}" || true',
   testJob: [master: "${TEST_JOB_ROOT_NAME}", pr: "${TEST_JOB_ROOT_NAME}-pr"],
   maxBuildsPerNode: 1,
