@@ -51,6 +51,31 @@ repos.each { Map repo ->
         authenticationToken('5ISZbTayHuC0nHV')
       }
 
+      if (isPR) { // set up GitHubPullRequest build trigger
+        triggers {
+          pullRequest {
+            admin('deis-admin')
+            cron('H/5 * * * *')
+            useGitHubHooks()
+            triggerPhrase('OK to test')
+            orgWhitelist(['deis'])
+            allowMembersOfWhitelistedOrgsAsAdmin()
+            // this plugin will update PR status no matter what,
+            // so until we fix this, here are our default messages:
+            extensions {
+              commitStatus {
+                context('ci/jenkins/pr')
+                triggeredStatus("Triggering ${repo.name} build/deploy...")
+                startedStatus("Starting ${repo.name} build/deploy...")
+                completedStatus('SUCCESS', "Merge with caution! Test job(s) may still be in progress...")
+                completedStatus('FAILURE', 'Build/deploy returned failure(s).')
+                completedStatus('ERROR', 'Something went wrong.')
+              }
+            }
+          }
+        }
+      }
+
       if (isPR) { // we'll be pushing images and testing specific git SHAs
         parameters {
           stringParam('DOCKER_USERNAME', 'deisbot', 'Docker Hub account name')
@@ -72,28 +97,6 @@ repos.each { Map repo ->
           string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
           string("QUAY_PASSWORD", "c67dc0a1-c8c4-4568-a73d-53ad8530ceeb")
           string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
-        }
-      }
-
-      publishers {
-        if (isPR) {
-          def statuses = [['SUCCESS', 'pending'],['FAILURE', 'failure'],['ABORTED', 'error']]
-          postBuildScripts {
-            onlyIfBuildSucceeds(false)
-            steps {
-              statuses.each { buildStatus, commitStatus ->
-                conditionalSteps {
-                  condition {
-                    status(buildStatus, buildStatus)
-                    steps {
-                      shell StatusUpdater.updateStatus(
-                        buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repo.name, commitSHA: '${GIT_COMMIT}')
-                    }
-                  }
-                }
-              }
-            }
-          }
         }
       }
 
@@ -120,12 +123,11 @@ repos.each { Map repo ->
             trigger(downstreamJobName) {
               parameters {
                 predefinedProps([
-                  // TODO remove this and use canonical COMPONENT_COMMIT
                   "${repo.commitEnvVar}": '${GIT_COMMIT}',
                   'UPSTREAM_BUILD_URL': '${BUILD_URL}',
                   'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
                   'COMPONENT_REPO': "${repo.name}",
-                  'COMPONENT_COMMIT': '${GIT_COMMIT}',
+                  'ACTUAL_COMMIT': '${ghprbActualCommit}',
                 ])
               }
             }
