@@ -31,25 +31,4 @@ defaults = [
     teamDomain: 'deis',
     channel: '#testing',
   ],
-  git: [
-    user: 'deis-admin',
-    context: 'ci/jenkins',
-  ],
 ]
-
-def curlStatus(Map args) {
-  """
-    #!/usr/bin/env bash
-
-    set -eo pipefail
-
-    curl\
-      --user ${defaults.git['user']}:"\${GITHUB_ACCESS_TOKEN}"\
-      --data '{\
-        "state":"${args.commitStatus}",\
-        "target_url":"'"\${BUILD_URL}"'",\
-        "description":"${args.jobName} job ${args.buildStatus}, current status: ${args.commitStatus}",\
-        "context":"${defaults.git['context']}"}'\
-      "https://api.github.com/repos/deis/${args.repoName}/statuses/\${GIT_COMMIT}"
-  """.stripIndent().trim()
-}

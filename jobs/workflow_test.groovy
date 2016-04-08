@@ -1,5 +1,7 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
+import utilities.StatusUpdater
+
 [
   [type: 'master'],
   [type: 'pr'],
@@ -11,8 +13,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
   repoName = 'charts'
 
   testReportMsg = "Test Report: ${JENKINS_URL}job/${name}/\${BUILD_NUMBER}/testReport"
-  upstreamJobMsg = "Upstream job: ${JENKINS_URL}job/\${UPSTREAM_JOB_NAME}/\${UPSTREAM_BUILD_NUMBER}"
-
+  upstreamJobMsg = "Upstream job: \${UPSTREAM_BUILD_URL}"
 
   job(name) {
     description """
@@ -84,8 +85,8 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
                  condition {
                    status(buildStatus, buildStatus)
                    steps {
-                     shell(
-                       curlStatus(buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: repoName))
+                     shell StatusUpdater.updateStatus(
+                       buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: '${COMPONENT_REPO}', commitSHA: '${COMPONENT_COMMIT}')
                    }
                  }
                }
@@ -96,10 +97,13 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
      }
 
     parameters {
-      // create string parameters for every <COMPONENT>_SHA passed from upstream
+      // TODO: remove these <COMPONENT>_SHA env vars to use the canonical
+      // COMPONENT_COMMIT.  Requires change in the chart-mate repo.
       repos.each { Map repo ->
-       stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
-     }
+        stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
+      }
+     stringParam('COMPONENT_REPO', '', "Component repo name")
+     stringParam('COMPONENT_COMMIT', '', "Component commit SHA")
     }
 
     triggers {
