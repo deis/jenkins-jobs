@@ -12,7 +12,7 @@ class StatusUpdater {
         --data '{\
           "state":"${args.commitStatus}",\
           "target_url":"'"\${BUILD_URL}"'",\
-          "description":"${args.jobName} job ${args.buildStatus}, current status: ${args.commitStatus}",\
+          "description":"${args.description}",\
           "context":"ci/jenkins/pr"}'\
         "https://api.github.com/repos/deis/${args.repoName}/statuses/${args.commitSHA}"
     """.stripIndent().trim()

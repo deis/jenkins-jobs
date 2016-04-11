@@ -86,7 +86,7 @@ import utilities.StatusUpdater
                    status(buildStatus, buildStatus)
                    steps {
                      shell StatusUpdater.updateStatus(
-                       buildStatus: buildStatus, commitStatus: commitStatus, jobName: name, repoName: '${COMPONENT_REPO}', commitSHA: '${COMPONENT_COMMIT}')
+                       commitStatus: commitStatus, repoName: '${COMPONENT_REPO}', commitSHA: '${ACTUAL_COMMIT}', description: "${name} job ${buildStatus}")
                    }
                  }
                }
@@ -97,13 +97,11 @@ import utilities.StatusUpdater
      }
 
     parameters {
-      // TODO: remove these <COMPONENT>_SHA env vars to use the canonical
-      // COMPONENT_COMMIT.  Requires change in the chart-mate repo.
       repos.each { Map repo ->
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
       }
      stringParam('COMPONENT_REPO', '', "Component repo name")
-     stringParam('COMPONENT_COMMIT', '', "Component commit SHA")
+     stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
     }
 
     triggers {
@@ -132,6 +130,11 @@ import utilities.StatusUpdater
     }
 
     steps {
+      if (isPR) { // update commit with pending status while tests run
+        shell StatusUpdater.updateStatus(
+          commitStatus: 'pending', repoName: '${COMPONENT_REPO}', commitSHA: '${ACTUAL_COMMIT}', description: 'Running e2e tests...')
+      }
+
       shell """
         #!/usr/bin/env bash
 
