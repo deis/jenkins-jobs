@@ -67,12 +67,14 @@ import utilities.StatusUpdater
 
        archiveJunit('logs/**/junit*.xml') {
          retainLongStdout(false)
+         allowEmptyResults()
        }
 
        archiveArtifacts {
          pattern('logs/${BUILD_NUMBER}/**')
          onlyIfSuccessful(false)
          fingerprint(false)
+         allowEmpty()
        }
 
        if (isPR) {
