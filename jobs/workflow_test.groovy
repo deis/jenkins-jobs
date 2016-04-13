@@ -5,9 +5,11 @@ import utilities.StatusUpdater
 [
   [type: 'master'],
   [type: 'pr'],
+  [type: 'release'],
 ].each { Map config ->
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
+  isRelease = config.type == 'release'
 
   name = defaults.testJob[config.type]
   repoName = 'charts'
