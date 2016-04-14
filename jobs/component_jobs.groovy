@@ -87,7 +87,10 @@ repos.each { Map repo ->
       }
 
       triggers {
-        githubPush()
+        // While TravisCI handles master commit deploys, only use this for PR
+        if (isPR) {
+          githubPush()
+        }
       }
 
       wrappers {
