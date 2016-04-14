@@ -38,7 +38,7 @@ import utilities.StatusUpdater
       concurrentBuild()
       throttleConcurrentBuilds {
         maxPerNode(defaults.maxBuildsPerNode)
-        maxTotal(defaults.maxTotalConcurrentBuilds)
+        maxTotal(6)
       }
     }
 
