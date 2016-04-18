@@ -115,7 +115,9 @@ import utilities.StatusUpdater
 
     wrappers {
       timeout {
-        absolute(25)
+        // Revisit when https://github.com/deis/jenkins-jobs/issues/51 complete
+        // (timeout can/should be decreased)
+        absolute(30)
         failBuild()
       }
       timestamps()
