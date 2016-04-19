@@ -47,10 +47,6 @@ repos.each { Map repo ->
         numToKeep defaults.numBuildsToKeep
       }
 
-      if (isMaster) { // used for remote build trigger (from TravisCI)
-        authenticationToken('5ISZbTayHuC0nHV')
-      }
-
       if (isPR) { // set up GitHubPullRequest build trigger
         triggers {
           pullRequest {
@@ -76,21 +72,16 @@ repos.each { Map repo ->
         }
       }
 
-      if (isPR) { // we'll be pushing images and testing specific git SHAs
-        parameters {
-          stringParam('DOCKER_USERNAME', 'deisbot', 'Docker Hub account name')
-          stringParam('DOCKER_EMAIL', 'dummy-address@deis.com', 'Docker Hub email address')
-          stringParam('QUAY_USERNAME', 'deisci+jenkins', 'Quay account name')
-          stringParam('QUAY_EMAIL', 'deisci+jenkins@deis.com', 'Quay email address')
-          stringParam('sha1', 'master', 'Specific Git SHA to test')
-        }
+      parameters {
+        stringParam('DOCKER_USERNAME', 'deisbot', 'Docker Hub account name')
+        stringParam('DOCKER_EMAIL', 'dummy-address@deis.com', 'Docker Hub email address')
+        stringParam('QUAY_USERNAME', 'deisci+jenkins', 'Quay account name')
+        stringParam('QUAY_EMAIL', 'deisci+jenkins@deis.com', 'Quay email address')
+        stringParam('sha1', 'master', 'Specific Git SHA to test')
       }
 
       triggers {
-        // While TravisCI handles master commit deploys, only use this for PR
-        if (isPR) {
-          githubPush()
-        }
+        githubPush()
       }
 
       wrappers {
@@ -104,22 +95,21 @@ repos.each { Map repo ->
       }
 
       steps {
-        // if a PR commit, build and push immutable docker tag
-        if (isPR) {
-          shell '''
-            #!/usr/bin/env bash
+        dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
+        shell """
+          #!/usr/bin/env bash
 
-            set -eo pipefail
+          set -eo pipefail
 
-            make bootstrap || true
+          make bootstrap || true
 
-            export IMAGE_PREFIX=deisci
-            docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-            DEIS_REGISTRY='' make docker-build docker-immutable-push
-            docker login -e="$QUAY_EMAIL" -u="$QUAY_USERNAME" -p="$QUAY_PASSWORD" quay.io
-            DEIS_REGISTRY=quay.io/ make docker-build docker-immutable-push
-          '''.stripIndent().trim()
-        }
+          export IMAGE_PREFIX=deisci
+          docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
+          DEIS_REGISTRY='' make docker-build ${dockerPush}
+          docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
+          DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
+        """.stripIndent().trim()
+
         // do not run e2e tests for workflow-manager at this time
         if (repo.name != 'workflow-manager') {
           downstreamParameterized {
