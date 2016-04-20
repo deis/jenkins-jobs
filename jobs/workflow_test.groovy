@@ -145,9 +145,6 @@ import utilities.StatusUpdater
         set -eo pipefail
 
         ./ci.sh
-        if [ "\${COMMIT}" == "true" ]; then
-          ${defaults.bumpverCommitCmd}
-        fi
       """.stripIndent().trim()
     }
   }
