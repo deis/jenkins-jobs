@@ -108,6 +108,14 @@ repos.each { Map repo ->
           DEIS_REGISTRY='' make docker-build ${dockerPush}
           docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
           DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
+
+          # if triggered by pull request plugin, use ghprbActualCommit
+          export ACTUAL_COMMIT="\${ghprbActualCommit}"
+          # if manually triggered, use sha1
+          if [ -z "\${ghprbActualCommit}" ]; then
+            export ACTUAL_COMMIT="\${sha1}"
+          fi
+          echo ACTUAL_COMMIT="\${ACTUAL_COMMIT}" > \${WORKSPACE}/env.properties
         """.stripIndent().trim()
 
         // do not run e2e tests for workflow-manager at this time
@@ -115,12 +123,12 @@ repos.each { Map repo ->
           downstreamParameterized {
             trigger(downstreamJobName) {
               parameters {
+                propertiesFile('${WORKSPACE}/env.properties')
                 predefinedProps([
                   "${repo.commitEnvVar}": '${GIT_COMMIT}',
                   'UPSTREAM_BUILD_URL': '${BUILD_URL}',
                   'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
                   'COMPONENT_REPO': "${repo.name}",
-                  'ACTUAL_COMMIT': '${ghprbActualCommit}',
                 ])
               }
             }
