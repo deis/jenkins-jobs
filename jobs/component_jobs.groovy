@@ -132,11 +132,6 @@ repos.each { Map repo ->
             #!/usr/bin/env bash
 
             set -eo pipefail
-
-            if [ ! -z "\${WORKFLOW_MANAGER_SHA}" ]; then
-              rerun chart-mate:bumpver
-              ${defaults.bumpverCommitCmd}
-            fi
           """.stripIndent().trim()
         }
       }
