@@ -44,7 +44,7 @@ repos.each { Map repo ->
       }
 
       logRotator {
-        numToKeep defaults.numBuildsToKeep
+        daysToKeep defaults.daysToKeep
       }
 
       if (isPR) { // set up GitHubPullRequest build trigger
