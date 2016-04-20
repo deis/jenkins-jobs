@@ -31,7 +31,7 @@ import utilities.StatusUpdater
     }
 
     logRotator {
-      numToKeep defaults.numBuildsToKeep
+      daysToKeep defaults.daysToKeep
     }
 
     if (isPR) {
