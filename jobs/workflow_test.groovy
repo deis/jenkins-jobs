@@ -125,6 +125,7 @@ import utilities.StatusUpdater
       credentialsBinding {
         string("GCLOUD_CREDENTIALS", "246d6550-569b-4925-8cda-e11a4f0d6803")
         string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
+        string("QUAY_ROBOT_ACCOUNT_TOKEN", "76c71e73-8262-46c6-86c0-71ec9e5cc455")
       }
     }
 
