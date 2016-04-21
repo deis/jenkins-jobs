@@ -6,7 +6,13 @@ For more information about the Deis Workflow, please visit the main project page
 
 # About
 
-This repository serves as a central location for [Deis Workflow Jenkins jobs](https://ci.deis.io) represented in [Jenkins Job DSL](https://github.com/jenkinsci/job-dsl-plugin)
+This repository serves as a central location for [Deis Workflow Jenkins jobs](https://ci.deis.io) represented in [Jenkins Job DSL](https://github.com/jenkinsci/job-dsl-plugin).
+
+## Resources
+
+The definitive wiki resource describing all available Jenkins Job DSL API items can be found in the [Jenkins Job DSL Plugin API](https://jenkinsci.github.io/job-dsl-plugin/).
+
+Until we add support for [testing DSL changes](https://github.com/deis/jenkins-jobs/issues/39) while developing, the [Jenkins Job DSL Playground](http://job-dsl.herokuapp.com/) can be used for verifying that the DSL parses correctly.  (If it does, an `xml` file will be generated.  For comparison, you can view an existing job's `xml` equivalent by navigating to `https://ci.deis.io/job/<job-name>/config.xml`)
 
 ## License
 
