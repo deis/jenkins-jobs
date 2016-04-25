@@ -7,14 +7,14 @@ class StatusUpdater {
 
 set -eo pipefail
 
-curl\
---user deis-admin:"\${GITHUB_ACCESS_TOKEN}"\
---data '{\
-"state":"${args.commitStatus}",\
-"target_url":"'"\${BUILD_URL}"'",\
-"description":"${args.description}",\
-"context":"ci/jenkins/pr"}'\
+curl \
+--user deis-admin:"\${GITHUB_ACCESS_TOKEN}" \
+--data '{ \
+"state":"${args.commitStatus}", \
+"target_url":"'"\${BUILD_URL}"'", \
+"description":"${args.description}", \
+"context":"ci/jenkins/pr"}' \
 "https://api.github.com/repos/deis/${args.repoName}/statuses/${args.commitSHA}"
-""".stripIndent().trim()
+""".stripIndent()
   }
 }
