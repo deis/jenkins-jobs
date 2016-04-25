@@ -2,9 +2,7 @@ package utilities
 
 class StatusUpdater {
   static updateStatus(Map args) {
-"""
-#!/usr/bin/env bash
-
+"""#!/usr/bin/env bash
 set -eo pipefail
 
 curl \
