@@ -9,6 +9,7 @@ repos = [
   [name: 'router', slackChannel: 'router'],
   [name: 'slugbuilder', slackChannel: 'builder'],
   [name: 'slugrunner', slackChannel: 'builder'],
+  [name: 'stdout-metrics', slackChannel: 'metrics'],
   [name: 'controller', slackChannel: 'controller'],
   [name: 'workflow-e2e', slackChannel: 'testing'],
   [name: 'workflow-manager', slackChannel: 'wfm'],
