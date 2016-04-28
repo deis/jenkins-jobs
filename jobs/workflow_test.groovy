@@ -12,7 +12,7 @@ import utilities.StatusUpdater
   name = defaults.testJob[config.type]
   repoName = 'charts'
 
-  testReportMsg = "Test Report: ${JENKINS_URL}job/${name}/\${BUILD_NUMBER}/testReport"
+  testReportMsg = defaults.testJob["reportMsg"]
   upstreamJobMsg = "Upstream job: \${UPSTREAM_BUILD_URL}"
 
   job(name) {
@@ -115,9 +115,7 @@ import utilities.StatusUpdater
 
     wrappers {
       timeout {
-        // Revisit when https://github.com/deis/jenkins-jobs/issues/51 complete
-        // (timeout can/should be decreased)
-        absolute(30)
+        absolute(defaults.testJob["timeoutMins"])
         failBuild()
       }
       timestamps()
@@ -131,7 +129,6 @@ import utilities.StatusUpdater
 
     environmentVariables {
       env('COMMIT', isMaster)
-      env('PARALLEL_TESTS', true)
     }
 
     steps {
