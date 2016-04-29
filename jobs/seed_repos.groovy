@@ -36,14 +36,14 @@ job(name) {
   }
 
   steps {
-    repos.each { Map repo ->
-      shell """
-      #!/usr/bin/env bash
+    shell """
+    #!/usr/bin/env bash
 
-      set -eo pipefail
+    set -eo pipefail
 
-      ./seed-repo deis/${repo.name}
-      """.stripIndent().trim()
-    }
+    bundle install
+
+    for i in $(./list-repos); do ./seed-repo $i; done
+    """.stripIndent().trim()
   }
 }
