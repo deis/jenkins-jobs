@@ -41,7 +41,7 @@ job(name) {
 
     bundle install
 
-    for i in $(./list-repos); do ./seed-repo $i; done
+    for i in \$(./list-repos); do ./seed-repo \$i; done
     """.stripIndent().trim()
   }
 }
