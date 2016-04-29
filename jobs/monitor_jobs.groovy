@@ -42,7 +42,7 @@ dirs.each { Map dir ->
           }
           configure { gitScm ->
             gitScm / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
-              includedRegions(dir.name)
+              includedRegions("${dir.name}/**")
             }
           }
         }
@@ -76,7 +76,7 @@ dirs.each { Map dir ->
                 context('ci/jenkins/pr')
                 triggeredStatus("Triggering ${dir.name} build/deploy...")
                 startedStatus("Starting ${dir.name} build/deploy...")
-                completedStatus('SUCCESS', "Merge with caution! Test job(s) may still be in progress...")
+                completedStatus('SUCCESS', "Build/deploy successful!")
                 completedStatus('FAILURE', 'Build/deploy returned failure(s).')
                 completedStatus('ERROR', 'Something went wrong.')
               }
@@ -114,8 +114,7 @@ dirs.each { Map dir ->
 
           set -eo pipefail
 
-          make bootstrap || true
-
+          cd ${dir.name}
           export IMAGE_PREFIX=deisci
           docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
           DEIS_REGISTRY='' make docker-build ${dockerPush}
