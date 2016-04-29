@@ -1,3 +1,5 @@
+evaluate(new File("${WORKSPACE}/common.groovy"))
+
 import utilities.StatusUpdater
 
 dirs = [
