@@ -1,7 +1,5 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-import utilities.StatusUpdater
-
 name = 'deis-seed-repos'
 repoName = 'seed-repo'
 
