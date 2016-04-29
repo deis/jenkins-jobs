@@ -28,10 +28,6 @@ job(name) {
   }
 
   wrappers {
-    timeout {
-      absolute(defaults.testJob["timeoutMins"])
-      failBuild()
-    }
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
