@@ -75,7 +75,7 @@ dirs.each { Map dir ->
             // so until we fix this, here are our default messages:
             extensions {
               commitStatus {
-                context('ci/jenkins/pr')
+                context("ci/jenkins/${dir.name}/pr")
                 triggeredStatus("Triggering ${dir.name} build/deploy...")
                 startedStatus("Starting ${dir.name} build/deploy...")
                 completedStatus('SUCCESS', "Build/deploy successful!")
