@@ -40,9 +40,11 @@ dirs.each { Map dir ->
             }
             branch(config.branch)
           }
-          configure { gitScm ->
-            gitScm / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
-              includedRegions("${dir.name}/**")
+          if (!isPr) {
+            configure { gitScm ->
+              gitScm / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
+                includedRegions("${dir.name}/**")
+              }
             }
           }
         }
