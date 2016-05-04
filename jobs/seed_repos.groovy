@@ -39,9 +39,7 @@ job(name) {
 
     set -eo pipefail
 
-    bundle install
-
-    for i in \$(./list-repos); do ./seed-repo \$i; done
+    docker run -v \$PWD:/app ruby:2.3.1 bash -c 'cd /app && bundle install && for i in \$(./list-repos); do ./seed-repo \$i; done'
     """.stripIndent().trim()
   }
 }
