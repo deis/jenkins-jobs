@@ -3,21 +3,11 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 import utilities.StatusUpdater
 
 name = 'workflow-test-release'
-repoName = 'charts'
 
 job(name) {
   description """
-    <p>Runs a given workflow-[RELEASE]-e2e tests chart against a workflow-[RELEASE] chart candidate.</p>
+    <p>Runs a given workflow-[RELEASE]-e2e tests chart against a workflow-[RELEASE] chart candidate using e2e-runner</p>
   """.stripIndent().trim()
-
-  scm {
-    git {
-      remote {
-        github("deis/${repoName}")
-      }
-      branch('master')
-    }
-  }
 
   logRotator {
     daysToKeep defaults.daysToKeep
@@ -32,13 +22,13 @@ job(name) {
       includeTestSummary()
      }
 
-     archiveJunit('logs/**/junit*.xml') {
+     archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
        retainLongStdout(false)
        allowEmptyResults()
      }
 
      archiveArtifacts {
-       pattern('logs/${BUILD_NUMBER}/**')
+       pattern('${BUILD_NUMBER}/logs/**')
        onlyIfSuccessful(false)
        fingerprint(false)
        allowEmpty()
@@ -46,10 +36,13 @@ job(name) {
    }
 
   parameters {
-   stringParam('HELM_REMOTE_REPO', defaults.helm["remoteRepo"], "Helm remote repo name")
-   stringParam('HELM_REMOTE_BRANCH', defaults.helm["remoteBranch"], "Helm remote repo branch")
-   stringParam('HELM_REMOTE_NAME', defaults.helm["remoteName"], "Helm remote name")
-   stringParam('RELEASE', defaults.workflowRelease, "Release string for resolving workflow-[release](-e2e) charts")
+   stringParam('WORKFLOW_BRANCH', 'master', "The branch to use for installing the workflow chart.")
+   stringParam('WORKFLOW_E2E_BRANCH', 'master', "The branch to use for installing the workflow-e2e chart.")
+   stringParam('RELEASE', 'rc1', "Release string for resolving workflow-[release](-e2e) charts")
+   stringParam('HELM_REMOTE_REPO', 'https://github.com/deis/charts.git', "The remote repo to use for fetching charts.")
+   stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:latest', "The e2e-runner image")
+   stringParam('E2E_DIR', '$BUILD_NUMBER', "Directory for storing workspace files")
+   stringParam('E2E_DIR_LOGS', '$BUILD_NUMBER/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
   }
 
   triggers {
@@ -65,17 +58,12 @@ job(name) {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GCLOUD_CREDENTIALS", "246d6550-569b-4925-8cda-e11a4f0d6803")
+      string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
+      string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
     }
   }
 
   steps {
-    shell """
-      #!/usr/bin/env bash
-
-      set -eo pipefail
-
-      WORKFLOW_CHART="workflow-\${RELEASE}" WORKFLOW_E2E_CHART="workflow-\${RELEASE}-e2e" ./ci.sh
-    """.stripIndent().trim()
+    shell E2E_RUNNER_JOB
   }
 }
