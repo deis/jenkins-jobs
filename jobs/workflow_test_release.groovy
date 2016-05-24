@@ -46,10 +46,10 @@ job(name) {
    }
 
   parameters {
-   stringParam('HELM_REMOTE_REPO', 'https://github.com/deis/charts.git', "Helm remote repo name")
-   stringParam('HELM_REMOTE_BRANCH', 'master', "Helm remote repo branch")
-   stringParam('HELM_REMOTE_NAME', 'deis', "Helm remote name")
-   stringParam('RELEASE', 'beta3', "Release string for resolving workflow-[release](-e2e) charts")
+   stringParam('HELM_REMOTE_REPO', defaults.helm["remoteRepo"], "Helm remote repo name")
+   stringParam('HELM_REMOTE_BRANCH', defaults.helm["remoteBranch"], "Helm remote repo branch")
+   stringParam('HELM_REMOTE_NAME', defaults.helm["remoteName"], "Helm remote name")
+   stringParam('RELEASE', defaults.workflowRelease, "Release string for resolving workflow-[release](-e2e) charts")
   }
 
   triggers {

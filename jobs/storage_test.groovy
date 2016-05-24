@@ -22,10 +22,28 @@ job(name) {
   }
   parameters {
    stringParam('STORAGE_TYPE', 'gcs', "storage backend for helm chart, default is gcs")
+   stringParam('HELM_REMOTE_REPO', defaults.helm["remoteRepo"], "Helm remote repo name")
+   stringParam('HELM_REMOTE_BRANCH', defaults.helm["remoteBranch"], "Helm remote repo branch")
+   stringParam('HELM_REMOTE_NAME', defaults.helm["remoteName"], "Helm remote name")
+   stringParam('RELEASE', defaults.workflowRelease, "Release string for resolving workflow-[release](-e2e) charts")
   }
 
   triggers {
     cron('@daily')
+  }
+
+  publishers {
+    archiveJunit('logs/**/junit*.xml') {
+      retainLongStdout(false)
+      allowEmptyResults()
+    }
+
+    archiveArtifacts {
+      pattern('logs/${BUILD_NUMBER}/**')
+      onlyIfSuccessful(false)
+      fingerprint(false)
+      allowEmpty()
+    }
   }
 
   wrappers {
@@ -60,7 +78,7 @@ job(name) {
       export ${TYPE}_BUILDER_BUCKET="deis-builder-${BUILD_NUMBER}"
       export ${TYPE}_DATABASE_BUCKET="deis-database-${BUILD_NUMBER}"
 
-      ./ci.sh
+      WORKFLOW_CHART="workflow-\${RELEASE}" WORKFLOW_E2E_CHART="workflow-\${RELEASE}-e2e" ./ci.sh
     '''.stripIndent().trim()
 
   }

@@ -35,8 +35,14 @@ defaults = [
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
   workflowChart: 'workflow-dev',
+  workflowRelease: 'dev',
   slack: [
     teamDomain: 'deis',
     channel: '#testing',
+  ],
+  helm: [
+    remoteRepo: 'https://github.com/deis/charts.git',
+    remoteBranch: 'master',
+    remoteName: 'deis',
   ],
 ]
