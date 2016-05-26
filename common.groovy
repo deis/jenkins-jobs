@@ -21,8 +21,7 @@ repos.each { Map repo ->
 
 TEST_JOB_ROOT_NAME = 'workflow-test'
 
-E2E_RUNNER_JOB = '''
-#!/usr/bin/env bash
+E2E_RUNNER_JOB = '''#!/usr/bin/env bash
 set -eo pipefail
 
 export WORKFLOW_CHART="workflow-${RELEASE}"

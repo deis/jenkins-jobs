@@ -91,8 +91,8 @@ import utilities.StatusUpdater
      stringParam('GINKGO_NODES', '30', "Number of parallel executors to use when running e2e tests")
      stringParam('RELEASE', 'dev', "Release string for resolving workflow-[release](-e2e) charts")
      stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:latest', "The e2e-runner image")
-     stringParam('E2E_DIR', '$BUILD_NUMBER', "Directory for storing workspace files")
-     stringParam('E2E_DIR_LOGS', '$BUILD_NUMBER/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
+     stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")
+     stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
     }
 
     triggers {
