@@ -6,6 +6,7 @@ class StatusUpdater {
 set -eo pipefail
 
 curl \
+--silent \
 --user deis-admin:"\${GITHUB_ACCESS_TOKEN}" \
 --data '{ \
 "state":"${args.commitStatus}", \

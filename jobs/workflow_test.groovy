@@ -17,29 +17,13 @@ import utilities.StatusUpdater
 
   job(name) {
     description """
-      <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflowChart}">${defaults.workflowChart}</a> chart</p>
+      <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a
+      <a href="https://github.com/deis/charts/tree/master/${defaults.workflowChart}">${defaults.workflowChart}</a> chart
+      using e2e-runner</p>
     """.stripIndent().trim()
-
-    scm {
-      git {
-        remote {
-          github("deis/${repoName}")
-          credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
-        }
-        branch('master')
-      }
-    }
 
     logRotator {
       daysToKeep defaults.daysToKeep
-    }
-
-    if (isPR) {
-      concurrentBuild()
-      throttleConcurrentBuilds {
-        maxPerNode(defaults.maxBuildsPerNode)
-        maxTotal(6)
-      }
     }
 
     publishers {
@@ -65,13 +49,13 @@ import utilities.StatusUpdater
          }
        }
 
-       archiveJunit('logs/**/junit*.xml') {
+       archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
          retainLongStdout(false)
          allowEmptyResults()
        }
 
        archiveArtifacts {
-         pattern('logs/${BUILD_NUMBER}/**')
+         pattern('${BUILD_NUMBER}/logs/**')
          onlyIfSuccessful(false)
          fingerprint(false)
          allowEmpty()
@@ -104,6 +88,11 @@ import utilities.StatusUpdater
       }
      stringParam('COMPONENT_REPO', '', "Component repo name")
      stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
+     stringParam('GINKGO_NODES', '30', "Number of parallel executors to use when running e2e tests")
+     stringParam('RELEASE', 'dev', "Release string for resolving workflow-[release](-e2e) charts")
+     stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:latest', "The e2e-runner image")
+     stringParam('E2E_DIR', '$BUILD_NUMBER', "Directory for storing workspace files")
+     stringParam('E2E_DIR_LOGS', '$BUILD_NUMBER/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
     }
 
     triggers {
@@ -121,9 +110,8 @@ import utilities.StatusUpdater
       timestamps()
       colorizeOutput 'xterm'
       credentialsBinding {
-        string("GCLOUD_CREDENTIALS", "246d6550-569b-4925-8cda-e11a4f0d6803")
+        string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
         string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
-        string("QUAY_ROBOT_ACCOUNT_TOKEN", "76c71e73-8262-46c6-86c0-71ec9e5cc455")
       }
     }
 
@@ -136,17 +124,7 @@ import utilities.StatusUpdater
         shell StatusUpdater.updateStatus(
           commitStatus: 'pending', repoName: '${COMPONENT_REPO}', commitSHA: '${ACTUAL_COMMIT}', description: 'Running e2e tests...')
       }
-
-      shell """
-        #!/usr/bin/env bash
-
-        set -eo pipefail
-
-        ./ci.sh
-        if [ "\${COMMIT}" == "true" ]; then
-          ${defaults.bumpverCommitCmd}
-        fi
-      """.stripIndent().trim()
+      shell E2E_RUNNER_JOB
     }
   }
 }
