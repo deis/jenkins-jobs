@@ -22,8 +22,8 @@ repos.each { Map repo ->
 TEST_JOB_ROOT_NAME = 'workflow-test'
 
 defaults = [
-  tmpPath: '/tmp/${JOB_NAME}/${BUILD_NUMBER}'
-  envFile: "${tmpPath}/env.properties"
+  tmpPath: '/tmp/${JOB_NAME}/${BUILD_NUMBER}',
+  envFile: "${tmpPath}/env.properties",
   daysToKeep: 14,
   bumpverCommitCmd: 'git commit -a -m "chore(versions): ci bumped versions via ${BUILD_URL}" || true',
   testJob: [
