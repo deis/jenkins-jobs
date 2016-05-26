@@ -8,6 +8,7 @@ import utilities.StatusUpdater
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
   name = isMaster ? "e2e-runner" : "e2e-runner-${config.type}"
+  dockerPush = isPR ? 'push-e2e-runner-immutable' : 'push-e2e-runner-mutable'
   downstreamJobName = defaults.testJob[config.type]
 
   job(name) {
@@ -88,7 +89,6 @@ import utilities.StatusUpdater
     }
 
     steps {
-      dockerPush = isPR ? 'push-e2e-runner-immutable' : 'push-e2e-runner-mutable'
       shell """
         #!/usr/bin/env bash
         set -eo pipefail
@@ -99,25 +99,25 @@ import utilities.StatusUpdater
         docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
         DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
 
-        mkdir -p ${tmpPath}
-        eval $(make image)
+        mkdir -p ${defaults.tmpPath}
+        eval \$(make image)
         # if triggered by pull request plugin, use ghprbActualCommit
         export ACTUAL_COMMIT="\${ghprbActualCommit}"
         # if manually triggered, use sha1
         if [ -z "\${ghprbActualCommit}" ]; then
         	export ACTUAL_COMMIT="\${sha1}"
         fi
-        echo ACTUAL_COMMIT="\${ACTUAL_COMMIT}" >> ${envFile}
-        echo E2E_RUNNER_IMAGE="\${E2E_RUNNER_IMAGE}" >> ${envFile}
-        echo UPSTREAM_BUILD_URL="\${BUILD_URL}" >> ${envFile}
-        echo COMPONENT_REPO="e2e-runner" >> ${envFile}
-        echo UPSTREAM_SLACK_CHANNEL="testing" >> ${envFile}
+        echo ACTUAL_COMMIT="\${ACTUAL_COMMIT}" >> ${defaults.envFile}
+        echo E2E_RUNNER_IMAGE="\${E2E_RUNNER_IMAGE}" >> ${defaults.envFile}
+        echo UPSTREAM_BUILD_URL="\${BUILD_URL}" >> ${defaults.envFile}
+        echo COMPONENT_REPO="e2e-runner" >> ${defaults.envFile}
+        echo UPSTREAM_SLACK_CHANNEL="testing" >> ${defaults.envFile}
       """.stripIndent().trim()
 
       downstreamParameterized {
-        trigger(downStreamJobName) {
+        trigger(downstreamJobName) {
           parameters {
-            propertiesFile("${envFile}")
+            propertiesFile("${defaults.envFile}")
           }
         }
       }

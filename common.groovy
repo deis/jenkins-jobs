@@ -21,9 +21,21 @@ repos.each { Map repo ->
 
 TEST_JOB_ROOT_NAME = 'workflow-test'
 
+E2E_RUNNER_JOB = '''
+#!/usr/bin/env bash
+set -eo pipefail
+
+export WORKFLOW_CHART="workflow-${RELEASE}"
+export WORKFLOW_E2E_CHART="workflow-${RELEASE}-e2e"
+
+mkdir -p ${E2E_DIR_LOGS}
+env > ${E2E_DIR}/env.file
+docker run -u jenkins:jenkins --env-file=${E2E_DIR}/env.file -v ${E2E_DIR_LOGS}:/home/jenkins/logs:rw $E2E_RUNNER_IMAGE
+'''.stripIndent()
+
 defaults = [
   tmpPath: '/tmp/${JOB_NAME}/${BUILD_NUMBER}',
-  envFile: "${tmpPath}/env.properties",
+  envFile: '/tmp/${JOB_NAME}/${BUILD_NUMBER}/env.properties',
   daysToKeep: 14,
   bumpverCommitCmd: 'git commit -a -m "chore(versions): ci bumped versions via ${BUILD_URL}" || true',
   testJob: [
@@ -48,15 +60,3 @@ defaults = [
     remoteName: 'deis',
   ],
 ]
-
-E2E_RUNNER_JOB = '''
-#!/usr/bin/env bash
-set -eo pipefail
-
-export WORKFLOW_CHART="workflow-${RELEASE}"
-export WORKFLOW_E2E_CHART="workflow-${RELEASE}-e2e"
-
-mkdir -p ${E2E_DIR_LOGS}
-env > ${E2E_DIR}/env.file
-docker run -u jenkins:jenkins --env-file=${E2E_DIR}/env.file -v ${E2E_DIR_LOGS}:/home/jenkins/logs:rw $E2E_RUNNER_IMAGE
-'''.stripIndent()
