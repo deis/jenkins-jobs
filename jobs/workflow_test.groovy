@@ -42,13 +42,6 @@ import utilities.StatusUpdater
         includeTestSummary()
        }
 
-       if (isMaster) {
-         git {
-           pushOnlyIfSuccess()
-           branch('origin', 'master')
-         }
-       }
-
        archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
          retainLongStdout(false)
          allowEmptyResults()
@@ -113,10 +106,6 @@ import utilities.StatusUpdater
         string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
         string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
       }
-    }
-
-    environmentVariables {
-      env('COMMIT', isMaster)
     }
 
     steps {
