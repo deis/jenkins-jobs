@@ -35,6 +35,11 @@ job(name) {
      }
    }
 
+   concurrentBuild()
+   throttleConcurrentBuilds {
+     maxTotal(defaults.maxWorkflowReleaseConcurrentBuilds)
+   }
+
   parameters {
    stringParam('WORKFLOW_BRANCH', 'master', "The branch to use for installing the workflow chart.")
    stringParam('WORKFLOW_E2E_BRANCH', 'master', "The branch to use for installing the workflow-e2e chart.")

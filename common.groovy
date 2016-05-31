@@ -47,6 +47,9 @@ defaults = [
   ],
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
+  maxWorkflowTestConcurrentBuilds: 1,
+  maxWorkflowTestPRConcurrentBuilds: 4,
+  maxWorkflowReleaseConcurrentBuilds: 1,
   workflowChart: 'workflow-dev',
   workflowRelease: 'dev',
   slack: [
