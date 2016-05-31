@@ -75,6 +75,18 @@ import utilities.StatusUpdater
        }
      }
 
+     if (isPR) {
+       concurrentBuild()
+       throttleConcurrentBuilds {
+         maxTotal(defaults.maxWorkflowTestPRConcurrentBuilds)
+       }
+     } else {
+       concurrentBuild()
+       throttleConcurrentBuilds {
+         maxTotal(defaults.maxWorkflowTestConcurrentBuilds)
+       }
+     }
+
     parameters {
       repos.each { Map repo ->
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
