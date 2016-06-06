@@ -134,19 +134,6 @@ repos.each { Map repo ->
             }
           }
         }
-        // if workflow-manager master commit, bump the chart version and commit
-        if (repo.name == 'workflow-manager' && isMaster) {
-          shell """
-            #!/usr/bin/env bash
-
-            set -eo pipefail
-
-            if [ ! -z "\${WORKFLOW_MANAGER_SHA}" ]; then
-              rerun chart-mate:bumpver
-              ${defaults.bumpverCommitCmd}
-            fi
-          """.stripIndent().trim()
-        }
       }
     }
   }

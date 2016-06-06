@@ -36,7 +36,6 @@ defaults = [
   tmpPath: '/tmp/${JOB_NAME}/${BUILD_NUMBER}',
   envFile: '/tmp/${JOB_NAME}/${BUILD_NUMBER}/env.properties',
   daysToKeep: 14,
-  bumpverCommitCmd: 'git commit -a -m "chore(versions): ci bumped versions via ${BUILD_URL}" || true',
   testJob: [
     master: "${TEST_JOB_ROOT_NAME}",
     pr: "${TEST_JOB_ROOT_NAME}-pr",
