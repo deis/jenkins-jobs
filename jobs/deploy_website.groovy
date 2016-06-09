@@ -61,6 +61,7 @@ job(name) {
     colorizeOutput 'xterm'
     credentialsBinding {
       file('GUTENBERG_STAGING_ENV', '7d29c809-9480-47ae-91aa-a25f43e58897')
+      file('GUTENBERG_PROD_ENV', '91cd521d-e2bb-452d-9abd-863e00ff1e12')
     }
     parameters {
       stringParam('WORKFLOW_DOCS_SOURCE', '${WORKSPACE}/workflow', 'Relative Workflow source')
