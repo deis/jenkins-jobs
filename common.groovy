@@ -4,6 +4,7 @@ repos = [
   [name: 'fluentd', slackChannel: 'logger'],
   [name: 'logger', slackChannel: 'logger'],
   [name: 'minio', slackChannel: 'object-store'],
+  [name: 'nsq', slackChannel: 'metrics'],
   [name: 'postgres', slackChannel: 'postgres'],
   [name: 'registry', slackChannel: 'registry'],
   [name: 'router', slackChannel: 'router'],
