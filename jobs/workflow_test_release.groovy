@@ -24,14 +24,12 @@ job(name) {
 
      archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
        retainLongStdout(false)
-       allowEmptyResults()
      }
 
      archiveArtifacts {
        pattern('${BUILD_NUMBER}/logs/**')
        onlyIfSuccessful(false)
        fingerprint(false)
-       allowEmpty()
      }
    }
 
