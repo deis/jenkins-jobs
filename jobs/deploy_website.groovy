@@ -32,7 +32,7 @@ job(name) {
    }
    git {
      remote {
-         github('engineyard/deis.com')
+         github('deis/deis.com')
          credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
      }
      extensions {
@@ -66,7 +66,7 @@ job(name) {
     parameters {
       stringParam('WORKFLOW_DOCS_SOURCE', '${WORKSPACE}/workflow', 'Relative Workflow source')
       stringParam('DEIS_COM_SOURCE', '${WORKSPACE}/deis.com', 'Relative Deis.com source')
-      stringParam('CONTAINER_ENV', '${GUTENBERG_STAGING_ENV}', 'Environment file with AWS API Keys, S3 Buckets and CloudFront values')
+      stringParam('CONTAINER_ENV', '${GUTENBERG_PROD_ENV}', 'Environment file with AWS API Keys, S3 Buckets and CloudFront values')
     }
   }
 
