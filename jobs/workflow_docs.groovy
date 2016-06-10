@@ -1,6 +1,6 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-name = 'workflow'
+name = 'workflow-docs'
 downstreamJobName = 'deploy_website'
 
 job(name) {
