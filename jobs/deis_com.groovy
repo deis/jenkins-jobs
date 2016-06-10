@@ -6,7 +6,7 @@ downstreamJobName = 'deploy_website'
 job(name) {
   description """
     <ol>
-      <li>Watches the <a href="https://github.com/engineyard/${name}">${name}</a> repo for a commit to master</li>
+      <li>Watches the <a href="https://github.com/deis/${name}">${name}</a> repo for a commit to master</li>
       <li>Kicks off downstream ${downstreamJobName} job to deploy docs</li>
     </ol>
   """.stripIndent().trim()
@@ -14,7 +14,7 @@ job(name) {
   scm {
     git {
       remote {
-        github("engineyard/deis.com")
+        github("deis/deis.com")
         credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
       }
       branch('${DEIS_COM_BRANCH}')

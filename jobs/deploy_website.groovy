@@ -32,7 +32,7 @@ job(name) {
    }
    git {
      remote {
-         github('engineyard/deis.com')
+         github('deis/deis.com')
          credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
      }
      extensions {
