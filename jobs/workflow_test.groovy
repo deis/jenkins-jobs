@@ -53,7 +53,7 @@ import utilities.StatusUpdater
        }
 
        if (isPR) {
-         def statuses = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error']]
+         def statuses = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
          postBuildScripts {
            onlyIfBuildSucceeds(false)
            steps {
