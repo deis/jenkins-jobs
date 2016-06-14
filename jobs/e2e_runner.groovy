@@ -8,7 +8,7 @@ import utilities.StatusUpdater
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
   name = isMaster ? "e2e-runner" : "e2e-runner-${config.type}"
-  dockerPush = isPR ? 'docker-immutable-push' : 'docker-mutable-push'
+  dockerPush = 'docker-push'
   downstreamJobName = defaults.testJob[config.type]
 
   job(name) {
