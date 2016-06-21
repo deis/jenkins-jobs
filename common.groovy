@@ -30,6 +30,7 @@ export WORKFLOW_E2E_CHART="workflow-${RELEASE}-e2e"
 
 mkdir -p ${E2E_DIR_LOGS}
 env > ${E2E_DIR}/env.file
+docker pull ${E2E_RUNNER_IMAGE} # bust the cache as tag may be canary
 docker run -u jenkins:jenkins --env-file=${E2E_DIR}/env.file -v ${E2E_DIR_LOGS}:/home/jenkins/logs:rw $E2E_RUNNER_IMAGE
 '''.stripIndent()
 
