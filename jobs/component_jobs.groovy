@@ -118,18 +118,27 @@ repos.each { Map repo ->
           echo ACTUAL_COMMIT="\${ACTUAL_COMMIT}" > \${WORKSPACE}/env.properties
         """.stripIndent().trim()
 
+        shell new File("${WORKSPACE}/bash/scripts/commit_description_parser.sh").text
+
         // do not run e2e tests for workflow-manager at this time
         if (repo.name != 'workflow-manager') {
-          downstreamParameterized {
-            trigger(downstreamJobName) {
-              parameters {
-                propertiesFile('${WORKSPACE}/env.properties')
-                predefinedProps([
-                  "${repo.commitEnvVar}": '${GIT_COMMIT}',
-                  'UPSTREAM_BUILD_URL': '${BUILD_URL}',
-                  'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
-                  'COMPONENT_REPO': "${repo.name}",
-                ])
+          conditionalSteps {
+            condition {
+              shell new File("${WORKSPACE}/bash/scripts/skip_e2e_check.sh").text
+            }
+            steps {
+              downstreamParameterized {
+                trigger(downstreamJobName) {
+                  parameters {
+                    propertiesFile('${WORKSPACE}/env.properties')
+                    predefinedProps([
+                      "${repo.commitEnvVar}": '${GIT_COMMIT}',
+                      'UPSTREAM_BUILD_URL': '${BUILD_URL}',
+                      'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
+                      'COMPONENT_REPO': "${repo.name}",
+                    ])
+                  }
+                }
               }
             }
           }
