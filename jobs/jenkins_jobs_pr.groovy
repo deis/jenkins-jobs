@@ -15,8 +15,8 @@ job(name) {
       remote {
         github("deis/jenkins-jobs")
         credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       }
-      refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       branch('${sha1}')
     }
   }
@@ -46,6 +46,10 @@ job(name) {
         }
       }
     }
+  }
+
+  parameters {
+    stringParam('sha1', 'master', 'Specific Git SHA to test')
   }
 
   wrappers {
