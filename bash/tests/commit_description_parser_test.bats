@@ -48,18 +48,15 @@ setup() {
   [ "${output}" = "" ]
 }
 
-@test "main : if on jenkins in jenkins-jobs workspace" {
-  export JENKINS_HOME="foo"
-  export JOB_BASE_NAME="jenkins-jobs"
+@test "main : if not on jenkins" {
   run main
 
   [ "${status}" -eq 0 ]
   [ "${output}" = "" ]
 }
 
-@test "main : if on jenkins and not in jenkins-jobs workspace" {
+@test "main : if on jenkins" {
   export JENKINS_HOME="foo"
-  export JOB_BASE_NAME="bar"
   run main
 
   echo "${output}"

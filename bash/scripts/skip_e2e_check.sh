@@ -9,7 +9,7 @@ main() {
 check-skip-e2e() {
   description="${1}"
 
-  skipE2e=`echo "${description}" | grep -o "skip e2e"` || true
+  skipE2e=$(echo "${description}" | grep -o "skip e2e") || true
 
   if [ -n "${skipE2e}" ]; then
     echo "'skip e2e' found in commit body so skipping e2e test run"
