@@ -27,6 +27,7 @@ set -eo pipefail
 
 export WORKFLOW_CHART="workflow-${RELEASE}"
 export WORKFLOW_E2E_CHART="workflow-${RELEASE}-e2e"
+export CLI_VERSION="${WORKFLOW_CLI_SHA:0:7}"
 
 mkdir -p ${E2E_DIR_LOGS}
 env > ${E2E_DIR}/env.file
