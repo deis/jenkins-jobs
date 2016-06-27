@@ -90,6 +90,8 @@ import utilities.StatusUpdater
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
       }
       stringParam('WORKFLOW_CLI_SHA', '', "workflow-cli commit SHA")
+      stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
+      stringParam('UPSTREAM_SLACK_CHANNEL', '', "Upstream Slack channel")
       stringParam('COMPONENT_REPO', '', "Component repo name")
       stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
       stringParam('GINKGO_NODES', '30', "Number of parallel executors to use when running e2e tests")
