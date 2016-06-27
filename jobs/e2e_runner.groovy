@@ -89,6 +89,8 @@ import utilities.StatusUpdater
     }
 
     steps {
+      shell 'make docker-test'
+
       shell """
         #!/usr/bin/env bash
         set -eo pipefail
