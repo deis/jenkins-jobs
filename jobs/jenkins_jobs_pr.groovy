@@ -63,8 +63,6 @@ job(name) {
 
       set -eo pipefail
 
-      # we currently only have test coverage for bash logic
-      cd bash
       make docker-test
     '''.stripIndent().trim()
   }
