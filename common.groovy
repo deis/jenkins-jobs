@@ -10,7 +10,6 @@ repos = [
   [name: 'router', slackChannel: 'router'],
   [name: 'slugbuilder', slackChannel: 'builder'],
   [name: 'slugrunner', slackChannel: 'builder'],
-  [name: 'stdout-metrics', slackChannel: 'metrics'],
   [name: 'controller', slackChannel: 'controller'],
   [name: 'workflow-e2e', slackChannel: 'testing'],
   [name: 'workflow-manager', slackChannel: 'wfm'],
@@ -42,6 +41,7 @@ defaults = [
   testJob: [
     master: "${TEST_JOB_ROOT_NAME}",
     pr: "${TEST_JOB_ROOT_NAME}-pr",
+    release: "${TEST_JOB_ROOT_NAME}-release",
     reportMsg: "Test Report: ${JENKINS_URL}job/\${JOB_NAME}/\${BUILD_NUMBER}/testReport",
     // Revisit when https://github.com/deis/jenkins-jobs/issues/51 complete
     // (timeout can/should be decreased)

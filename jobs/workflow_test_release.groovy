@@ -39,7 +39,7 @@ job(name) {
    }
 
   parameters {
-    stringParam('WORKFLOW_CLI_SHA', '', "workflow-cli commit SHA")
+    stringParam('WORKFLOW_CLI_SHA', '', "workflow-cli commit SHA (default: master HEAD commit if left blank)")
     stringParam('WORKFLOW_BRANCH', 'master', "The branch to use for installing the workflow chart.")
     stringParam('WORKFLOW_E2E_BRANCH', 'master', "The branch to use for installing the workflow-e2e chart.")
     stringParam('RELEASE', 'rc1', "Release string for resolving workflow-[release](-e2e) charts")
