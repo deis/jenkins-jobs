@@ -15,8 +15,8 @@ dirs.each { Map dir ->
 dirs.each { Map dir ->
   [
     // for each repo, create a <dir.name>-master and <dir.name>-pr job
-    [type: 'master', branch: 'master'],
-    [type: 'pr', branch: '${sha1}'],
+    [type: 'master'],
+    [type: 'pr'],
   ].each { Map config ->
     isMaster = config.type == 'master'
     isPR = config.type == 'pr'
@@ -38,7 +38,7 @@ dirs.each { Map dir ->
             if (isPR) {
               refspec('+refs/pull/*:refs/remotes/origin/pr/*')
             }
-            branch(config.branch)
+            branch('${sha1}')
           }
         }
       }

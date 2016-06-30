@@ -2,8 +2,8 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
 import utilities.StatusUpdater
 
-[ [type: 'master', branch: 'master'],
-  [type: 'pr', branch: '${sha1}'],
+[ [type: 'master'],
+  [type: 'pr'],
 ].each { Map config ->
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
@@ -25,7 +25,7 @@ import utilities.StatusUpdater
             refspec('+refs/pull/*:refs/remotes/origin/pr/*')
           }
         }
-        branch(config.branch)
+        branch('${sha1}')
       }
     }
 

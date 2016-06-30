@@ -5,8 +5,8 @@ import utilities.StatusUpdater
 repos.each { Map repo ->
   [
     // for each repo, create a <repo.name>-master and <repo.name>-pr job
-    [type: 'master', branch: 'master'],
-    [type: 'pr', branch: '${sha1}'],
+    [type: 'master'],
+    [type: 'pr'],
   ].each { Map config ->
     isMaster = config.type == 'master'
     isPR = config.type == 'pr'
@@ -31,7 +31,7 @@ repos.each { Map repo ->
               refspec('+refs/pull/*:refs/remotes/origin/pr/*')
             }
           }
-          branch(config.branch)
+          branch('${sha1}')
         }
       }
 
