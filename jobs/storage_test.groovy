@@ -33,6 +33,13 @@ job(name) {
   }
 
   publishers {
+    slackNotifications {
+      customMessage(defaults.testJob["reportMsg"])
+      notifyFailure()
+      notifySuccess()
+      includeTestSummary()
+    }
+
     archiveJunit('logs/**/junit*.xml') {
       retainLongStdout(false)
       allowEmptyResults()
