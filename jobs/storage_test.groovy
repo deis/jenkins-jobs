@@ -5,7 +5,7 @@ repoName = 'charts'
 
 job(name) {
   description """
-    <p>Nightly Job runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflowChart}">${defaults.workflowChart}</a> chart configured to GCS by default </p>
+    <p>Nightly Job runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflow.chartName}">${defaults.workflow.chartName}</a> chart configured to GCS by default </p>
   """.stripIndent().trim()
 
   scm {
@@ -25,7 +25,7 @@ job(name) {
    stringParam('HELM_REMOTE_REPO', defaults.helm["remoteRepo"], "Helm remote repo name")
    stringParam('HELM_REMOTE_BRANCH', defaults.helm["remoteBranch"], "Helm remote repo branch")
    stringParam('HELM_REMOTE_NAME', defaults.helm["remoteName"], "Helm remote name")
-   stringParam('RELEASE', defaults.workflowRelease, "Release string for resolving workflow-[release](-e2e) charts")
+   stringParam('RELEASE', defaults.workflow.release, "Release string for resolving workflow-[release](-e2e) charts")
   }
 
   triggers {
