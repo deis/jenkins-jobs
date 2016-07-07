@@ -29,7 +29,7 @@ repos.each { Map repo ->
       stringParam('DOCKER_EMAIL', 'dummy-address@deis.com', 'Docker Hub email address')
       stringParam('QUAY_USERNAME', 'deisci+jenkins', 'Quay account name')
       stringParam('QUAY_EMAIL', 'deisci+jenkins@deis.com', 'Quay email address')
-      stringParam('RELEASE', 'v2.2.0', 'Release to use for branch checkout')
+      stringParam('RELEASE', defaults.workflow.release, 'Release to use for branch checkout')
       booleanParam('RUN_E2E', false, 'check to run downstream release e2e job')
     }
 
