@@ -16,7 +16,7 @@ parse-commit-description() {
 
   # Looks specifically for matches of '[rR]equires <repo>#<prNumber>',
   # e.g., "requires builder#123, Requires router#567"
-  reqs=$(echo "${description}" | grep -o "[Rr]equires [-a-z]*#[0-9]\{1,9\}" | grep -o "[-a-z]*#[0-9]\{1,9\}") || true
+  reqs=$(echo "${description}" | grep -o "[Rr]equires \(deis\/\)\?[-a-z]*#[0-9]\{1,9\}" | grep -o "[-a-z]*#[0-9]\{1,9\}") || true
 
   # split on whitespace into array of '<repo>#<prNumber>' values
   reqsArray=(${reqs// / })

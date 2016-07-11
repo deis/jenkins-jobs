@@ -49,6 +49,23 @@ teardown() {
   [ "${lines[1]}" = "REPO_B_SHA=${sha}" ]
 }
 
+@test "parse-commit-description : description with requirements and full 'deis/<repo>#<pr number>' format" {
+  description="\
+    A PR with required commits...
+    Requires deis/repo-a#1
+    requires deis/repo-b#2
+  "
+  sha="abc1234"
+  stub curl "echo '[{\"sha\":\"${sha}\"}]'"
+  stub docker "echo ${sha}"
+
+  run parse-commit-description "${description}"
+  echo "${output}"
+  [ "${status}" -eq 0 ]
+  [ "${lines[0]}" = "REPO_A_SHA=${sha}" ]
+  [ "${lines[1]}" = "REPO_B_SHA=${sha}" ]
+}
+
 @test "parse-commit-description : description with ill-formated requirements" {
   description="\
     A PR with required commits...
