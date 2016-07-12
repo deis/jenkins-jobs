@@ -45,14 +45,17 @@ teardown() {
   run parse-commit-description "${description}"
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "REPO_A_SHA=${sha}" ]
-  [ "${lines[1]}" = "REPO_B_SHA=${sha}" ]
+  [ "${lines[0]}" = "Found Required PR(s)..." ]
+  [ "${lines[1]}" = "repo-a#1" ]
+  [ "${lines[2]}" = "repo-b#2" ]
+  [ "${lines[5]}" = "REPO_A_SHA=${sha}" ]
+  [ "${lines[8]}" = "REPO_B_SHA=${sha}" ]
 }
 
 @test "parse-commit-description : description with requirements and full 'deis/<repo>#<pr number>' format" {
   description="\
     A PR with required commits...
-    Requires deis/repo-a#1
+    Requires deis/repo-e2e#1
     requires deis/repo-b#2
   "
   sha="abc1234"
@@ -60,10 +63,13 @@ teardown() {
   stub docker "echo ${sha}"
 
   run parse-commit-description "${description}"
-  echo "${output}"
+
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "REPO_A_SHA=${sha}" ]
-  [ "${lines[1]}" = "REPO_B_SHA=${sha}" ]
+  [ "${lines[0]}" = "Found Required PR(s)..." ]
+  [ "${lines[1]}" = "repo-e2e#1" ]
+  [ "${lines[2]}" = "repo-b#2" ]
+  [ "${lines[5]}" = "REPO_E2E_SHA=${sha}" ]
+  [ "${lines[8]}" = "REPO_B_SHA=${sha}" ]
 }
 
 @test "parse-commit-description : description with ill-formated requirements" {
@@ -78,44 +84,41 @@ teardown() {
   [ "${output}" = "" ]
 }
 
-@test "parse-commit-description : description with requirements not found" {
+@test "parse-commit-description : description with requirement commits not found" {
   repoName="repo-a"
   pr="1"
   description="\
     A PR with required commits...
     Requires ${repoName}#${pr}
   "
-  notFoundMsg=cat <<EOF
-    {
-      "message": "Not Found",
-      "documentation_url": "https://developer.github.com/v3"
-    }
-EOF
-  stub curl "echo ${notFoundMsg}"
-  stub docker "echo ${notFoundMsg}"
+
+  stub curl
+  stub docker # nothing returned if no commits found
 
   run parse-commit-description "${description}"
 
   [ "${status}" -eq 1 ]
-  [ "${output}" = "Commit sha for PR #${pr} in repo '${repoName}' not found." ]
+  [ "${lines[0]}" = "Found Required PR(s)..." ]
+  [ "${lines[1]}" = "repo-a#1" ]
+  [ "${lines[2]}" = "Failure: Commit sha for PR #${pr} in repo '${repoName}' not found!" ]
 }
 
-# get-most-recent-pr-commit tests
+# get-pr-commits tests
 
-@test "get-most-recent-pr-commit: no commits found" {
+@test "get-pr-commits: no commits found" {
   repoName="repo-a"
   prNumber="1"
 
   stub curl
   stub docker
 
-  run get-most-recent-pr-commit "${repoName}" "${prNumber}"
+  run get-pr-commits "${repoName}" "${prNumber}"
 
   [ "${status}" -eq 0 ]
   [ "${output}" = "" ]
 }
 
-@test "get-most-recent-pr-commit: one commit" {
+@test "get-pr-commits: commits found" {
   repoName="repo-a"
   prNumber="1"
 
@@ -123,29 +126,10 @@ EOF
   stub curl
   stub docker "echo '${sha}'"
 
-  run get-most-recent-pr-commit "${repoName}" "${prNumber}"
-  echo "${status}"
-  echo "${output}"
+  run get-pr-commits "${repoName}" "${prNumber}"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "${sha}" ]
-}
-
-@test "get-most-recent-pr-commit: multiple commits" {
-  repoName="repo-a"
-  prNumber="1"
-
-  sha1="abc1234"
-  sha2="def5678"
-  stub curl
-  stub docker "printf '${sha1}\n${sha2}'"
-
-  run get-most-recent-pr-commit "${repoName}" "${prNumber}"
-  echo "${status}"
-  echo "${output}"
-
-  [ "${status}" -eq 0 ]
-  [ "${output}" = "${sha2}" ]
+  [ "${lines[0]}" = "${sha}" ]
 }
 
 # main tests
