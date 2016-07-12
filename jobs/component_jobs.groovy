@@ -96,6 +96,9 @@ repos.each { Map repo ->
 
       steps {
         dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
+
+        shell new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text
+
         shell """
           #!/usr/bin/env bash
 
@@ -108,14 +111,6 @@ repos.each { Map repo ->
           DEIS_REGISTRY='' make docker-build ${dockerPush}
           docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
           DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
-
-          # if triggered by pull request plugin, use ghprbActualCommit
-          export ACTUAL_COMMIT="\${ghprbActualCommit}"
-          # if manually triggered, use sha1
-          if [ -z "\${ghprbActualCommit}" ]; then
-            export ACTUAL_COMMIT="\${sha1}"
-          fi
-          echo ACTUAL_COMMIT="\${ACTUAL_COMMIT}" > \${WORKSPACE}/env.properties
         """.stripIndent().trim()
 
         shell new File("${WORKSPACE}/bash/scripts/commit_description_parser.sh").text
