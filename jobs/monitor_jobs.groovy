@@ -98,7 +98,7 @@ dirs.each { Map dir ->
         credentialsBinding {
           string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
           string("QUAY_PASSWORD", "c67dc0a1-c8c4-4568-a73d-53ad8530ceeb")
-          string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
+          string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
         }
       }
 

@@ -67,4 +67,8 @@ defaults = [
     remoteBranch: 'master',
     remoteName: 'deis',
   ],
+  github: [
+    username: 'deis-admin',
+    credentialsID: '8e11254f-44f3-4ddd-bf98-2cabcb7434cd',
+  ],
 ]
