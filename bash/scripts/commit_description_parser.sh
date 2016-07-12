@@ -49,7 +49,7 @@ get-most-recent-pr-commit() {
 
   curl \
   -sSL \
-  --user deis-admin:"\${GITHUB_ACCESS_TOKEN}" \
+  --user deis-admin:"${GITHUB_ACCESS_TOKEN}" \
   "https://api.github.com/repos/deis/${repoName}/pulls/${prNumber}/commits" \
   | docker run -i --rm kamermans/jq '.[].sha' | tail -n1
 }

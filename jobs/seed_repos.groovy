@@ -29,7 +29,7 @@ job(name) {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GITHUB_ACCESS_TOKEN", "8e11254f-44f3-4ddd-bf98-2cabcb7434cd")
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
     }
   }
 
