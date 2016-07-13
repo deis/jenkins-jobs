@@ -17,6 +17,10 @@ main() {
     echo "PR build, so using VERSION=${VERSION} for Docker image tag rather than the merge commit"
   fi
   echo ACTUAL_COMMIT="${ACTUAL_COMMIT}" > "${envPropsFilepath}"
+
+  if [ "${VERSION}" != "" ]; then
+    echo VERSION="${VERSION}" >> "${envPropsFilepath}"
+  fi
 }
 
 main
