@@ -100,6 +100,21 @@ repos.each { Map repo ->
         shell new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text
 
         shell """
+        #!/usr/bin/env bash
+
+        set -eo pipefail
+
+        # pass along appropriate commit via properties file
+        if [ -z "\${ghprbActualCommit}" ]; then
+          echo ${repo.commitEnvVar}="\${GIT_COMMIT}" >> "\${WORKSPACE}/env.properties"
+        else
+          echo "PR build, setting ${repo.commitEnvVar} to '\${ghprbActualCommit}', the actual PR commit"
+          echo ${repo.commitEnvVar}="\${ghprbActualCommit}" >> "\${WORKSPACE}/env.properties"
+        fi
+
+        """.stripIndent().trim()
+
+        shell """
           #!/usr/bin/env bash
 
           set -eo pipefail
@@ -130,7 +145,6 @@ repos.each { Map repo ->
                   parameters {
                     propertiesFile('${WORKSPACE}/env.properties')
                     predefinedProps([
-                      "${repo.commitEnvVar}": '${GIT_COMMIT}',
                       'UPSTREAM_BUILD_URL': '${BUILD_URL}',
                       'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
                       'COMPONENT_REPO': "${repo.name}",
