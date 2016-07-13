@@ -104,6 +104,9 @@ repos.each { Map repo ->
 
           set -eo pipefail
 
+          # export env vars set in any shell steps prior to this
+          export \$(cat "\${WORKSPACE}/env.properties" | xargs)
+
           make bootstrap || true
 
           export IMAGE_PREFIX=deisci
