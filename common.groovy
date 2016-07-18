@@ -29,6 +29,7 @@ set -eo pipefail
 export WORKFLOW_CHART="workflow-${RELEASE}"
 export WORKFLOW_E2E_CHART="workflow-${RELEASE}-e2e"
 
+export CLI_VERSION="latest"
 if [ -n "${WORKFLOW_CLI_SHA}" ]; then
   export CLI_VERSION="${WORKFLOW_CLI_SHA:0:7}"
 fi
