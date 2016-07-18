@@ -20,7 +20,6 @@ repos.each { Map repo ->
   repo.commitEnvVar = "${repo.name.toUpperCase().replaceAll('-', '_')}_SHA"
 }
 
-WORKFLOW_RELEASE = 'v2.1.0'
 TEST_JOB_ROOT_NAME = 'workflow-test'
 
 E2E_RUNNER_JOB = '''#!/usr/bin/env bash
@@ -60,7 +59,7 @@ defaults = [
   maxWorkflowReleaseConcurrentBuilds: 1,
   workflow: [
     chartName: 'workflow-dev',
-    release: "${WORKFLOW_RELEASE}",
+    release: new File("${WORKSPACE}/workflow.version").text,
   ],
   slack: [
     teamDomain: 'deis',
