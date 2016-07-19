@@ -55,7 +55,7 @@ defaults = [
   ],
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
-  maxWorkflowTestConcurrentBuilds: 1,
+  maxWorkflowTestConcurrentBuilds: 3,
   maxWorkflowTestPRConcurrentBuilds: 4,
   maxWorkflowReleaseConcurrentBuilds: 1,
   workflow: [
