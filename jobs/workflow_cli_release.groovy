@@ -15,7 +15,7 @@ job("${repoName}-tag-release") {
         credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
         refspec('+refs/tags/${RELEASE}:refs/remotes/origin/tags/${RELEASE}')
       }
-      branch('tags/${RELEASE}')
+      branch('refs/tags/${RELEASE}')
     }
   }
 
