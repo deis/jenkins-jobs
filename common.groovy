@@ -8,6 +8,7 @@ repos = [
   [name: 'postgres', slackChannel: 'postgres'],
   [name: 'redis', slackChannel: 'logger'],
   [name: 'registry', slackChannel: 'registry'],
+  [name: 'registry-proxy', slackChannel: 'registry'],
   [name: 'router', slackChannel: 'router'],
   [name: 'slugbuilder', slackChannel: 'builder'],
   [name: 'slugrunner', slackChannel: 'builder'],
