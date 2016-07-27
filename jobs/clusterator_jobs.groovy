@@ -31,7 +31,13 @@ job("clusterator-create") {
       #!/usr/bin/env bash
 
       set -eo pipefail
-      docker run -e GCLOUD_CREDENTIALS=\${GCLOUD_CREDENTIALS} quay.io/deisci/clusterator:git-b1810a5
+      docker run \
+      -e GCLOUD_CREDENTIALS="\${GCLOUD_CREDENTIALS}" \
+      -e NUMBER_OF_CLUSTERS="\${NUMBER_OF_CLUSTERS}" \
+      -e NUM_NODES="\${NUM_NODES}" \
+      -e MACHINE_TYPE="\${MACHINE_TYPE}" \
+      -e VERSION="\${VERSION}" \
+      quay.io/deisci/clusterator:git-b1810a5 create
     """.stripIndent().trim()
   }
 }
@@ -60,7 +66,7 @@ job("clusterator-delete") {
       #!/usr/bin/env bash
 
       set -eo pipefail
-      docker run -e GCLOUD_CREDENTIALS=\${GCLOUD_CREDENTIALS} quay.io/deisci/clusterator:git-b1810a5 delete
+      docker run -e GCLOUD_CREDENTIALS="\${GCLOUD_CREDENTIALS}" quay.io/deisci/clusterator:git-b1810a5 delete
     """.stripIndent().trim()
   }
 }
