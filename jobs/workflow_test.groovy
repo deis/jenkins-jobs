@@ -51,6 +51,7 @@ import utilities.StatusUpdater
          pattern('${BUILD_NUMBER}/logs/**')
          onlyIfSuccessful(false)
          fingerprint(false)
+         allowEmpty(true)
        }
 
        if (isPR) {
