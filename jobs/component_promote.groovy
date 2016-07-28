@@ -48,6 +48,11 @@ job('component-promote') {
 
       set -eo pipefail
 
+      if [ "${COMPONENT_NAME}" == "workflow-cli" ]; then
+        echo "Component to promote is 'workflow-cli' which has no Docker image form; exiting..."
+        exit 0
+      fi
+
       image_name_and_tag="${COMPONENT_NAME}:git-${COMPONENT_SHA:0:7}"
 
       # promote to dockerhub
