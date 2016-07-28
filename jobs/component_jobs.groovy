@@ -98,6 +98,7 @@ repos.each { Map repo ->
         dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
 
         shell new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text
+        shell new File("${WORKSPACE}/bash/scripts/get_commit_author.sh").text
 
         shell """
         #!/usr/bin/env bash
