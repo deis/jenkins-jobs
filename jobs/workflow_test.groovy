@@ -44,6 +44,7 @@ import utilities.StatusUpdater
 
        archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
          retainLongStdout(false)
+         allowEmptyResults(true)
        }
 
        archiveArtifacts {
