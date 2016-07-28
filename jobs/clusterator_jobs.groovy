@@ -8,7 +8,7 @@ job("clusterator-create") {
   }
 
   triggers {
-    cron('0 7 1 * 1-5')
+    cron('H 7 * * 1-5')
   }
 
   parameters {
@@ -44,7 +44,7 @@ job("clusterator-delete") {
   }
 
   triggers {
-    cron('0 19 1 * 1-5')
+    cron('H 19 * * 1-5')
   }
 
   wrappers {
