@@ -17,11 +17,10 @@ main() {
     if [ -n "${!env_var}" ]; then
       component_name="$(echo "${env_var%_SHA}" | perl -ne 'print lc' | sed 's/_/-/g')"
       component_sha="${!env_var}"
-      if [ "${component_name}" != "workflow-cli" ]; then
-        echo "Found component '${component_name}' with commit sha '${component_sha}'"
-        echo COMPONENT_NAME="${component_name}" >> "${envPropsFilepath}"
-        echo COMPONENT_SHA="${component_sha}"  >> "${envPropsFilepath}"
-      fi
+
+      echo "Found component '${component_name}' with commit sha '${component_sha}'"
+      echo COMPONENT_NAME="${component_name}" >> "${envPropsFilepath}"
+      echo COMPONENT_SHA="${component_sha}"  >> "${envPropsFilepath}"
     fi
   done
 }

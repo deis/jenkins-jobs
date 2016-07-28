@@ -11,11 +11,3 @@ setup() {
   [ "${status}" -eq 0 ]
   [ "${output}" = "Found component 'my-component' with commit sha 'abc1234def5678'" ]
 }
-
-@test "main : does not get component and sha if workflow-cli" {
-  export WORKFLOW_CLI_SHA="abc1234def5678"
-  run main
-  echo "${output}"
-  [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
-}
