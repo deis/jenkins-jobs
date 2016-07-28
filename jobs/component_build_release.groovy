@@ -2,7 +2,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
 repos.each { Map repo ->
 
-  job("${repo.name}-release") {
+  job("${repo.name}-build-release") {
     description """
       <li>Watches the ${repo.name} repo for commits on a given release-\${RELEASE} branch</li>
       <li>to build and deploy images using said commits</li>
