@@ -128,6 +128,18 @@ import utilities.StatusUpdater
           commitStatus: 'pending', repoName: '${COMPONENT_REPO}', commitSHA: '${ACTUAL_COMMIT}', description: 'Running e2e tests...')
       }
       shell E2E_RUNNER_JOB
+
+      if (isMaster) {
+        shell new File("${WORKSPACE}/bash/scripts/get_component_and_sha.sh").text
+
+        downstreamParameterized {
+          trigger('component-promote') {
+            parameters {
+              propertiesFile('${WORKSPACE}/${BUILD_NUMBER}/env.properties')
+            }
+          }
+        }
+      }
     }
   }
 }
