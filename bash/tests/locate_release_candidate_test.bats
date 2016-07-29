@@ -4,6 +4,7 @@ setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/locate_release_candidate.sh"
   load stub
   stub docker
+  ENV_PROPS_FILEPATH="${BATS_TEST_DIRNAME}/tmp/env.properties"
 }
 
 teardown() {

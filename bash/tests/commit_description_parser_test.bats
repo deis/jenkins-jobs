@@ -3,6 +3,7 @@
 setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/commit_description_parser.sh"
   load stub
+  ENV_PROPS_FILEPATH="${BATS_TEST_DIRNAME}/tmp/env.properties"
 }
 
 teardown() {
@@ -130,22 +131,4 @@ teardown() {
 
   [ "${status}" -eq 0 ]
   [ "${lines[0]}" = "${sha}" ]
-}
-
-# main tests
-
-@test "main : if not on jenkins" {
-  run main
-
-  [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
-}
-
-@test "main : if on jenkins" {
-  export JENKINS_HOME="foo"
-  run main
-
-  echo "${output}"
-  [ "${status}" -eq 1 ]
-  [[ "${output}" == *"Permission denied"* ]]
 }

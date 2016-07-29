@@ -17,4 +17,6 @@ check-skip-e2e() {
   fi
 }
 
-main
+if [ -n "${JENKINS_HOME}" ]; then
+  main
+fi

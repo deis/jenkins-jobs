@@ -13,3 +13,7 @@ check-release-branch() {
   fi
   echo "Proceeding with build/deploy from 'origin/release-${RELEASE}'..."
 }
+
+if [ -n "${JENKINS_HOME}" ]; then
+  main
+fi

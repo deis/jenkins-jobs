@@ -7,6 +7,7 @@ setup() {
 @test "check-release-branch : is non-release branch" {
   export RELEASE='foo'
   export GIT_BRANCH='origin/master'
+
   run check-release-branch
 
   [ "${status}" -eq 0 ]
@@ -16,6 +17,7 @@ setup() {
 @test "check-release-branch : is release branch" {
   export RELEASE='foo'
   export GIT_BRANCH="origin/release-${RELEASE}"
+
   run check-release-branch
 
   [ "${status}" -eq 0 ]
