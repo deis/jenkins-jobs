@@ -57,7 +57,7 @@ defaults = [
   maxBuildsPerNode: 1,
   maxTotalConcurrentBuilds: 3,
   maxWorkflowTestConcurrentBuilds: 3,
-  maxWorkflowTestPRConcurrentBuilds: 4,
+  maxWorkflowTestPRConcurrentBuilds: 13,
   maxWorkflowReleaseConcurrentBuilds: 1,
   workflow: [
     chartName: 'workflow-dev',
