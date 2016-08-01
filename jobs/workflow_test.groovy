@@ -111,6 +111,7 @@ import utilities.StatusUpdater
     }
 
     wrappers {
+      buildName('${COMPONENT_REPO} #${BUILD_NUMBER}')
       timeout {
         absolute(defaults.testJob["timeoutMins"])
         failBuild()
