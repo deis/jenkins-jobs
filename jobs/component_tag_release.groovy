@@ -37,6 +37,7 @@ repos.each { Map repo ->
         notifyAborted()
         notifyFailure()
         notifySuccess()
+        notifyRepeatedFailure()
        }
      }
 
@@ -64,27 +65,15 @@ repos.each { Map repo ->
         (${new File("${WORKSPACE}/bash/scripts/locate_release_candidate.sh").text})
       """.stripIndent().trim()
 
-      downstreamParameterized {
-        trigger('release-candidate-e2e') {
-          block {
-            buildStepFailure('FAILURE')
-            failure('FAILURE')
-            unstable('UNSTABLE')
-          }
-          parameters {
-            propertiesFile('${WORKSPACE}/env.properties')
-          }
-        }
-      }
-
-      // If e2e job results in `SUCCESS`, promote release candidate
       conditionalSteps {
         condition {
-          status('SUCCESS', 'SUCCESS')
+          not {
+            shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
+          }
         }
         steps {
           downstreamParameterized {
-            trigger('release-candidate-promote') {
+            trigger('release-candidate-e2e') {
               block {
                 buildStepFailure('FAILURE')
                 failure('FAILURE')
@@ -92,6 +81,33 @@ repos.each { Map repo ->
               }
               parameters {
                 propertiesFile('${WORKSPACE}/env.properties')
+              }
+            }
+          }
+        }
+
+        // If e2e job results in `SUCCESS`, promote release candidate
+        conditionalSteps {
+          condition {
+            and {
+              status('SUCCESS', 'SUCCESS')
+            } {
+              not {
+                shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
+              }
+            }
+          }
+          steps {
+            downstreamParameterized {
+              trigger('release-candidate-promote') {
+                block {
+                  buildStepFailure('FAILURE')
+                  failure('FAILURE')
+                  unstable('UNSTABLE')
+                }
+                parameters {
+                  propertiesFile('${WORKSPACE}/env.properties')
+                }
               }
             }
           }

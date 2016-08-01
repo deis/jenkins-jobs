@@ -20,6 +20,7 @@ main() {
     latest_tag="${LATEST_COMPONENT_TAG:-$(git tag -l | tail -n1)}"
     if [ "${latest_tag}" != "${tag}" ]; then
       echo "Latest tag of '${latest_tag}' does not match '${tag}'; not proceeding with release."
+      echo SKIP_RELEASE=true > "${envPropsFilepath}"
       exit 0
     fi
   else
