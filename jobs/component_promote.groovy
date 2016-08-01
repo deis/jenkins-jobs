@@ -48,8 +48,8 @@ job('component-promote') {
 
       set -eo pipefail
 
-      if [ "${COMPONENT_NAME}" == "workflow-cli" ]; then
-        echo "Component to promote is 'workflow-cli' which has no Docker image form; exiting..."
+      if [ -z "${COMPONENT_NAME}" ]; then
+        echo "COMPONENT_NAME is empty; no component to promote; exiting..."
         exit 0
       fi
 
