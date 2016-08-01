@@ -1,23 +1,11 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-import utilities.StatusUpdater
-
-name = 'workflow-test-release'
+name = 'release-candidate-e2e'
 
 job(name) {
   description """
-    <p>Runs a given workflow-[RELEASE]-e2e tests chart against a workflow-[RELEASE] chart candidate using e2e-runner</p>
+    <p>Runs the workflow-[RELEASE]-e2e tests chart against a workflow-[RELEASE] chart including a component release candidate under test</p>
   """.stripIndent().trim()
-
-  scm {
-    git {
-      remote {
-        github("deis/charts")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
-      }
-      branch('release-${RELEASE}')
-    }
-  }
 
   logRotator {
     daysToKeep defaults.daysToKeep
@@ -45,13 +33,13 @@ job(name) {
      }
    }
 
-   concurrentBuild()
-   throttleConcurrentBuilds {
-     maxTotal(defaults.maxWorkflowReleaseConcurrentBuilds)
-   }
+  concurrentBuild()
 
   parameters {
-    stringParam('WORKFLOW_CLI_SHA', '', "workflow-cli commit SHA (default: master HEAD commit if left blank)")
+    repos.each { Map repo ->
+      stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
+    }
+    stringParam('CLI_VERSION', defaults.workflow.release, "workflow-cli version")
     stringParam('WORKFLOW_BRANCH', "release-${defaults.workflow.release}", "The branch to use for installing the workflow chart.")
     stringParam('WORKFLOW_E2E_BRANCH', "release-${defaults.workflow.release}", "The branch to use for installing the workflow-e2e chart.")
     stringParam('RELEASE', defaults.workflow.release, "Release string for resolving workflow-[release](-e2e) charts")
@@ -59,14 +47,13 @@ job(name) {
     stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:canary', "The e2e-runner image")
     stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")
     stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
-  }
-
-  triggers {
-    githubPush()
+    stringParam('COMPONENT_NAME', '', 'Component name')
+    stringParam('COMPONENT_SHA', '', 'Commit sha used for image tag')
+    stringParam('RELEASE_TAG', '', 'Release tag to apply to candidate image')
   }
 
   wrappers {
-    buildName('workflow-${RELEASE} #${BUILD_NUMBER}')
+    buildName('${COMPONENT_NAME} #${BUILD_NUMBER}')
     timeout {
       absolute(defaults.testJob["timeoutMins"])
       failBuild()
