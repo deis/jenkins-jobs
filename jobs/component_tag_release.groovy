@@ -19,12 +19,8 @@ repos.each { Map repo ->
         remote {
           github("deis/${repo.name}")
           credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
-          refspec('+refs/tags/*:refs/remotes/origin/tags/*')
         }
-        extensions {
-          relativeTargetDirectory(repo.name)
-      }
-        branch('*/tags/*')
+        branch('master')
       }
     }
 
@@ -37,15 +33,12 @@ repos.each { Map repo ->
         notifyAborted()
         notifyFailure()
         notifySuccess()
+        notifyRepeatedFailure()
        }
      }
 
     parameters {
       stringParam('TAG', '', 'Specific tag to release')
-    }
-
-    triggers {
-      githubPush()
     }
 
     wrappers {
@@ -54,15 +47,16 @@ repos.each { Map repo ->
     }
 
     steps {
-      shell """
+      shell new File("${WORKSPACE}/bash/scripts/locate_release_candidate.sh").text
+
+      shell '''
         #!/usr/bin/env bash
 
         set -eo pipefail
 
-        cd ${repo.name}
-
-        (${new File("${WORKSPACE}/bash/scripts/locate_release_candidate.sh").text})
-      """.stripIndent().trim()
+        git tag ${TAG}
+        git push origin ${TAG}
+      '''.stripIndent().trim()
 
       downstreamParameterized {
         trigger('release-candidate-e2e') {

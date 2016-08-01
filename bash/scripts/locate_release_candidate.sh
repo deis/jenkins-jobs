@@ -12,18 +12,8 @@ main() {
   if [ -n "${TAG}" ]; then
     echo "TAG set to '${TAG}', attempting release of this tag..."
     tag="${TAG}"
-  elif [ -n "${GIT_BRANCH}" ]; then
-    echo "GIT_BRANCH set to '${GIT_BRANCH}', attempting release of this tag..."
-    tag="${GIT_BRANCH#origin/tags/}"
-
-    # make sure tag matches latest; else, exit
-    latest_tag="${LATEST_COMPONENT_TAG:-$(git tag -l | tail -n1)}"
-    if [ "${latest_tag}" != "${tag}" ]; then
-      echo "Latest tag of '${latest_tag}' does not match '${tag}'; not proceeding with release."
-      exit 0
-    fi
   else
-    echo "GIT_BRANCH or TAG not set, cannot determine tag to release; exiting."
+    echo "TAG not set, cannot determine tag to release; exiting."
     exit 1
   fi
 
