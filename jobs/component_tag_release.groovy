@@ -86,29 +86,29 @@ repos.each { Map repo ->
             }
           }
         }
+      }
 
-        // If e2e job results in `SUCCESS`, promote release candidate
-        conditionalSteps {
-          condition {
-            and {
-              status('SUCCESS', 'SUCCESS')
-            } {
-              not {
-                shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
-              }
+      // If e2e job results in `SUCCESS`, promote release candidate
+      conditionalSteps {
+        condition {
+          and {
+            status('SUCCESS', 'SUCCESS')
+          } {
+            not {
+              shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
             }
           }
-          steps {
-            downstreamParameterized {
-              trigger('release-candidate-promote') {
-                block {
-                  buildStepFailure('FAILURE')
-                  failure('FAILURE')
-                  unstable('UNSTABLE')
-                }
-                parameters {
-                  propertiesFile('${WORKSPACE}/env.properties')
-                }
+        }
+        steps {
+          downstreamParameterized {
+            trigger('release-candidate-promote') {
+              block {
+                buildStepFailure('FAILURE')
+                failure('FAILURE')
+                unstable('UNSTABLE')
+              }
+              parameters {
+                propertiesFile('${WORKSPACE}/env.properties')
               }
             }
           }
