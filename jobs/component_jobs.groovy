@@ -155,6 +155,19 @@ repos.each { Map repo ->
               }
             }
           }
+        } else {
+          if (isMaster) {
+            downstreamParameterized {
+              trigger('component-promote') {
+                parameters {
+                  predefinedProps([
+                    'COMPONENT_NAME': "workflow-manager",
+                    'COMPONENT_SHA': '${GIT_COMMIT}',
+                  ])
+                }
+              }
+            }
+          }
         }
       }
     }
