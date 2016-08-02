@@ -28,6 +28,7 @@ teardown() {
   [ "${status}" -eq 0 ]
   [ "${lines[0]}" = "GIT_BRANCH set to 'origin/tags/foo-tag', attempting release of this tag..." ]
   [ "${lines[1]}" = "Latest tag of 'bar-tag' does not match 'foo-tag'; not proceeding with release." ]
+  [ "$(cat ${BATS_TEST_DIRNAME}/tmp/env.properties)" = "SKIP_RELEASE=true" ]
 }
 
 @test "main : TAG not set - GIT_BRANCH set - matches latest" {
