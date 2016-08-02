@@ -134,10 +134,19 @@ import utilities.StatusUpdater
       if (isMaster) {
         shell new File("${WORKSPACE}/bash/scripts/get_component_and_sha.sh").text
 
-        downstreamParameterized {
-          trigger('component-promote') {
-            parameters {
-              propertiesFile('${WORKSPACE}/${BUILD_NUMBER}/env.properties')
+        conditionalSteps {
+          condition {
+            not {
+              shell 'cat "${WORKSPACE}/${BUILD_NUMBER}/env.properties" | grep -q SKIP_COMPONENT_PROMOTE'
+            }
+          }
+          steps {
+            downstreamParameterized {
+              trigger('component-promote') {
+                parameters {
+                  propertiesFile('${WORKSPACE}/${BUILD_NUMBER}/env.properties')
+                }
+              }
             }
           }
         }
