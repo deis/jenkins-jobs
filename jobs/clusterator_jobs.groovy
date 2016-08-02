@@ -15,7 +15,7 @@ job("clusterator-create") {
     stringParam('NUMBER_OF_CLUSTERS', '10', 'Number of clusters to create at 1 time')
     stringParam('NUM_NODES', '5', 'Number of nodes in each cluster')
     stringParam('MACHINE_TYPE', 'n1-standard-4', 'Node type')
-    stringParam('VERSION', '1.2.5', 'The version of kubernetes to use.')
+    stringParam('VERSION', '1.2.6', 'The version of kubernetes to use.')
   }
 
   wrappers {
