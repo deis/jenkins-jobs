@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 repos.each { Map repo ->
   if(repo.buildJobs != false) {
@@ -102,16 +104,16 @@ repos.each { Map repo ->
 
         steps {
           main = [
-            new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text,
-            new File("${WORKSPACE}/bash/scripts/find_required_commits.sh").text,
-            new File("${WORKSPACE}/bash/scripts/skip_e2e_check.sh").text,
+            new File("${workspace}/bash/scripts/get_actual_commit.sh").text,
+            new File("${workspace}/bash/scripts/find_required_commits.sh").text,
+            new File("${workspace}/bash/scripts/skip_e2e_check.sh").text,
           ].join('\n')
 
           repo.components.each{ Map component ->
             cdComponentDir = component.name == repo.name ?: "cd ${component.name}"
             dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
 
-            script = main
+            def script = main
             script += """
               #!/usr/bin/env bash
 

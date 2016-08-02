@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 repo_name = 'deis.com'
 downstreamJobName = 'deploy_website'

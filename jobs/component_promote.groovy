@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 job('component-promote') {
   description """
@@ -43,6 +45,6 @@ job('component-promote') {
   }
 
   steps {
-    shell new File("${WORKSPACE}/bash/scripts/promote_component.sh").text
+    shell new File("${workspace}/bash/scripts/promote_component.sh").text
   }
 }

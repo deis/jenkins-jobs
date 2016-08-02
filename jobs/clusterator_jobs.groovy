@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 job("clusterator-create") {
   description "Create a set number of clusters in the deis leasable project. This job runs Monday-Friday at 7AM."

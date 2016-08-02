@@ -10,9 +10,47 @@ This repository serves as a central location for [Deis Workflow Jenkins jobs](ht
 
 ## Resources
 
-The definitive wiki resource describing all available Jenkins Job DSL API items can be found in the [Jenkins Job DSL Plugin API](https://jenkinsci.github.io/job-dsl-plugin/).
+The definitive wiki resource describing all available Jenkins Job DSL API items can be found in the [Jenkins Job DSL Plugin API](https://jenkinsci.github.io/job-dsl-plugin/).  See also the following helpful [overview](https://youtu.be/SSK_JaBacE0) of the Job DSL Plugin for those new to this project.
 
-Until we add support for [testing DSL changes](https://github.com/deis/jenkins-jobs/issues/39) while developing, the [Jenkins Job DSL Playground](http://job-dsl.herokuapp.com/) can be used for verifying that the DSL parses correctly.  (If it does, an `xml` file will be generated.  For comparison, you can view an existing job's `xml` equivalent by navigating to `https://ci.deis.io/job/<job-name>/config.xml`)
+All jobs are written in [Groovy](http://www.groovy-lang.org/documentation.html) which runs on the Java platform hosted on Jenkins.
+
+## Directory Structure
+
+The DSL representation of a given job is currently placed in the `jobs` directory.  As much as possible, the actual shell logic that gets executed during a job's runtime is placed in the `bash/scripts` directory.  Correlating [Bats][bats] tests for these scripts are located in `bash/tests`.
+
+## Working with Groovy
+
+For debugging general Groovy code, one may run `make groovy-console` provided one has a Java JDK or JRE installed (_version 7 or higher; see [Gradle Prerequisites][gradle-prereqs]_).  
+
+Alternatively, one may use the handy-dandy [Groovy Web Console](https://groovyconsole.appspot.com/).
+
+## Testing
+
+There are containerized and non-containerized targets for all test-related `make` tasks.
+
+#### bash
+
+For testing bash script changes/additions, one may run `make (docker-)test-style` to run the [shellcheck][shellcheck] static analysis tool against script syntax and `make (docker-)test-scripts` to run the suite of `bats` tests located in `bash/tests`.
+_(Note: if running the non-containerized target(s), [bats][bats] and [shellcheck][shellcheck] are prerequisites)_
+
+#### DSL/Groovy
+
+For testing that the jobs' DSL/Groovy logic parses correctly, one may run `make (docker-)test-dsl`.  (There is also a `docker-test-dsl-quick` target that starts the stopped `gradle-test` container if it exists, capitalizing on cached dependencies.)
+_(Note: if running the non-containerized target(s), the [Gradle Prerequisites][gradle-prereqs] are needed)_
+
+Regardless of target, test results may be viewed in a web browser after they finish via `make open-test-results`.
+
+**How it works:** Each job is processed against the versions of Jenkins and the Job DSL Plugin as defined in `gradle.properties`, as well as the versions of necessary plugins required by the job(s), as declared in the `dependencies` block of `build.gradle`.  
+
+Therefore, if all jobs parse without failures, one can be reasonably confident they will build successfully on the live Jenkins instance, provided the aforementioned dependency versions are aligned.
+
+This [Gradle](https://gradle.org/)-based test harness was set up using a slimmed-down/modified version of the [Jenkins Job DSL Gradle Example](https://github.com/sheehan/job-dsl-gradle-example).
+
+## Upgrading Jenkins plugins
+
+Since a test harness exists for checking that the job DSL compiles, one can also check that an upgraded/added plugin plays nicely with existing/new jobs.  
+
+To do so, one would update/add the appropriate plugin in `build.gradle` and then run `make (docker-)test-dsl` to make sure compilation is unaffected.  This is meeant to provide a higher level confidence before actually upgrading/adding plugin(s) on the live Jenkins instance.
 
 
 ## Flow
@@ -102,5 +140,6 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-[issues]: https://github.com/deis/jenkins-jobs/issues
-[prs]: https://github.com/deis/jenkins-jobs/pulls
+[bats]: https://github.com/sstephenson/bats
+[shellcheck]: https://github.com/koalaman/shellcheck
+[gradle-prereqs]: https://docs.gradle.org/current/userguide/installation.html#sec:prerequisites

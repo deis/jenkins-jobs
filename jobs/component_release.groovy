@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 repos.each { Map repo ->
   if(repo.buildJobs != false) {
@@ -54,8 +56,8 @@ repos.each { Map repo ->
 
       steps {
         main = [
-          new File("${WORKSPACE}/bash/scripts/get_latest_tag.sh").text,
-          new File("${WORKSPACE}/bash/scripts/locate_release_candidate.sh").text,
+          new File("${workspace}/bash/scripts/get_latest_tag.sh").text,
+          new File("${workspace}/bash/scripts/locate_release_candidate.sh").text,
         ].join('\n')
 
         repo.components.each{ Map component ->

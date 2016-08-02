@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 [ [type: 'master'],
   [type: 'pr'],
@@ -87,7 +89,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
     }
 
     steps {
-      main = new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text
+      main = new File("${workspace}/bash/scripts/get_actual_commit.sh").text
 
       main += """
         #!/usr/bin/env bash
