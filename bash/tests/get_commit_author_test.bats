@@ -14,7 +14,7 @@ teardown() {
   stub git
 
   # expected env.properties output
-  echo COMMIT_AUTHOR="\"\"" > ${BATS_TEST_DIRNAME}/tmp/expected.env.properties
+  echo COMMIT_AUTHOR_EMAIL="" > ${BATS_TEST_DIRNAME}/tmp/expected.env.properties
 
   run main
 
