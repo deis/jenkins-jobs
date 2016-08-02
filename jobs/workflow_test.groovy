@@ -12,7 +12,7 @@ import utilities.StatusUpdater
   name = defaults.testJob[config.type]
   repoName = 'charts'
 
-  commitAuthorMsg = 'Commit Author: ${COMMIT_AUTHOR}'
+  commitAuthorMsg = 'Commit Author: ${COMMIT_AUTHOR_EMAIL}'
   testReportMsg = defaults.testJob["reportMsg"]
   upstreamJobMsg = "Upstream job: \${UPSTREAM_BUILD_URL}"
 
@@ -102,7 +102,7 @@ import utilities.StatusUpdater
       stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:canary', "The e2e-runner image")
       stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")
       stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
-      stringParam('COMMIT_AUTHOR', 'n/a', "Commit author")
+      stringParam('COMMIT_AUTHOR_EMAIL', 'n/a', "Commit author email address")
     }
 
     triggers {

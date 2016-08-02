@@ -50,6 +50,7 @@ repos.each { Map repo ->
     }
 
     wrappers {
+      buildName('${GIT_BRANCH} ${TAG} #${BUILD_NUMBER}')
       timestamps()
       colorizeOutput 'xterm'
     }
