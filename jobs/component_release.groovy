@@ -1,7 +1,7 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
 repos.each { Map repo ->
-  name = "${repo.name}-tag-release"
+  name = "${repo.name}-release"
 
   job(name) {
     description """
