@@ -66,22 +66,24 @@ repos.each { Map repo ->
         (${new File("${WORKSPACE}/bash/scripts/locate_release_candidate.sh").text})
       """.stripIndent().trim()
 
-      conditionalSteps {
-        condition {
-          not {
-            shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
+      if (repo.name != 'workflow-manager') {
+        conditionalSteps {
+          condition {
+            not {
+              shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
+            }
           }
-        }
-        steps {
-          downstreamParameterized {
-            trigger('release-candidate-e2e') {
-              block {
-                buildStepFailure('FAILURE')
-                failure('FAILURE')
-                unstable('UNSTABLE')
-              }
-              parameters {
-                propertiesFile('${WORKSPACE}/env.properties')
+          steps {
+            downstreamParameterized {
+              trigger('release-candidate-e2e') {
+                block {
+                  buildStepFailure('FAILURE')
+                  failure('FAILURE')
+                  unstable('UNSTABLE')
+                }
+                parameters {
+                  propertiesFile('${WORKSPACE}/env.properties')
+                }
               }
             }
           }
