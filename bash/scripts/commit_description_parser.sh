@@ -2,12 +2,13 @@
 set -eo pipefail
 
 main() {
-  envPropsFilepath="/dev/null"
-  if [ -n "${JENKINS_HOME}" ]; then
-    envPropsFilepath="${WORKSPACE}/env.properties"
-  fi
-
-  parse-commit-description "${ghprbPullLongDescription}" >> "${envPropsFilepath}"
+  envPropsFilepath="${ENV_PROPS_FILEPATH:-${WORKSPACE}/env.properties}"
+  # read ACTUAL_COMMIT from env props file, cutting/saving only the value
+  actual_commit="${ACTUAL_COMMIT:-$(grep ACTUAL_COMMIT "${envPropsFilepath}" | cut -d = -f 2)}"
+  # get commit description from commit
+  commit_description="${COMMIT_DESCRIPTION:-$(git log --format=%B -n 1 "${actual_commit}")}"
+  # parse it and send it on its way
+  parse-commit-description "${commit_description}" >> "${envPropsFilepath}"
 }
 
 # parse-commit-description parses a commit description for any required sibling
@@ -63,4 +64,6 @@ get-pr-commits() {
   echo "${resp}" | docker run -i --rm kamermans/jq '.[].sha'
 }
 
-main
+if [ -n "${JENKINS_HOME}" ]; then
+  main
+fi
