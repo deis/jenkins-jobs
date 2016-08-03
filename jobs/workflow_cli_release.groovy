@@ -48,17 +48,23 @@ job("${repoName}-tag-release") {
   }
 
   steps {
-    shell '''
+    gcloud = "docker run --rm -v  /tmp/workflow-cli-release:/.config -v \${WORKSPACE}/_dist:/upload google/cloud-sdk:latest"
+    gcs_bucket = "gs://workflow-cli"
+    shell """
       #!/usr/bin/env bash
 
       set -eo pipefail
 
-      mkdir -p ${WORKSPACE}/tmp
+      mkdir -p /tmp/workflow-cli-release
 
-      cat "${GCSKEY}" > ${WORKSPACE}/tmp/key.json
+      cat "\${GCSKEY}" > /tmp/workflow-cli-release/key.json
 
-      GIT_TAG="${RELEASE}" make bootstrap build-revision upload-gcs
-    '''.stripIndent().trim()
+      GIT_TAG="\${RELEASE}" make bootstrap build-revision fileperms
+
+      ${gcloud} gcloud auth activate-service-account -q --key-file /.config/key.json
+      ${gcloud} gsutil -mq cp -a public-read -r /upload/* ${gcs_bucket}
+      ${gcloud} sh -c 'rm -rf /.config/*'
+    """.stripIndent().trim()
 
 
     conditionalSteps {
