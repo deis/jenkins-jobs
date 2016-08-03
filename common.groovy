@@ -37,6 +37,9 @@ fi
 
 mkdir -p ${E2E_DIR_LOGS}
 env > ${E2E_DIR}/env.file
+if [ -e "/tmp/${JOB_NAME}/${BUILD_NUMBER}/env.properties" ]; then
+  cat /tmp/${JOB_NAME}/${BUILD_NUMBER}/env.properties >> ${E2E_DIR}/env.file
+fi
 docker pull ${E2E_RUNNER_IMAGE} # bust the cache as tag may be canary
 docker run -u jenkins:jenkins --env-file=${E2E_DIR}/env.file -v ${E2E_DIR_LOGS}:/home/jenkins/logs:rw $E2E_RUNNER_IMAGE
 '''.stripIndent()
