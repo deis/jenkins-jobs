@@ -106,7 +106,7 @@ import utilities.StatusUpdater
     }
 
     triggers {
-      cron('@daily')
+      cron('@hourly')
       if (isMaster) {
         githubPush()
       }
