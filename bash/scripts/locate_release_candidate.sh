@@ -3,10 +3,7 @@
 set -eo pipefail
 
 main() {
-  envPropsFilepath="${BATS_TEST_DIRNAME}/tmp/env.properties"
-  if [ -n "${JENKINS_HOME}" ]; then
-    envPropsFilepath="${WORKSPACE}/env.properties"
-  fi
+  envPropsFilepath="${ENV_PROPS_FILEPATH:-${WORKSPACE}/env.properties}"
 
   tag=''
   if [ -n "${TAG}" ]; then

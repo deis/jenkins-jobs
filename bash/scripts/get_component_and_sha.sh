@@ -26,4 +26,6 @@ main() {
   done
 }
 
-main
+if [ -n "${JENKINS_HOME}" ]; then
+  main
+fi
