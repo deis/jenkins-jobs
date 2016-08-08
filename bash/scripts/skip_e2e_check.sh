@@ -2,7 +2,13 @@
 set -eo pipefail
 
 main() {
-  check-skip-e2e "${ghprbPullLongDescription}"
+  envPropsFilepath="${ENV_PROPS_FILEPATH:-${WORKSPACE}/env.properties}"
+  # read ACTUAL_COMMIT from env props file, cutting/saving only the value
+  actual_commit="${ACTUAL_COMMIT:-$(grep ACTUAL_COMMIT "${envPropsFilepath}" | cut -d = -f 2)}"
+  # get commit description from commit
+  commit_description="${COMMIT_DESCRIPTION:-$(git log --format=%B -n 1 "${actual_commit}")}"
+  # parse it and send it on its way
+  check-skip-e2e "${commit_description}"
 }
 
 # check-skip-e2e checks if 'skip e2e' is provided in commit body
@@ -17,4 +23,6 @@ check-skip-e2e() {
   fi
 }
 
-main
+if [ -n "${JENKINS_HOME}" ]; then
+  main
+fi

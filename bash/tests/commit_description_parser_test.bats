@@ -3,6 +3,7 @@
 setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/commit_description_parser.sh"
   load stub
+  ENV_PROPS_FILEPATH="${BATS_TEST_DIRNAME}/tmp/env.properties"
 }
 
 teardown() {
@@ -44,12 +45,17 @@ teardown() {
 
   run parse-commit-description "${description}"
 
+  # expected env.properties
+  { echo REPO_A_SHA="${sha}"; \
+    echo REPO_B_SHA="${sha}"; } > "${BATS_TEST_DIRNAME}/tmp/expected.env.properties"
+
   [ "${status}" -eq 0 ]
   [ "${lines[0]}" = "Found Required PR(s)..." ]
   [ "${lines[1]}" = "repo-a#1" ]
   [ "${lines[2]}" = "repo-b#2" ]
   [ "${lines[5]}" = "REPO_A_SHA=${sha}" ]
   [ "${lines[8]}" = "REPO_B_SHA=${sha}" ]
+  [ "$(cmp ${BATS_TEST_DIRNAME}/tmp/env.properties ${BATS_TEST_DIRNAME}/tmp/expected.env.properties)" = "" ]
 }
 
 @test "parse-commit-description : description with requirements and full 'deis/<repo>#<pr number>' format" {
@@ -134,18 +140,28 @@ teardown() {
 
 # main tests
 
-@test "main : if not on jenkins" {
+@test "main : commit and description found" {
+  description="\
+    A PR with required commits...
+    Requires deis/repo-e2e#1
+    requires deis/repo-b#2
+  "
+  export COMMIT_DESCRIPTION="${description}"
+  export ACTUAL_COMMIT="bogus_actual_commit"
+  stub git
+  sha="abc1234"
+  stub curl
+  stub docker "echo ${sha}"
+
   run main
+
+  # expected env.properties
+  { echo REPO_E2E_SHA="${sha}"; \
+    echo REPO_B_SHA="${sha}"; } > "${BATS_TEST_DIRNAME}/tmp/expected.env.properties"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
-}
-
-@test "main : if on jenkins" {
-  export JENKINS_HOME="foo"
-  run main
-
-  echo "${output}"
-  [ "${status}" -eq 1 ]
-  [[ "${output}" == *"Permission denied"* ]]
+  [ "${lines[0]}" = "Found Required PR(s)..." ]
+  [ "${lines[1]}" = "repo-e2e#1" ]
+  [ "${lines[2]}" = "repo-b#2" ]
+  [ "$(cmp ${BATS_TEST_DIRNAME}/tmp/env.properties ${BATS_TEST_DIRNAME}/tmp/expected.env.properties)" = "" ]
 }
