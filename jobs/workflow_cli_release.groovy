@@ -59,7 +59,7 @@ job("${repoName}-tag-release") {
 
       cat "\${GCSKEY}" > /tmp/workflow-cli-release/key.json
 
-      GIT_TAG="\${RELEASE}" make bootstrap build-revision fileperms
+      make bootstrap build-revision fileperms
 
       ${gcloud} gcloud auth activate-service-account -q --key-file /.config/key.json
       ${gcloud} gsutil -mq cp -a public-read -r /upload/* ${gcs_bucket}
