@@ -132,7 +132,8 @@ repos.each { Map repo ->
           DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
         """.stripIndent().trim()
 
-        shell new File("${WORKSPACE}/bash/scripts/commit_description_parser.sh").text
+        // only attempt to parse commit description if -pr job
+        isMaster ?: shell(new File("${WORKSPACE}/bash/scripts/commit_description_parser.sh").text)
 
         // do not run e2e tests for workflow-manager at this time
         if (repo.name != 'workflow-manager') {
