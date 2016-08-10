@@ -38,6 +38,7 @@ import utilities.StatusUpdater
         customMessage([commitAuthorMsg, testReportMsg, upstreamJobMsg].join('\n'))
         notifyAborted()
         notifyFailure()
+        notifyRepeatedFailure()
         notifySuccess()
         showCommitList()
         includeTestSummary()

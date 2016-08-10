@@ -1,25 +1,4 @@
-repos = [
-  [name: 'builder', slackChannel: 'builder'],
-  [name: 'dockerbuilder', slackChannel: 'builder'],
-  [name: 'fluentd', slackChannel: 'logger'],
-  [name: 'logger', slackChannel: 'logger'],
-  [name: 'minio', slackChannel: 'object-store'],
-  [name: 'nsq', slackChannel: 'logger'],
-  [name: 'postgres', slackChannel: 'postgres'],
-  [name: 'redis', slackChannel: 'logger'],
-  [name: 'registry', slackChannel: 'registry'],
-  [name: 'registry-proxy', slackChannel: 'registry'],
-  [name: 'router', slackChannel: 'router'],
-  [name: 'slugbuilder', slackChannel: 'builder'],
-  [name: 'slugrunner', slackChannel: 'builder'],
-  [name: 'controller', slackChannel: 'controller'],
-  [name: 'workflow-e2e', slackChannel: 'testing'],
-  [name: 'workflow-manager', slackChannel: 'wfm'],
-]
-
-repos.each { Map repo ->
-  repo.commitEnvVar = "${repo.name.toUpperCase().replaceAll('-', '_')}_SHA"
-}
+evaluate(new File("${WORKSPACE}/repo.groovy"))
 
 WORKFLOW_RELEASE = 'v2.3.0'
 TEST_JOB_ROOT_NAME = 'workflow-test'

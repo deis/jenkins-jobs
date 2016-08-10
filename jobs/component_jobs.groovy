@@ -95,8 +95,6 @@ repos.each { Map repo ->
       }
 
       steps {
-        dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
-
         shell new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text
         shell new File("${WORKSPACE}/bash/scripts/get_commit_author.sh").text
 
@@ -115,31 +113,37 @@ repos.each { Map repo ->
 
         """.stripIndent().trim()
 
-        shell """
-          #!/usr/bin/env bash
+        repo.components.each{ Map component ->
+          cdComponentDir = component.name == repo.name ?: "cd ${component.name}"
+          dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
 
-          set -eo pipefail
+          shell """
+            #!/usr/bin/env bash
 
-          # export env vars set in any shell steps prior to this
-          export \$(cat "\${WORKSPACE}/env.properties" | xargs)
+            set -eo pipefail
 
-          make bootstrap || true
+            # export env vars set in any shell steps prior to this
+            export \$(cat "\${WORKSPACE}/env.properties" | xargs)
 
-          export IMAGE_PREFIX=deisci
-          docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
-          DEIS_REGISTRY='' make docker-build ${dockerPush}
-          docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
-          DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
-        """.stripIndent().trim()
+            ${cdComponentDir}
+
+            make bootstrap || true
+
+            export IMAGE_PREFIX=deisci
+            docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
+            DEIS_REGISTRY='' make docker-build ${dockerPush}
+            docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
+            DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
+          """.stripIndent().trim()
+        }
 
         // only attempt to parse commit description if -pr job
         isMaster ?: shell(new File("${WORKSPACE}/bash/scripts/commit_description_parser.sh").text)
 
-        // do not run e2e tests for workflow-manager at this time
-        if (repo.name != 'workflow-manager') {
+        if (repo.runE2e) {
           conditionalSteps {
             condition {
-              shell new File("${WORKSPACE}/bash/scripts/skip_e2e_check.sh").text
+              isMaster ? alwaysRun() : shell(new File("${WORKSPACE}/bash/scripts/skip_e2e_check.sh").text)
             }
             steps {
               downstreamParameterized {
@@ -158,13 +162,15 @@ repos.each { Map repo ->
           }
         } else {
           if (isMaster) {
-            downstreamParameterized {
-              trigger('component-promote') {
-                parameters {
-                  predefinedProps([
-                    'COMPONENT_NAME': "workflow-manager",
-                    'COMPONENT_SHA': '${GIT_COMMIT}',
-                  ])
+            repo.components.each{ Map component ->
+              downstreamParameterized {
+                trigger('component-promote') {
+                  parameters {
+                    predefinedProps([
+                      'COMPONENT_NAME': component.name,
+                      'COMPONENT_SHA': '${GIT_COMMIT}',
+                    ])
+                  }
                 }
               }
             }
