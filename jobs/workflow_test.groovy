@@ -133,19 +133,30 @@ import utilities.StatusUpdater
       shell E2E_RUNNER_JOB
 
       if (isMaster) {
-        shell new File("${WORKSPACE}/bash/scripts/get_component_and_sha.sh").text
+        main = new File("${WORKSPACE}/bash/scripts/get_component_and_sha.sh").text
+
+        main += """
+          #!/usr/bin/env bash
+
+          set -eo pipefail
+
+          mkdir -p ${defaults.tmpPath}
+          get-component-and-sha > ${defaults.envFile}
+        """.stripIndent()
+
+        shell main
 
         conditionalSteps {
           condition {
             not {
-              shell 'cat "${WORKSPACE}/${BUILD_NUMBER}/env.properties" | grep -q SKIP_COMPONENT_PROMOTE'
+              shell "cat \"${defaults.envFile}\" | grep -q SKIP_COMPONENT_PROMOTE"
             }
           }
           steps {
             downstreamParameterized {
               trigger('component-promote') {
                 parameters {
-                  propertiesFile('${WORKSPACE}/${BUILD_NUMBER}/env.properties')
+                  propertiesFile(defaults.envFile)
                 }
               }
             }

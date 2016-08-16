@@ -2,25 +2,19 @@
 
 set -eo pipefail
 
-# Gets actual commit for reporting status and potentially tagging Docker image
-main() {
-  envPropsFilepath="/dev/null"
-  if [ -n "${JENKINS_HOME}" ]; then
-    envPropsFilepath="${WORKSPACE}/env.properties"
-  fi
+get-actual-commit() {
+  git_branch="${GIT_BRANCH:-$(git describe --all)}"
+  git_commit="${GIT_COMMIT:-$(git rev-parse HEAD)}"
 
-  export ACTUAL_COMMIT="${sha1}"
-  # if triggered by pull request plugin, use ghprbActualCommit
-  if [ "${ghprbActualCommit}" != "" ]; then
-    export ACTUAL_COMMIT="${ghprbActualCommit}"
-    export VERSION="git-${ACTUAL_COMMIT:0:7}"
-    echo "PR build, so using VERSION=${VERSION} for Docker image tag rather than the merge commit"
-  fi
-  echo ACTUAL_COMMIT="${ACTUAL_COMMIT}" > "${envPropsFilepath}"
+  if [[ "${git_branch}" != *"master"* ]]; then
+    # Determine actual PR commit for reporting status and Docker image tagging
+    git_commit_parents="${GIT_COMMIT_PARENTS:-$(echo "${git_commit}" | git log --pretty=%P -n 1 --date-order)}"
 
-  if [ "${VERSION}" != "" ]; then
-    echo VERSION="${VERSION}" >> "${envPropsFilepath}"
+    if [ "${#git_commit_parents}" -gt 40 ]; then
+      # More than one merge commit parent signifies that the merge commit is not the PR commit
+      git_commit="${git_commit_parents:0:40}"
+    # else only one merge commit parent signifies that the merge commit is also the PR commit
+    fi
   fi
+  echo "${git_commit}"
 }
-
-main

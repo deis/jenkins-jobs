@@ -1,7 +1,5 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-import utilities.StatusUpdater
-
 repo_name = 'deis.com'
 downstreamJobName = 'deploy_website'
 

@@ -1,7 +1,5 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-import utilities.StatusUpdater
-
 [ [type: 'master'],
   [type: 'pr'],
 ].each { Map config ->
@@ -89,11 +87,13 @@ import utilities.StatusUpdater
     }
 
     steps {
-      shell 'make docker-test'
+      main = new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text
 
-      shell """
+      main += """
         #!/usr/bin/env bash
         set -eo pipefail
+
+        make docker-test
 
         docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
         DEIS_REGISTRY='' make docker-build ${dockerPush}
@@ -103,18 +103,15 @@ import utilities.StatusUpdater
 
         mkdir -p ${defaults.tmpPath}
         eval \$(make image)
-        # if triggered by pull request plugin, use ghprbActualCommit
-        export ACTUAL_COMMIT="\${ghprbActualCommit}"
-        # if manually triggered, use sha1
-        if [ -z "\${ghprbActualCommit}" ]; then
-        	export ACTUAL_COMMIT="\${sha1}"
-        fi
-        echo ACTUAL_COMMIT="\${ACTUAL_COMMIT}" >> ${defaults.envFile}
-        echo E2E_RUNNER_IMAGE="\${E2E_RUNNER_IMAGE}" >> ${defaults.envFile}
-        echo UPSTREAM_BUILD_URL="\${BUILD_URL}" >> ${defaults.envFile}
-        echo COMPONENT_REPO="e2e-runner" >> ${defaults.envFile}
-        echo UPSTREAM_SLACK_CHANNEL="testing" >> ${defaults.envFile}
+
+        { echo ACTUAL_COMMIT="\$(get-actual-commit)"; \
+          echo E2E_RUNNER_IMAGE="\${E2E_RUNNER_IMAGE}"; \
+          echo UPSTREAM_BUILD_URL="\${BUILD_URL}"; \
+          echo COMPONENT_REPO="e2e-runner"; \
+          echo UPSTREAM_SLACK_CHANNEL="testing"; } >> ${defaults.envFile}
       """.stripIndent().trim()
+
+      shell main
 
       downstreamParameterized {
         trigger(downstreamJobName) {

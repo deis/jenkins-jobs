@@ -1,7 +1,5 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-import utilities.StatusUpdater
-
 name = 'workflow-test-release'
 
 job(name) {
