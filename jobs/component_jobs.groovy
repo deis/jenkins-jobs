@@ -35,6 +35,13 @@ repos.each { Map repo ->
         }
       }
 
+      publishers {
+        slackNotifications {
+          notifyFailure()
+          notifyRepeatedFailure()
+         }
+       }
+
       if (isPR) {
         concurrentBuild()
         throttleConcurrentBuilds {

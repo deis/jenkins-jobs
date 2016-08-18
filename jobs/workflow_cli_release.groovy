@@ -22,7 +22,7 @@ job("${repoName}-tag-release") {
   publishers {
     slackNotifications {
       notifyFailure()
-      notifySuccess()
+      notifyRepeatedFailure()
     }
   }
 

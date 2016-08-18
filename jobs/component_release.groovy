@@ -31,9 +31,7 @@ repos.each { Map repo ->
 
     publishers {
       slackNotifications {
-        notifyAborted()
         notifyFailure()
-        notifySuccess()
         notifyRepeatedFailure()
        }
      }
