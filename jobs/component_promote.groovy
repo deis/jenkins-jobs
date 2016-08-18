@@ -19,7 +19,7 @@ job('component-promote') {
   publishers {
     slackNotifications {
       notifyFailure()
-      notifySuccess()
+      notifyRepeatedFailure()
     }
   }
 

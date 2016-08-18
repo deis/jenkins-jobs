@@ -40,7 +40,6 @@ name = "storagetype_e2e"
     slackNotifications {
       customMessage(defaults.testJob["reportMsg"])
       notifyFailure()
-      notifySuccess()
       includeTestSummary()
     }
 

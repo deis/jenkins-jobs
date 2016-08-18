@@ -15,7 +15,7 @@ job('release-candidate-promote') {
   publishers {
     slackNotifications {
       notifyFailure()
-      notifySuccess()
+      notifyRepeatedFailure()
     }
   }
 

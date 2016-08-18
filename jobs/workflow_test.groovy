@@ -36,10 +36,8 @@ import utilities.StatusUpdater
         // integrationToken('${SLACK_INTEGRATION_TOKEN}')
         // projectChannel('#${UPSTREAM_SLACK_CHANNEL}')
         customMessage([commitAuthorMsg, testReportMsg, upstreamJobMsg].join('\n'))
-        notifyAborted()
         notifyFailure()
         notifyRepeatedFailure()
-        notifySuccess()
         showCommitList()
         includeTestSummary()
        }
