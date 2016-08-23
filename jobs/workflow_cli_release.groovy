@@ -43,29 +43,33 @@ job("${repoName}-tag-release") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      file("GCSKEY", "e80fd033-dd76-4d96-be79-6c272726fb82")
+      file("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
     }
   }
 
   steps {
-    gcloud = "docker run --rm -v  /tmp/workflow-cli-release:/.config -v \${WORKSPACE}/_dist:/upload google/cloud-sdk:latest"
-    gcs_bucket = "gs://workflow-cli"
+    def bucket = "gs://workflow-cli-release"
+
+    def headers  = "-h 'x-goog-meta-ci-job:\${JOB_NAME}' "
+        headers += "-h 'x-goog-meta-ci-number:\${BUILD_NUMBER}' "
+        headers += "-h 'x-goog-meta-ci-url:\${BUILD_URL}'"
+
+    def script  = "sh -c 'make build-tag "
+        script += "&& echo \${GCS_KEY_JSON} | base64 -d - > /tmp/key.json "
+        script += "&& gcloud auth activate-service-account -q --key-file /tmp/key.json "
+        script += "&& gsutil -mq ${headers} cp -a public-read -r _dist/* ${bucket}'"
+
     shell """
       #!/usr/bin/env bash
 
       set -eo pipefail
 
-      mkdir -p /tmp/workflow-cli-release
+      git_commit="\$(git rev-parse HEAD)"
+      revision_image=quay.io/deisci/workflow-cli-dev:"\${git_commit:0:7}"
 
-      cat "\${GCSKEY}" > /tmp/workflow-cli-release/key.json
-
-      make bootstrap build-revision fileperms
-
-      ${gcloud} gcloud auth activate-service-account -q --key-file /.config/key.json
-      ${gcloud} gsutil -mq cp -a public-read -r /upload/* ${gcs_bucket}
-      ${gcloud} sh -c 'rm -rf /.config/*'
+      # Build and upload artifacts
+      docker run -e GCS_KEY_JSON=\"\${GCSKEY}\" --rm "\${revision_image}" ${script}
     """.stripIndent().trim()
-
 
     conditionalSteps {
       condition {
