@@ -3,9 +3,7 @@
 set -eo pipefail
 
 # Breaks up a <COMPONENT>_SHA env var into component name and sha
-main() {
-  envPropsFilepath="${ENV_PROPS_FILEPATH:-${WORKSPACE}/${BUILD_NUMBER}/env.properties}"
-
+get-component-and-sha() {
   # populate env_var_array with all <COMPONENT>_SHA env vars
   IFS=' ' read -r -a env_var_array <<< "$(compgen -A variable | grep _SHA)"
 
@@ -16,14 +14,11 @@ main() {
       component_sha="${!env_var}"
 
       if [ "${component_name}" == 'workflow-cli' ]; then
-        echo SKIP_COMPONENT_PROMOTE=true >> "${envPropsFilepath}"
+        echo SKIP_COMPONENT_PROMOTE=true
       fi
 
-      echo "Found component '${component_name}' with commit sha '${component_sha}'"
       { echo COMPONENT_NAME="${component_name}"; \
-        echo COMPONENT_SHA="${component_sha}"; } >> "${envPropsFilepath}"
+        echo COMPONENT_SHA="${component_sha}"; }
     fi
   done
 }
-
-main

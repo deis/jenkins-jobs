@@ -1,7 +1,5 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-import utilities.StatusUpdater
-
 repos.each { Map repo ->
   [
     // for each repo, create a <repo.name>-master and <repo.name>-pr job
@@ -102,61 +100,58 @@ repos.each { Map repo ->
       }
 
       steps {
-        shell new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text
-        shell new File("${WORKSPACE}/bash/scripts/get_commit_author.sh").text
-
-        shell """
-        #!/usr/bin/env bash
-
-        set -eo pipefail
-
-        # pass along appropriate commit via properties file
-        if [ -z "\${ghprbActualCommit}" ]; then
-          echo ${repo.commitEnvVar}="\${GIT_COMMIT}" >> "\${WORKSPACE}/env.properties"
-        else
-          echo "PR build, setting ${repo.commitEnvVar} to '\${ghprbActualCommit}', the actual PR commit"
-          echo ${repo.commitEnvVar}="\${ghprbActualCommit}" >> "\${WORKSPACE}/env.properties"
-        fi
-
-        """.stripIndent().trim()
+        main = [
+          new File("${WORKSPACE}/bash/scripts/get_actual_commit.sh").text,
+          new File("${WORKSPACE}/bash/scripts/find_required_commits.sh").text,
+          new File("${WORKSPACE}/bash/scripts/skip_e2e_check.sh").text,
+        ].join('\n')
 
         repo.components.each{ Map component ->
           cdComponentDir = component.name == repo.name ?: "cd ${component.name}"
           dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
 
-          shell """
+          script = main
+          script += """
             #!/usr/bin/env bash
 
             set -eo pipefail
 
-            # export env vars set in any shell steps prior to this
-            export \$(cat "\${WORKSPACE}/env.properties" | xargs)
-
             ${cdComponentDir}
+
+            git_commit="\$(get-actual-commit)"
 
             make bootstrap || true
 
-            export IMAGE_PREFIX=deisci
+            export IMAGE_PREFIX=deisci VERSION="git-\${git_commit:0:7}"
             docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
             DEIS_REGISTRY='' make docker-build ${dockerPush}
             docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
             DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
-          """.stripIndent().trim()
-        }
 
-        // only attempt to parse commit description if -pr job
-        isMaster ?: shell(new File("${WORKSPACE}/bash/scripts/commit_description_parser.sh").text)
+            # populate env file for passing to downstream job
+            mkdir -p ${defaults.tmpPath}
+            { echo COMMIT_AUTHOR_EMAIL="\$(echo "\${git_commit}" | git --no-pager show -s --format='%ae')"; \
+              echo ACTUAL_COMMIT="\${git_commit}"; \
+              echo ${repo.commitEnvVar}="\${git_commit}"; \
+              echo "\$(find-required-commits "\${git_commit}")"; \
+              echo "\$(check-skip-e2e "\${git_commit}")"; } > ${defaults.envFile}
+          """.stripIndent().trim()
+
+          shell script
+        }
 
         if (repo.runE2e) {
           conditionalSteps {
             condition {
-              isMaster ? alwaysRun() : shell(new File("${WORKSPACE}/bash/scripts/skip_e2e_check.sh").text)
+              not {
+                shell "cat \"${defaults.envFile}\" | grep -q SKIP_E2E"
+              }
             }
             steps {
               downstreamParameterized {
                 trigger(downstreamJobName) {
                   parameters {
-                    propertiesFile('${WORKSPACE}/env.properties')
+                    propertiesFile(defaults.envFile)
                     predefinedProps([
                       'UPSTREAM_BUILD_URL': '${BUILD_URL}',
                       'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",

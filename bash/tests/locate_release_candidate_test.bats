@@ -10,21 +10,29 @@ teardown() {
   rm_stubs
 }
 
-@test "locate-release-candidate" {
+@test "locate-release-candidate : candidate found" {
   component="my-component"
   commit="abc1234def5678"
   tag="foo-tag"
-  env_file="${BATS_TEST_DIRNAME}/tmp/env.properties"
 
-  # expected env.properties output
-  { echo COMPONENT_NAME=my-component; \
-    echo COMPONENT_SHA=abc1234def5678; \
-    echo RELEASE_TAG=foo-tag; \
-    echo MY_COMPONENT_SHA=abc1234def5678; } > ${BATS_TEST_DIRNAME}/tmp/expected.env.properties
-
-  run locate-release-candidate "${component}" "${commit}" "${tag}" "${env_file}"
+  run locate-release-candidate "${component}" "${commit}" "${tag}"
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "Locating candidate release image quay.io/deis/my-component:git-abc1234..." ]
-  [ "$(cmp ${BATS_TEST_DIRNAME}/tmp/env.properties ${BATS_TEST_DIRNAME}/tmp/expected.env.properties)" = "" ]
+  [ "${lines[0]}" = "COMPONENT_NAME=my-component" ]
+  [ "${lines[1]}" = "COMPONENT_SHA=abc1234def5678" ]
+  [ "${lines[2]}" = "RELEASE_TAG=foo-tag" ]
+  [ "${lines[3]}" = "MY_COMPONENT_SHA=abc1234def5678" ]
+}
+
+@test "locate-release-candidate : candidate not found" {
+  component="my-component"
+  commit="abc1234def5678"
+  tag="foo-tag"
+
+  stub docker '' 1
+
+  run locate-release-candidate "${component}" "${commit}" "${tag}"
+  echo "${output}"
+  [ "${status}" -eq 1 ]
+  [ "${output}" = "Release candidate 'quay.io/deis/my-component:git-abc1234' cannot be located; exiting." ]
 }

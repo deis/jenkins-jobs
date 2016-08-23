@@ -58,10 +58,19 @@ repos.each { Map repo ->
 
       repo.components.each{ Map component ->
         main += """
-          tag="\$(get-latest-tag)"
-          commit="\$(git rev-parse HEAD)"
+          #!/usr/bin/env bash
 
-          locate-release-candidate ${component.name} "\${commit}" "\${tag}" "${component.envFile}"
+          set -eo pipefail
+
+          tag="\$(get-latest-tag)"
+          commit="\$(git checkout "\${tag}" && git rev-parse HEAD)"
+          echo "Checked out tag '\${tag}' and will pass commit at HEAD (\${commit}) to downstream job."
+
+          echo "Locating release candidate based on tag commit '\${commit}'..."
+          result="\$(locate-release-candidate ${component.name} "\${commit}" "\${tag}")"
+
+          mkdir -p "\$(dirname ${component.envFile})"
+          echo "\${result}" >> ${component.envFile}
 
         """.stripIndent()
       }
@@ -71,9 +80,7 @@ repos.each { Map repo ->
       if (repo.runE2e) {
         conditionalSteps {
           condition {
-            not {
-              shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
-            }
+            status('SUCCESS', 'SUCCESS')
           }
           steps {
             repo.components.each{ Map component ->
@@ -97,13 +104,7 @@ repos.each { Map repo ->
       // If e2e job results in `SUCCESS`, promote release candidate
       conditionalSteps {
         condition {
-          and {
-            status('SUCCESS', 'SUCCESS')
-          } {
-            not {
-              shell 'cat "${WORKSPACE}/env.properties" | grep -q SKIP_RELEASE'
-            }
-          }
+          status('SUCCESS', 'SUCCESS')
         }
         steps {
           repo.components.each{ Map component ->

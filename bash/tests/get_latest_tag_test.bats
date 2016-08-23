@@ -4,7 +4,6 @@ setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/get_latest_tag.sh"
   load stub
   stub docker
-  ENV_PROPS_FILEPATH="${BATS_TEST_DIRNAME}/tmp/env.properties"
 }
 
 teardown() {
@@ -16,17 +15,6 @@ teardown() {
 
   [ "${status}" -eq 1 ]
   [ "${output}" = "" ]
-}
-
-@test "main : TAG not set - GIT_BRANCH set - does not match latest" {
-  export GIT_BRANCH="origin/tags/foo-tag"
-  export LATEST_TAG="bar-tag"
-
-  run get-latest-tag
-
-  [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
-  [ "$(cat ${BATS_TEST_DIRNAME}/tmp/env.properties)" = "SKIP_RELEASE=true" ]
 }
 
 @test "main : TAG not set - GIT_BRANCH set - matches latest" {

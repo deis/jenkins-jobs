@@ -1,28 +1,25 @@
 evaluate(new File("${WORKSPACE}/common.groovy"))
 
-import utilities.StatusUpdater
-
-
 name = "storagetype_e2e"
 
+job(name) {
+  description """
+    <p>Nightly Job runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflow.chartName}">${defaults.workflow.chartName}</a> chart configured to GCS by default </p>
+  """.stripIndent().trim()
 
-  job(name) {
-    description """
-      <p>Nightly Job runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflow.chartName}">${defaults.workflow.chartName}</a> chart configured to GCS by default </p>
-    """.stripIndent().trim()
-
-    scm {
-      git {
-        remote {
-          github("deis/e2e-runner")
-        }
-        branch('master')
+  scm {
+    git {
+      remote {
+        github("deis/e2e-runner")
       }
+      branch('master')
     }
+  }
 
-    logRotator {
-      daysToKeep defaults.daysToKeep
-    }
+  logRotator {
+    daysToKeep defaults.daysToKeep
+  }
+
   parameters {
    stringParam('STORAGE_TYPE', 'gcs', "storage backend for helm chart, default is gcs")
    stringParam('HELM_REMOTE_REPO', defaults.helm["remoteRepo"], "The remote repo to use for fetching charts.")
