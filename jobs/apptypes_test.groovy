@@ -54,7 +54,6 @@ job(name) {
         echo UPSTREAM_SLACK_CHANNEL="testing"; } >> ${defaults.envFile}
     """.stripIndent().trim()
 
-    shell E2E_RUNNER_JOB
-
+    shell e2eRunnerJob
   }
 }

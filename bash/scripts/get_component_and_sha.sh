@@ -13,7 +13,7 @@ get-component-and-sha() {
       component_name="$(echo "${env_var%_SHA}" | perl -ne 'print lc' | sed 's/_/-/g')"
       component_sha="${!env_var}"
 
-      if [ "${component_name}" == 'workflow-cli' ]; then
+      if [ "${component_name}" == 'workflow-cli' ] || [ "${component_name}" == 'charts' ]; then
         echo SKIP_COMPONENT_PROMOTE=true
       fi
 

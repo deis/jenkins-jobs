@@ -4,8 +4,8 @@ set -eo pipefail
 # find-required-commits parses a commit description for any required sibling
 # commits to pass along to downstream job(s)...
 find-required-commits() {
-  local git_commit="${1}"
-  local commit_description="${COMMIT_DESCRIPTION:-$(git log --format=%B -n 1 "${git_commit}")}"
+  git_commit="${1}"
+  commit_description="${COMMIT_DESCRIPTION:-$(git log --format=%B -n 1 "${git_commit}")}"
 
   # Looks specifically for matches of '[rR]equires <repo>#<pr_number>',
   # e.g., "requires builder#123, Requires router#567"

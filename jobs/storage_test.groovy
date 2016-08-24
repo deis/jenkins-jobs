@@ -86,6 +86,6 @@ job(name) {
       echo \${TYPE}_DATABASE_BUCKET="store-database-\${BUILD_NUMBER}" >> ${defaults.envFile}
     """.stripIndent().trim()
 
-    shell E2E_RUNNER_JOB
+    shell e2eRunnerJob
   }
 }

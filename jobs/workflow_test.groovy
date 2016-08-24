@@ -91,6 +91,7 @@ import utilities.StatusUpdater
       repos.each { Map repo ->
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
       }
+      stringParam('CHARTS_SHA', '', "charts commit SHA")
       stringParam('WORKFLOW_CLI_SHA', '', "workflow-cli commit SHA")
       stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
       stringParam('UPSTREAM_SLACK_CHANNEL', '', "Upstream Slack channel")
@@ -129,20 +130,28 @@ import utilities.StatusUpdater
       if (isPR) { // update commit with pending status while tests run
         shell StatusUpdater.updateStatus(
           commitStatus: 'pending', repoName: '${COMPONENT_REPO}', commitSHA: '${ACTUAL_COMMIT}', description: 'Running e2e tests...')
+
+        setupHelmcEnv = new File("${WORKSPACE}/bash/scripts/setup_helmc_environment.sh").text
+        setupHelmcEnv += """
+          mkdir -p ${defaults.tmpPath}
+          setup-helmc-env >> ${defaults.envFile}
+        """.stripIndent().trim()
+
+        shell setupHelmcEnv
       }
-      shell E2E_RUNNER_JOB
 
-      if (isMaster) {
-        main = new File("${WORKSPACE}/bash/scripts/get_component_and_sha.sh").text
+      shell e2eRunnerJob
 
+      if (isMaster) { // send component name and sha to downstream component-promote job
+        main  = new File("${WORKSPACE}/bash/scripts/get_component_and_sha.sh").text
         main += """
           #!/usr/bin/env bash
 
           set -eo pipefail
 
           mkdir -p ${defaults.tmpPath}
-          get-component-and-sha > ${defaults.envFile}
-        """.stripIndent()
+          get-component-and-sha >> ${defaults.envFile}
+        """.stripIndent().trim()
 
         shell main
 
