@@ -2,10 +2,10 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
 
 repoName="workflow-cli"
 
-job("${repoName}-tag-release") {
+job("${repoName}-release") {
   description """
-    <li>Watches the ${repoName} repo for a new tag to be pushed. (Assumed to be '\${RELEASE}')</li>
-    <li>It then checks out the \${RELEASE} tag and builds and deploys binaries, optionally kicking off e2e (default: false)</li>
+    <li>Watches the ${repoName} repo for a git tag push. (It can also be triggered manually, supplying a value for TAG.)</li>
+    <li>The commit at HEAD of tag is then used to locate the release candidate image(s).</li>
   """.stripIndent().trim()
 
   scm {
@@ -13,9 +13,9 @@ job("${repoName}-tag-release") {
       remote {
         github("deis/${repoName}")
         credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
-        refspec('+refs/tags/${RELEASE}:refs/remotes/origin/tags/${RELEASE}')
+        refspec('+refs/tags/*:refs/remotes/origin/tags/*')
       }
-      branch('refs/tags/${RELEASE}')
+      branch('*/tags/*')
     }
   }
 
@@ -31,8 +31,7 @@ job("${repoName}-tag-release") {
   }
 
   parameters {
-    stringParam('RELEASE', defaults.workflow.release, 'Release to use for tag checkout')
-    booleanParam('RUN_E2E', false, 'check to run downstream release e2e job')
+    stringParam('TAG', '', 'Specific tag to release')
   }
 
   triggers {
@@ -40,6 +39,7 @@ job("${repoName}-tag-release") {
   }
 
   wrappers {
+    buildName('${GIT_BRANCH} ${TAG} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
@@ -59,35 +59,21 @@ job("${repoName}-tag-release") {
         script += "&& gcloud auth activate-service-account -q --key-file /tmp/key.json "
         script += "&& gsutil -mq ${headers} cp -a public-read -r _dist/* ${bucket}'"
 
-    shell """
+    main = new File("${WORKSPACE}/bash/scripts/get_latest_tag.sh").text
+
+    main += """
       #!/usr/bin/env bash
 
       set -eo pipefail
 
-      git_commit="\$(git rev-parse HEAD)"
+      tag="\$(get-latest-tag)"
+      git_commit="\$(git checkout "\${tag}" && git rev-parse HEAD)"
       revision_image=quay.io/deisci/workflow-cli-dev:"\${git_commit:0:7}"
 
       # Build and upload artifacts
       docker run -e GCS_KEY_JSON=\"\${GCSKEY}\" --rm "\${revision_image}" ${script}
     """.stripIndent().trim()
 
-    conditionalSteps {
-      condition {
-        booleanCondition('RUN_E2E')
-      }
-      steps {
-        downstreamParameterized {
-          trigger(defaults.testJob['release']) {
-            parameters {
-              predefinedProps([
-                "WORKFLOW_BRANCH": 'release-${RELEASE}',
-                "WORKFLOW_E2E_BRANCH": 'release-${RELEASE}',
-                "RELEASE": '${RELEASE}'
-              ])
-            }
-          }
-        }
-      }
-    }
+    shell main
   }
 }
