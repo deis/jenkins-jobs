@@ -10,8 +10,8 @@ setup() {
   run get-component-and-sha
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "COMPONENT_NAME=my-component" ]
-  [ "${lines[1]}" = "COMPONENT_SHA=abc1234def5678" ]
+  [ "${lines[0]}" == "COMPONENT_NAME=my-component" ]
+  [ "${lines[1]}" == "COMPONENT_SHA=abc1234def5678" ]
 }
 
 @test "get-component-and-sha : skip promotion if workflow-cli" {
@@ -20,7 +20,7 @@ setup() {
   run get-component-and-sha
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "SKIP_COMPONENT_PROMOTE=true" ]
-  [ "${lines[1]}" = "COMPONENT_NAME=workflow-cli" ]
-  [ "${lines[2]}" = "COMPONENT_SHA=abc1234def5678" ]
+  [ "${lines[0]}" == "SKIP_COMPONENT_PROMOTE=true" ]
+  [ "${lines[1]}" == "COMPONENT_NAME=workflow-cli" ]
+  [ "${lines[2]}" == "COMPONENT_SHA=abc1234def5678" ]
 }

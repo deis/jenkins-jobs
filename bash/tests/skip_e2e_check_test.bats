@@ -15,7 +15,7 @@ teardown() {
   run check-skip-e2e
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
+  [ "${output}" == "" ]
 }
 
 @test "check-skip-e2e : description with no 'skip e2e'" {
@@ -26,7 +26,7 @@ teardown() {
   run check-skip-e2e
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
+  [ "${output}" == "" ]
 }
 
 @test "check-skip-e2e : description with 'skip e2e'" {
@@ -37,5 +37,5 @@ teardown() {
   run check-skip-e2e
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "SKIP_E2E=true" ]
+  [ "${output}" == "SKIP_E2E=true" ]
 }

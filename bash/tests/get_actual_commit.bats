@@ -18,7 +18,7 @@ teardown() {
   run get-actual-commit
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "${TEST_GIT_SHA}" ]
+  [ "${output}" == "${TEST_GIT_SHA}" ]
 }
 
 @test "get-actual-commit : is PR, multiple parents" {
@@ -29,7 +29,7 @@ teardown() {
   run get-actual-commit
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "ghi1234jkl567812345678901234567890123456" ]
+  [ "${output}" == "ghi1234jkl567812345678901234567890123456" ]
 }
 
 @test "get-actual-commit : is PR, single parent" {
@@ -40,5 +40,5 @@ teardown() {
   run get-actual-commit
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "${TEST_GIT_SHA}" ]
+  [ "${output}" == "${TEST_GIT_SHA}" ]
 }

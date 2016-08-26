@@ -18,6 +18,6 @@ teardown() {
   run main
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "Retagging deis/my-component:git-abc1234 to deis/my-component:v9.9.9" ]
-  [ "${lines[1]}" = "Retagging quay.io/deis/my-component:git-abc1234 to quay.io/deis/my-component:v9.9.9" ]
+  [ "${lines[0]}" == "Retagging deis/my-component:git-abc1234 to deis/my-component:v9.9.9" ]
+  [ "${lines[1]}" == "Retagging quay.io/deis/my-component:git-abc1234 to quay.io/deis/my-component:v9.9.9" ]
 }

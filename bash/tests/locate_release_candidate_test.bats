@@ -18,10 +18,10 @@ teardown() {
   run locate-release-candidate "${component}" "${commit}" "${tag}"
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "COMPONENT_NAME=my-component" ]
-  [ "${lines[1]}" = "COMPONENT_SHA=abc1234def5678" ]
-  [ "${lines[2]}" = "RELEASE_TAG=foo-tag" ]
-  [ "${lines[3]}" = "MY_COMPONENT_SHA=abc1234def5678" ]
+  [ "${lines[0]}" == "COMPONENT_NAME=my-component" ]
+  [ "${lines[1]}" == "COMPONENT_SHA=abc1234def5678" ]
+  [ "${lines[2]}" == "RELEASE_TAG=foo-tag" ]
+  [ "${lines[3]}" == "MY_COMPONENT_SHA=abc1234def5678" ]
 }
 
 @test "locate-release-candidate : candidate not found" {
@@ -34,5 +34,5 @@ teardown() {
   run locate-release-candidate "${component}" "${commit}" "${tag}"
   echo "${output}"
   [ "${status}" -eq 1 ]
-  [ "${output}" = "Release candidate 'quay.io/deis/my-component:git-abc1234' cannot be located; exiting." ]
+  [ "${output}" == "Release candidate 'quay.io/deis/my-component:git-abc1234' cannot be located; exiting." ]
 }
