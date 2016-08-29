@@ -77,6 +77,6 @@ job(name) {
   }
 
   steps {
-    shell E2E_RUNNER_JOB
+    shell e2eRunnerJob
   }
 }
