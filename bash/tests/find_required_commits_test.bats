@@ -21,7 +21,7 @@ teardown() {
   run find-required-commits "${TEST_GIT_COMMIT}"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
+  [ "${output}" == "" ]
 }
 
 @test "find-required-commits : description with no requirements" {
@@ -33,7 +33,7 @@ teardown() {
   run find-required-commits "${TEST_GIT_COMMIT}"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
+  [ "${output}" == "" ]
 }
 
 @test "find-required-commits : description with requirements" {
@@ -48,8 +48,8 @@ teardown() {
   run find-required-commits "${TEST_GIT_COMMIT}"
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "REPO_A_SHA=${required_commit}" ]
-  [ "${lines[1]}" = "REPO_B_SHA=${required_commit}" ]
+  [ "${lines[0]}" == "REPO_A_SHA=${required_commit}" ]
+  [ "${lines[1]}" == "REPO_B_SHA=${required_commit}" ]
 }
 
 @test "find-required-commits : description with requirements and full 'deis/<repo>#<pr number>' format" {
@@ -64,8 +64,8 @@ teardown() {
   run find-required-commits "${TEST_GIT_COMMIT}"
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "REPO_E2E_SHA=${required_commit}" ]
-  [ "${lines[1]}" = "REPO_B_SHA=${required_commit}" ]
+  [ "${lines[0]}" == "REPO_E2E_SHA=${required_commit}" ]
+  [ "${lines[1]}" == "REPO_B_SHA=${required_commit}" ]
 }
 
 @test "find-required-commits : description with ill-formated requirements" {
@@ -77,7 +77,7 @@ teardown() {
   run find-required-commits "${TEST_GIT_COMMIT}"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "" ]
+  [ "${output}" == "" ]
 }
 
 @test "find-required-commits : description with requirement commits not found" {
@@ -92,7 +92,7 @@ teardown() {
   run find-required-commits "${TEST_GIT_COMMIT}"
 
   [ "${status}" -eq 1 ]
-  [ "${lines[0]}" = "Failure: Commit sha for PR #${pr} in repo '${repo_name}' not found!" ]
+  [ "${lines[0]}" == "Failure: Commit sha for PR #${pr} in repo '${repo_name}' not found!" ]
 }
 
 # get-pr-commits tests
@@ -106,7 +106,7 @@ teardown() {
   run get-pr-commits "${repoName}" "${prNumber}"
 
   [ "${status}" -eq 1 ]
-  [ "${output}" = "" ]
+  [ "${output}" == "" ]
 }
 
 @test "get-pr-commits: commits found" {
@@ -119,5 +119,5 @@ teardown() {
   run get-pr-commits "${repoName}" "${prNumber}"
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "${sha}" ]
+  [ "${lines[0]}" == "${sha}" ]
 }

@@ -14,7 +14,7 @@ teardown() {
   run get-latest-tag
 
   [ "${status}" -eq 1 ]
-  [ "${output}" = "" ]
+  [ "${output}" == "" ]
 }
 
 @test "main : TAG not set - GIT_BRANCH set - matches latest" {
@@ -24,7 +24,7 @@ teardown() {
   run get-latest-tag
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "${LATEST_TAG}" ]
+  [ "${output}" == "${LATEST_TAG}" ]
 }
 
 @test "main : TAG set" {
@@ -34,5 +34,5 @@ teardown() {
   run get-latest-tag
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "${TAG}" ]
+  [ "${output}" == "${TAG}" ]
 }

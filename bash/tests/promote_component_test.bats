@@ -17,7 +17,7 @@ teardown() {
   run main
 
   [ "${status}" -eq 0 ]
-  [ "${output}" = "COMPONENT_NAME is empty; no component to promote; exiting..." ]
+  [ "${output}" == "COMPONENT_NAME is empty; no component to promote; exiting..." ]
 }
 
 @test "main : COMPONENT_NAME non-empty" {
@@ -27,6 +27,6 @@ teardown() {
   run main
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" = "Promoting ${STAGING_ORG}/my-component:git-abc1234 to ${PROD_ORG}/my-component:git-abc1234" ]
-  [ "${lines[1]}" = "Promoting quay.io/${STAGING_ORG}/my-component:git-abc1234 to quay.io/${PROD_ORG}/my-component:git-abc1234" ]
+  [ "${lines[0]}" == "Promoting ${STAGING_ORG}/my-component:git-abc1234 to ${PROD_ORG}/my-component:git-abc1234" ]
+  [ "${lines[1]}" == "Promoting quay.io/${STAGING_ORG}/my-component:git-abc1234 to quay.io/${PROD_ORG}/my-component:git-abc1234" ]
 }
