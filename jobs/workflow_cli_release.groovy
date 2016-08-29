@@ -43,7 +43,7 @@ job("${repoName}-release") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      stringParam("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
+      string("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
     }
   }
 
