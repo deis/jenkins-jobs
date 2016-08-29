@@ -118,7 +118,7 @@ repos.each { Map repo ->
 
             ${cdComponentDir}
 
-            git_commit="\$(get-actual-commit)"
+            git_commit="\$(get-actual-commit ${repo.name})"
 
             make bootstrap || true
 
