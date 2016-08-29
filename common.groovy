@@ -1,6 +1,6 @@
 evaluate(new File("${WORKSPACE}/repo.groovy"))
 
-WORKFLOW_RELEASE = 'v2.4.1'
+WORKFLOW_RELEASE = 'v2.4.2'
 TEST_JOB_ROOT_NAME = 'workflow-test'
 
 E2E_RUNNER_JOB = '''#!/usr/bin/env bash
