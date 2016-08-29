@@ -46,6 +46,8 @@ job(name) {
     stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:canary', "The e2e-runner image")
     stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")
     stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
+    stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
+    stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
     stringParam('COMPONENT_NAME', '', 'Component name')
     stringParam('COMPONENT_SHA', '', 'Commit sha used for image tag')
     stringParam('RELEASE_TAG', '', 'Release tag to apply to candidate image')
