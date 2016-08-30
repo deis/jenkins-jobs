@@ -43,7 +43,7 @@ teardown() {
     requires repo-b#2
   "
   required_commit="abc1234"
-  stub docker "echo ${required_commit}"
+  stub jq "echo ${required_commit}"
 
   run find-required-commits "${TEST_GIT_COMMIT}"
 
@@ -59,7 +59,7 @@ teardown() {
     requires deis/repo-b#2
   "
   required_commit="abc1234"
-  stub docker "echo ${required_commit}"
+  stub jq "echo ${required_commit}"
 
   run find-required-commits "${TEST_GIT_COMMIT}"
 
@@ -87,7 +87,7 @@ teardown() {
     A PR with required commits...
     Requires ${repo_name}#${pr}
   "
-  stub docker # nothing returned if no commits found
+  stub jq # nothing returned if no commits found
 
   run find-required-commits "${TEST_GIT_COMMIT}"
 
@@ -101,7 +101,7 @@ teardown() {
   repoName="repo-a"
   prNumber="1"
 
-  stub docker "" 1
+  stub jq "" 1
 
   run get-pr-commits "${repoName}" "${prNumber}"
 
@@ -114,7 +114,7 @@ teardown() {
   prNumber="1"
 
   sha="abc1234"
-  stub docker "echo '${sha}'"
+  stub jq "echo '${sha}'"
 
   run get-pr-commits "${repoName}" "${prNumber}"
 

@@ -29,14 +29,14 @@ get-remote-repo-url() {
   --user deis-admin:"${GITHUB_ACCESS_TOKEN}" \
   "https://api.github.com/repos/deis/${repo_name}/commits/${git_commit}")
 
-  committer_name="$(echo "${commit_info}" | docker run -i --rm kamermans/jq '.commit.committer.name')"
+  committer_name="$(echo "${commit_info}" | jq '.commit.committer.name')"
 
   if [ "${committer_name//\"}" == "GitHub" ]; then
     # commit has presumably been merged
     echo "https://github.com/deis/${repo_name}.git"
   else
     # determine url to retrieve list of committer repos from commit info
-    committer_repos_url="$(echo "${commit_info}" | docker run -i --rm kamermans/jq '.committer.repos_url')"
+    committer_repos_url="$(echo "${commit_info}" | jq '.committer.repos_url')"
 
     # retrieve list of committer repos
     committer_all_repos=$(curl \
@@ -45,7 +45,7 @@ get-remote-repo-url() {
     "${committer_repos_url//\"}")
 
     # determine ${repo_name} clone url from list of committer repos
-    clone_url="$(echo "${committer_all_repos}" | docker run -i --rm kamermans/jq '.[].clone_url' | grep "${repo_name}")"
+    clone_url="$(echo "${committer_all_repos}" | jq '.[].clone_url' | grep "${repo_name}")"
 
     # return clone url with double-quotes stripped
     echo "${clone_url//\"}"

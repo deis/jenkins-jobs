@@ -3,7 +3,7 @@
 setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/setup_helmc_environment.sh"
   load stub
-  stub docker
+  stub jq
   stub curl
 }
 
@@ -27,9 +27,7 @@ teardown() {
   repo_name="repo"
   helmc_remote_repo="https://some/remote/charts/${repo_name}.git"
 
-  load stubs/tpl/default
-  # stub so that get-remote-repo-url returns ${helmc_remote_repo}
-  stub grep "$(generate-stub "charts" ${helmc_remote_repo})" 0
+  stub grep "echo ${helmc_remote_repo}" 0
 
   run setup-helmc-env
 
@@ -59,7 +57,7 @@ teardown() {
 \"https://github.com/user/foo.git\"
 \"https://github.com/user/${repo_name}.git\"
 "
-  stub docker "echo '${urls}'"
+  stub jq "echo '${urls}'"
 
   run get-remote-repo-url "${repo_name}" "${git_commit}"
 
@@ -71,7 +69,7 @@ teardown() {
   git_commit="abc1234def5678"
 
   # We check committer name; if GitHub, assume it had been merged
-  stub docker "echo 'GitHub'"
+  stub jq "echo 'GitHub'"
 
   run get-remote-repo-url "${repo_name}" "${git_commit}"
 
