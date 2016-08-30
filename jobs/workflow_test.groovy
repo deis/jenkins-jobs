@@ -103,6 +103,8 @@ import utilities.StatusUpdater
       stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")
       stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
       stringParam('COMMIT_AUTHOR_EMAIL', 'n/a', "Commit author email address")
+      stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
+      stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
     }
 
     triggers {
