@@ -91,8 +91,6 @@ import utilities.StatusUpdater
       repos.each { Map repo ->
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
       }
-      stringParam('CHARTS_SHA', '', "charts commit SHA")
-      stringParam('WORKFLOW_CLI_SHA', '', "workflow-cli commit SHA")
       stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
       stringParam('UPSTREAM_SLACK_CHANNEL', '', "Upstream Slack channel")
       stringParam('COMPONENT_REPO', '', "Component repo name")
