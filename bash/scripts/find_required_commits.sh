@@ -48,5 +48,5 @@ get-pr-commits() {
   "https://api.github.com/repos/deis/${repo_name}/pulls/${pr_number}/commits")
 
   echo "${resp}" >&2
-  echo "${resp}" | docker run -i --rm kamermans/jq '.[].sha'
+  echo "${resp}" | jq '.[].sha'
 }

@@ -30,13 +30,11 @@ teardown() {
 
   curl_resp="Merge ${TEST_PR_SHA} into ${TEST_MASTER_SHA}"
 
-  load stubs/tpl/default
   stub curl
-  stub docker "$(generate-stub "run" "${curl_resp}")" 0
+  stub jq "echo ${curl_resp}" 0
 
   run get-actual-commit "${TEST_REPO_NAME}"
 
-  echo "${output}"
   [ "${status}" -eq 0 ]
   [ "${output}" == "${TEST_PR_SHA}" ]
 }
@@ -46,11 +44,10 @@ teardown() {
   export GIT_COMMIT="${TEST_MERGE_SHA}"
 
   stub curl "" 1
-  stub docker "" 1
+  stub jq "" 1
 
   run get-actual-commit "${TEST_REPO_NAME}"
 
-  echo "${output}"
   [ "${status}" -eq 0 ]
   [ "${output}" == "${TEST_MERGE_SHA}" ]
 }

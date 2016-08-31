@@ -28,7 +28,7 @@ get-pr-commit() {
   "https://api.github.com/repos/deis/${repo_name}/commits/${commit}")
 
   echo "${resp}" \
-    | docker run -i --rm kamermans/jq '.commit.message' \
+    | jq '.commit.message' \
     | grep -o "\(Merge\)\s[a-f0-9]*\s\(into\)" \
     | grep -o "[a-f0-9]\{40\}"
 }
