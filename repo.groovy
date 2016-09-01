@@ -4,6 +4,14 @@ repos = [
     slackChannel: 'builder',
     runE2e: true],
 
+  [ name: 'charts',
+    buildJobs: false],
+
+  [ name: 'controller',
+    components: [[name: 'controller']],
+    slackChannel: 'controller',
+    runE2e: true],
+
   [ name: 'dockerbuilder',
     components: [[name: 'dockerbuilder']],
     slackChannel: 'builder',
@@ -69,10 +77,8 @@ repos = [
     slackChannel: 'builder',
     runE2e: true],
 
-  [ name: 'controller',
-    components: [[name: 'controller']],
-    slackChannel: 'controller',
-    runE2e: true],
+  [ name: 'workflow-cli',
+    buildJobs: false],
 
   [ name: 'workflow-e2e',
     components: [[name: 'workflow-e2e']],
