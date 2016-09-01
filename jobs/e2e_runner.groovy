@@ -104,7 +104,7 @@ evaluate(new File("${WORKSPACE}/common.groovy"))
         mkdir -p ${defaults.tmpPath}
         eval \$(make image)
 
-        { echo ACTUAL_COMMIT="\$(get-actual-commit e2e-runner)"; \
+        { echo ACTUAL_COMMIT="\$(get-actual-commit e2e-runner \${ghprbActualCommit})"; \
           echo E2E_RUNNER_IMAGE="\${E2E_RUNNER_IMAGE}"; \
           echo UPSTREAM_BUILD_URL="\${BUILD_URL}"; \
           echo COMPONENT_REPO="e2e-runner"; \

@@ -24,7 +24,21 @@ teardown() {
   [ "${output}" == "${TEST_MASTER_SHA}" ]
 }
 
-@test "get-actual-commit : is PR" {
+@test "get-actual-commit : is PR, ghprbActualCommit defined" {
+  export GIT_BRANCH="PR-123"
+  export GIT_COMMIT="${TEST_MERGE_SHA}"
+  export ghprbActualCommit="${TEST_PR_SHA}"
+
+  # don't stub curl or jq as logic should not use them
+  # (test will fail if either binary is invoked)
+
+  run get-actual-commit "${TEST_REPO_NAME}" "${ghprbActualCommit}"
+
+  [ "${status}" -eq 0 ]
+  [ "${output}" == "${TEST_PR_SHA}" ]
+}
+
+@test "get-actual-commit : is PR, ghprbActualCommit not defined" {
   export GIT_BRANCH="PR-123"
   export GIT_COMMIT="${TEST_MERGE_SHA}"
 
@@ -39,7 +53,7 @@ teardown() {
   [ "${output}" == "${TEST_PR_SHA}" ]
 }
 
-@test "get-actual-commit : is PR, use merge sha if GH API curl fails" {
+@test "get-actual-commit : is PR, ghprbActualCommit not defined, use merge sha if GH API curl fails" {
   export GIT_BRANCH="PR-123"
   export GIT_COMMIT="${TEST_MERGE_SHA}"
 
