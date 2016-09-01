@@ -119,7 +119,7 @@ repos.each { Map repo ->
 
               ${cdComponentDir}
 
-              git_commit="\$(get-actual-commit ${repo.name})"
+              git_commit="\$(get-actual-commit ${repo.name} \${ghprbActualCommit})"
 
               make bootstrap || true
 
