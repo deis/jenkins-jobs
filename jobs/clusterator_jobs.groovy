@@ -27,18 +27,8 @@ job("clusterator-create") {
   }
 
   steps {
-    shell """
-      #!/usr/bin/env bash
-
-      set -eo pipefail
-      docker run \
-      -e GCLOUD_CREDENTIALS="\${GCLOUD_CREDENTIALS}" \
-      -e NUMBER_OF_CLUSTERS="\${NUMBER_OF_CLUSTERS}" \
-      -e NUM_NODES="\${NUM_NODES}" \
-      -e MACHINE_TYPE="\${MACHINE_TYPE}" \
-      -e VERSION="\${VERSION}" \
-      quay.io/deisci/clusterator:git-b1810a5 create
-    """.stripIndent().trim()
+    shell new File("${WORKSPACE}/bash/scripts/clusterator_create.sh").text +
+      "clusterator-create ${defaults.k8sClusterVersions}"
   }
 }
 
