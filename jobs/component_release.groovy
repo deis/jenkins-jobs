@@ -39,6 +39,7 @@ repos.each { Map repo ->
 
       parameters {
         stringParam('TAG', '', 'Specific tag to release')
+        stringParam('CLI_VERSION', defaults.cli.release, 'Specific Workflow CLI version to use in downstream e2e run, if applicable')
       }
 
       triggers {
@@ -71,8 +72,8 @@ repos.each { Map repo ->
             result="\$(locate-release-candidate ${component.name} "\${commit}" "\${tag}")"
 
             mkdir -p "\$(dirname ${component.envFile})"
-            echo "\${result}" >> ${component.envFile}
-
+            { echo "\${result}"; \
+              echo "CLI_VERSION=\${CLI_VERSION}"; } >> ${component.envFile}
           """.stripIndent()
         }
 
