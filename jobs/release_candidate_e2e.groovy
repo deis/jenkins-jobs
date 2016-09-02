@@ -38,7 +38,7 @@ job(name) {
     repos.each { Map repo ->
       stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
     }
-    stringParam('CLI_VERSION', defaults.workflow.release, "workflow-cli version")
+    stringParam('CLI_VERSION', '', "Specific Workflow CLI version")
     stringParam('WORKFLOW_BRANCH', "release-${defaults.workflow.release}", "The branch to use for installing the workflow chart.")
     stringParam('WORKFLOW_E2E_BRANCH', "release-${defaults.workflow.release}", "The branch to use for installing the workflow-e2e chart.")
     stringParam('RELEASE', defaults.workflow.release, "Release string for resolving workflow-[release](-e2e) charts")

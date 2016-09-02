@@ -1,16 +1,19 @@
 evaluate(new File("${WORKSPACE}/repo.groovy"))
 
-WORKFLOW_RELEASE = 'v2.4.2'
-TEST_JOB_ROOT_NAME = 'workflow-test'
+def workflowRelease = [
+  chart: 'v2.4.2',
+  cli: 'v2.4.0',
+]
+def testJobRootName = 'workflow-test'
 
 defaults = [
   tmpPath: '/tmp/${JOB_NAME}/${BUILD_NUMBER}',
   envFile: '/tmp/${JOB_NAME}/${BUILD_NUMBER}/env.properties',
   daysToKeep: 14,
   testJob: [
-    master: "${TEST_JOB_ROOT_NAME}",
-    pr: "${TEST_JOB_ROOT_NAME}-pr",
-    release: "${TEST_JOB_ROOT_NAME}-release",
+    master: testJobRootName,
+    pr: "${testJobRootName}-pr",
+    release: "${testJobRootName}-release",
     reportMsg: "Test Report: ${JENKINS_URL}job/\${JOB_NAME}/\${BUILD_NUMBER}/testReport",
     timeoutMins: 30,
   ],
@@ -21,7 +24,10 @@ defaults = [
   maxWorkflowReleaseConcurrentBuilds: 1,
   workflow: [
     chartName: 'workflow-dev',
-    release: "${WORKFLOW_RELEASE}",
+    release: workflowRelease.chart,
+  ],
+  cli: [
+    release: workflowRelease.cli,
   ],
   slack: [
     teamDomain: 'deis',
