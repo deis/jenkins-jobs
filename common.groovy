@@ -1,9 +1,6 @@
 evaluate(new File("${WORKSPACE}/repo.groovy"))
 
-def workflowRelease = [
-  chart: 'v2.5.0',
-  cli: 'v2.5.1',
-]
+def workflowChartRelease = 'v2.5.0'
 def testJobRootName = 'workflow-test'
 
 defaults = [
@@ -24,10 +21,10 @@ defaults = [
   maxWorkflowReleaseConcurrentBuilds: 1,
   workflow: [
     chartName: 'workflow-dev',
-    release: workflowRelease.chart,
+    release: workflowChartRelease,
   ],
   cli: [
-    release: workflowRelease.cli,
+    release: 'stable',
   ],
   slack: [
     teamDomain: 'deis',
