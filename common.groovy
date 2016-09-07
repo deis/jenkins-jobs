@@ -1,7 +1,7 @@
 evaluate(new File("${WORKSPACE}/repo.groovy"))
 
 def workflowRelease = [
-  chart: 'v2.4.2',
+  chart: 'v2.5.0',
   cli: 'v2.4.0',
 ]
 def testJobRootName = 'workflow-test'
