@@ -41,5 +41,16 @@ job('release-candidate-promote') {
 
   steps {
     shell new File("${WORKSPACE}/bash/scripts/retag_release_candidate.sh").text
+
+    downstreamParameterized {
+      trigger('component-release-publish') {
+        parameters {
+          predefinedProps([
+            'COMPONENT': '${COMPONENT_NAME}',
+            'RELEASE': '${RELEASE_TAG}',
+          ])
+        }
+      }
+    }
   }
 }
