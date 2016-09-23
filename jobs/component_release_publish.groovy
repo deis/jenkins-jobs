@@ -26,6 +26,10 @@ job('component-release-publish') {
       notifyFailure()
       notifyRepeatedFailure()
     }
+    git {
+      pushOnlyIfSuccess()
+      branch('origin', 'master')
+    }
   }
 
   parameters {
