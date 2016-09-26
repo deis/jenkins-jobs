@@ -29,7 +29,9 @@ job(name) {
 
   publishers {
     publishHtml {
-      report('build/reports/tests/test/index.html') {
+      report('build/reports/tests/test') {
+        alwaysLinkToLastBuild()
+        reportFiles('index.html')
         reportName('DSL Test Results')
       }
     }
