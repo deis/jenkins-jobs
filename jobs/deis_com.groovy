@@ -83,7 +83,7 @@ job("deis_com_pr") {
   }
 
   triggers {
-    pullRequest {
+    githubPullRequest {
       admin('deis-admin')
       cron('H/5 * * * *')
       useGitHubHooks()

@@ -40,7 +40,7 @@ job(name) {
   triggers {
     githubPush()
 
-    pullRequest {
+    githubPullRequest {
       admin('deis-admin')
       cron('H/5 * * * *')
       useGitHubHooks()
