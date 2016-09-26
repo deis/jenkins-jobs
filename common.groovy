@@ -13,7 +13,7 @@ defaults = [
     master: testJobRootName,
     pr: "${testJobRootName}-pr",
     release: "${testJobRootName}-release",
-    reportMsg: "Test Report: ${System.getenv('JENKINS_URL')}job/\${JOB_NAME}/\${BUILD_NUMBER}/testReport",
+    reportMsg: "Test Report: https://ci.deis.io/job/\${JOB_NAME}/\${BUILD_NUMBER}/testReport",
     timeoutMins: 30,
   ],
   maxBuildsPerNode: 1,
