@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 job('release-candidate-promote') {
   description """
@@ -40,7 +42,7 @@ job('release-candidate-promote') {
   }
 
   steps {
-    shell new File("${WORKSPACE}/bash/scripts/retag_release_candidate.sh").text
+    shell new File("${workspace}/bash/scripts/retag_release_candidate.sh").text
 
     downstreamParameterized {
       trigger('component-release-publish') {

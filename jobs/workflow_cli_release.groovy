@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 def repoName = 'workflow-cli'
 
@@ -63,7 +65,7 @@ job("${repoName}-release") {
   }
 
   steps {
-    shell new File("${WORKSPACE}/bash/scripts/get_latest_tag.sh").text +
+    shell new File("${workspace}/bash/scripts/get_latest_tag.sh").text +
       """
         mkdir -p ${defaults.tmpPath}
         echo TAG="\$(get-latest-tag)" > ${defaults.envFile}

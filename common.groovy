@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/repo.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/repo.groovy"))
 
 def workflowChartRelease = 'v2.5.0'
 def testJobRootName = 'workflow-test'
@@ -11,7 +13,7 @@ defaults = [
     master: testJobRootName,
     pr: "${testJobRootName}-pr",
     release: "${testJobRootName}-release",
-    reportMsg: "Test Report: ${JENKINS_URL}job/\${JOB_NAME}/\${BUILD_NUMBER}/testReport",
+    reportMsg: "Test Report: ${System.getenv('JENKINS_URL')}job/\${JOB_NAME}/\${BUILD_NUMBER}/testReport",
     timeoutMins: 30,
   ],
   maxBuildsPerNode: 1,
@@ -41,5 +43,5 @@ defaults = [
   ],
 ]
 
-e2eRunnerJob = new File("${WORKSPACE}/bash/scripts/run_e2e.sh").text +
+e2eRunnerJob = new File("${workspace}/bash/scripts/run_e2e.sh").text +
   "run-e2e ${defaults.envFile}"

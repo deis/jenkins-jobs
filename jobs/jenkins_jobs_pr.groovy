@@ -1,4 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 name = 'jenkins-jobs-pr'
 
@@ -23,6 +25,14 @@ job(name) {
 
   logRotator {
     daysToKeep defaults.daysToKeep
+  }
+
+  publishers {
+    publishHtml {
+      report('build/reports/tests/test/index.html') {
+        reportName('DSL Test Results')
+      }
+    }
   }
 
   triggers {

@@ -1,6 +1,6 @@
-evaluate(new File("${WORKSPACE}/common.groovy"))
-
-import utilities.StatusUpdater
+def workspace = new File(".").getAbsolutePath()
+if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common.groovy"))
 
 [
   [type: 'master'],
@@ -64,8 +64,20 @@ import utilities.StatusUpdater
                  condition {
                    status(buildStatus, buildStatus)
                    steps {
-                     shell StatusUpdater.updateStatus(
-                       commitStatus: commitStatus, repoName: '${COMPONENT_REPO}', commitSHA: '${ACTUAL_COMMIT}', description: "${name} job ${buildStatus}")
+                     shell """
+                       #!/usr/bin/env bash
+                       set -eo pipefail
+
+                       curl \
+                       --silent \
+                       --user deis-admin:"\${GITHUB_ACCESS_TOKEN}" \
+                       --data '{ \
+                       "state":"${commitStatus}", \
+                       "target_url":"'"\${BUILD_URL}"'", \
+                       "description":"${name} job ${buildStatus}", \
+                       "context":"ci/jenkins/pr"}' \
+                       "https://api.github.com/repos/deis/\${COMPONENT_REPO}/statuses/\${ACTUAL_COMMIT}"
+                     """.stripIndent().trim()
                    }
                  }
                }
@@ -128,22 +140,34 @@ import utilities.StatusUpdater
 
     steps {
       if (isPR) { // update commit with pending status while tests run
-        shell StatusUpdater.updateStatus(
-          commitStatus: 'pending', repoName: '${COMPONENT_REPO}', commitSHA: '${ACTUAL_COMMIT}', description: 'Running e2e tests...')
-
-        setupHelmcEnv = new File("${WORKSPACE}/bash/scripts/setup_helmc_environment.sh").text
+        setupHelmcEnv = new File("${workspace}/bash/scripts/setup_helmc_environment.sh").text
         setupHelmcEnv += """
           mkdir -p ${defaults.tmpPath}
           setup-helmc-env >> ${defaults.envFile}
         """.stripIndent().trim()
 
         shell setupHelmcEnv
+
+        shell """
+          #!/usr/bin/env bash
+          set -eo pipefail
+
+          curl \
+          --silent \
+          --user deis-admin:"\${GITHUB_ACCESS_TOKEN}" \
+          --data '{ \
+          "state":"pending", \
+          "target_url":"'"\${BUILD_URL}"'", \
+          "description":"Running e2e tests...", \
+          "context":"ci/jenkins/pr"}' \
+          "https://api.github.com/repos/deis/\${COMPONENT_REPO}/statuses/\${ACTUAL_COMMIT}"
+        """.stripIndent().trim()
       }
 
       shell e2eRunnerJob
 
       if (isMaster) { // send component name and sha to downstream component-promote job
-        main  = new File("${WORKSPACE}/bash/scripts/get_component_and_sha.sh").text
+        main  = new File("${workspace}/bash/scripts/get_component_and_sha.sh").text
         main += """
           #!/usr/bin/env bash
 
