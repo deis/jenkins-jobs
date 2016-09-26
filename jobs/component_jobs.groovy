@@ -36,12 +36,28 @@ repos.each { Map repo ->
           }
         }
 
+        def statusesToNotify = ['FAILURE']
         publishers {
-          slackNotifications {
-            notifyFailure()
-            notifyRepeatedFailure()
-           }
-         }
+          postBuildScripts {
+            onlyIfBuildSucceeds(false)
+            steps {
+              statusesToNotify.each { buildStatus ->
+                conditionalSteps {
+                  condition {
+                   status(buildStatus, buildStatus)
+                    steps {
+                      def message = 'Commit Author: ${COMMIT_AUTHOR_EMAIL}'
+                      shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                        """
+                          slack-notify ${repo.slackChannel} ${buildStatus} "${message}"
+                        """.stripIndent().trim()
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
 
         if (isPR) {
           concurrentBuild()
@@ -99,6 +115,7 @@ repos.each { Map repo ->
             string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
             string("QUAY_PASSWORD", "c67dc0a1-c8c4-4568-a73d-53ad8530ceeb")
             string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+            string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
           }
         }
 

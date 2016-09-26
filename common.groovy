@@ -13,7 +13,6 @@ defaults = [
     master: testJobRootName,
     pr: "${testJobRootName}-pr",
     release: "${testJobRootName}-release",
-    reportMsg: "Test Report: https://ci.deis.io/job/\${JOB_NAME}/\${BUILD_NUMBER}/testReport",
     timeoutMins: 30,
   ],
   maxBuildsPerNode: 1,
@@ -31,6 +30,7 @@ defaults = [
   slack: [
     teamDomain: 'deis',
     channel: '#testing',
+    webhookURL: 'a53b3a9e-d649-4cff-9997-6c24f07743c8',
   ],
   helm: [
     remoteRepo: 'https://github.com/deis/charts.git',

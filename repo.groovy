@@ -1,7 +1,7 @@
 repos = [
   [ name: 'builder',
     components: [[name: 'builder']],
-    slackChannel: 'builder',
+    slackChannel: '#builder',
     runE2e: true],
 
   [ name: 'charts',
@@ -9,77 +9,77 @@ repos = [
 
   [ name: 'controller',
     components: [[name: 'controller']],
-    slackChannel: 'controller',
+    slackChannel: '#controller',
     runE2e: true],
 
   [ name: 'dockerbuilder',
     components: [[name: 'dockerbuilder']],
-    slackChannel: 'builder',
+    slackChannel: '#builder',
     runE2e: true],
 
   [ name: 'fluentd',
     components: [[name: 'fluentd']],
-    slackChannel: 'logger',
+    slackChannel: '#logger',
     runE2e: true],
 
   [ name: 'logger',
     components: [[name: 'logger']],
-    slackChannel: 'logger',
+    slackChannel: '#logger',
     runE2e: true],
 
   [ name: 'minio',
     components: [[name: 'minio']],
-    slackChannel: 'object-store',
+    slackChannel: '#object-store',
     runE2e: true],
 
   [ name: 'monitor',
     components: [[name: 'grafana'], [name: 'influxdb'], [name: 'telegraf']],
-    slackChannel: 'monitor',
+    slackChannel: '#monitor',
     runE2e: false],
 
   [ name: 'nsq',
     components: [[name: 'nsq']],
-    slackChannel: 'logger',
+    slackChannel: '#logger',
     runE2e: true],
 
   [ name: 'postgres',
     components: [[name: 'postgres']],
-    slackChannel: 'postgres',
+    slackChannel: '#postgres',
     runE2e: true],
 
   [ name: 'redis',
     components: [[name: 'redis']],
-    slackChannel: 'logger',
+    slackChannel: '#logger',
     runE2e: true],
 
   [ name: 'registry',
     components: [[name: 'registry']],
-    slackChannel: 'registry',
+    slackChannel: '#registry',
     runE2e: true],
 
   [ name: 'registry-proxy',
     components: [[name: 'registry-proxy']],
-    slackChannel: 'registry',
+    slackChannel: '#registry',
     runE2e: true],
 
   [ name: 'registry-token-refresher',
     components: [[name: 'registry-token-refresher']],
-    slackChannel: 'registry',
+    slackChannel: '#registry',
     runE2e: false],
 
   [ name: 'router',
     components: [[name: 'router']],
-    slackChannel: 'router',
+    slackChannel: '#router',
     runE2e: true],
 
   [ name: 'slugbuilder',
     components: [[name: 'slugbuilder']],
-    slackChannel: 'builder',
+    slackChannel: '#builder',
     runE2e: true],
 
   [ name: 'slugrunner',
     components: [[name: 'slugrunner']],
-    slackChannel: 'builder',
+    slackChannel: '#builder',
     runE2e: true],
 
   [ name: 'workflow-cli',
@@ -87,12 +87,12 @@ repos = [
 
   [ name: 'workflow-e2e',
     components: [[name: 'workflow-e2e']],
-    slackChannel: 'testing',
+    slackChannel: '#testing',
     runE2e: true],
 
   [ name: 'workflow-manager',
     components: [[name: 'workflow-manager']],
-    slackChannel: 'wfm',
+    slackChannel: '#wfm',
     runE2e: false],
 ]
 
