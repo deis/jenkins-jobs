@@ -49,7 +49,6 @@ job('component-release-publish') {
     shell '''
       git add versions/${COMPONENT}/${RELEASE}.json
       git commit versions/${COMPONENT}/${RELEASE}.json -m "feat(versions): add ${COMPONENT} ${RELEASE}"
-      git push origin master
     '''.stripIndent().trim()
   }
 }
