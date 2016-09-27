@@ -88,6 +88,17 @@ job("${repoName}-release") {
 }
 
 downstreamJobs.each{ Map thisJob ->
+  def bucket = "gs://workflow-cli-release"
+
+  def headers  = "-h 'x-goog-meta-ci-job:\${JOB_NAME}' "
+      headers += "-h 'x-goog-meta-ci-number:\${BUILD_NUMBER}' "
+      headers += "-h 'x-goog-meta-ci-url:\${BUILD_URL}'"
+
+  def upload_script = "echo \${GCS_KEY_JSON} | base64 -d - > /tmp/key.json "
+      upload_script += "&& gcloud auth activate-service-account -q --key-file /tmp/key.json "
+      upload_script += "&& gsutil -mq ${headers} cp -a public-read -r _dist/* ${bucket}"
+
+  // default variants
   job(thisJob.name) {
     scm {
       git {
@@ -125,17 +136,6 @@ downstreamJobs.each{ Map thisJob ->
     }
 
     steps {
-      def bucket = "gs://workflow-cli-release"
-
-      def headers  = "-h 'x-goog-meta-ci-job:\${JOB_NAME}' "
-          headers += "-h 'x-goog-meta-ci-number:\${BUILD_NUMBER}' "
-          headers += "-h 'x-goog-meta-ci-url:\${BUILD_URL}'"
-
-      def script  = "sh -c 'make ${thisJob.target} "
-          script += "&& echo \${GCS_KEY_JSON} | base64 -d - > /tmp/key.json "
-          script += "&& gcloud auth activate-service-account -q --key-file /tmp/key.json "
-          script += "&& gsutil -mq ${headers} cp -a public-read -r _dist/* ${bucket}'"
-
       shell """
         #!/usr/bin/env bash
 
@@ -144,12 +144,96 @@ downstreamJobs.each{ Map thisJob ->
         git_commit="\$(git checkout "\${TAG}" && git rev-parse HEAD)"
         revision_image=quay.io/deisci/workflow-cli-dev:"\${git_commit:0:7}"
 
-        # Build and upload artifacts
         docker run \
-          -e GCS_KEY_JSON=\"\${GCSKEY}\" \
+          -e GCS_KEY_JSON=\""\${GCSKEY}"\" \
           -e GIT_TAG="\$(git describe --abbrev=0 --tags)" \
-          --rm "\${revision_image}" ${script}
+          --rm "\${revision_image}" sh -c 'make ${thisJob.target} && ${upload_script}'
       """.stripIndent().trim()
+
+      downstreamParameterized {
+        // trigger job for (cgo-enabled) darwin amd64 build/upload
+        trigger("${thisJob.name}-darwin-amd64") {
+          block {
+            buildStepFailure('FAILURE')
+            failure('FAILURE')
+            unstable('UNSTABLE')
+          }
+          parameters {
+            predefinedProp('TAG', '${TAG}')
+            nodeLabel('node', 'darwin')
+          }
+        }
+      }
+    }
+  }
+
+  // darwin-amd64 variants
+  job("${thisJob.name}-darwin-amd64") {
+    def workdir = "golang/src/github.com/deis/workflow-cli"
+
+    scm {
+      git {
+        remote {
+          github(gitInfo.repo)
+          credentials(gitInfo.creds)
+          refspec(gitInfo.refspec)
+        }
+        branch(gitInfo.branch)
+        extensions {
+          relativeTargetDirectory(workdir)
+        }
+      }
+    }
+
+    publishers {
+      slackNotifications {
+        notifyFailure()
+        notifyRepeatedFailure()
+      }
+    }
+
+    logRotator {
+      daysToKeep defaults.daysToKeep
+    }
+
+    parameters {
+      stringParam('CGO_ENABLED', '1', 'CGO_ENABLED value for darwin build (default is 1/enabled)')
+      stringParam('TAG', '', 'Specific tag to release')
+      nodeParam('DARWIN_HOST') {
+        description('Darwin host to run on')
+        defaultNodes(['node5-boulder'])
+      }
+    }
+
+    wrappers {
+      buildName("\${TAG} #\${BUILD_NUMBER}")
+      timestamps()
+      colorizeOutput 'xterm'
+      credentialsBinding {
+        string("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
+      }
+    }
+
+    steps {
+      shell new File("${workspace}/bash/scripts/build_darwin_cli_binary.sh").text +
+        """
+          #!/usr/bin/env bash
+
+          set -eo pipefail
+
+          cd ${workdir}
+
+          git_commit="\$(git checkout "\${TAG}" && git rev-parse HEAD)"
+          revision_image=quay.io/deisci/workflow-cli-dev:"\${git_commit:0:7}"
+
+          build-darwin-cli-binary ${thisJob.target}
+
+          docker run \
+            -e GCS_KEY_JSON=\"\${GCSKEY}\" \
+            -v "\${GOPATH}/src/github.com/deis/workflow-cli/_dist":/workdir/_dist \
+            -w /workdir \
+            --rm "\${revision_image}" sh -c '${upload_script}'
+        """.stripIndent().trim()
     }
   }
 }
