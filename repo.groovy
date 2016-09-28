@@ -62,6 +62,11 @@ repos = [
     slackChannel: 'registry',
     runE2e: true],
 
+  [ name: 'registry-token-refresher',
+    components: [[name: 'registry-token-refresher']],
+    slackChannel: 'registry',
+    runE2e: false],
+
   [ name: 'router',
     components: [[name: 'router']],
     slackChannel: 'router',
