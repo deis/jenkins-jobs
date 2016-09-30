@@ -30,12 +30,13 @@ evaluate(new File("${workspace}/common.groovy"))
     publishers {
       slackNotifications {
         // TODO: re-enable once integrationToken can make use of Jenkins'
-        // secure credentials handling:
-        // https://github.com/jenkinsci/slack-plugin/pull/208
+        // secure credentials handling, for broadcasting to specific channels:
+        // https://github.com/jenkinsci/slack-plugin/pull/247
         // teamDomain(defaults.slack['teamDomain'])
         // integrationToken('${SLACK_INTEGRATION_TOKEN}')
         // projectChannel('#${UPSTREAM_SLACK_CHANNEL}')
         customMessage([commitAuthorMsg, testReportMsg, upstreamJobMsg].join('\n'))
+        notifySuccess()
         notifyFailure()
         notifyRepeatedFailure()
         showCommitList()
