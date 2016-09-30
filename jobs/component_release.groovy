@@ -81,31 +81,6 @@ repos.each { Map repo ->
 
         shell main
 
-        if (repo.runE2e) {
-          conditionalSteps {
-            condition {
-              status('SUCCESS', 'SUCCESS')
-            }
-            steps {
-              repo.components.each{ Map component ->
-                downstreamParameterized {
-                  trigger('release-candidate-e2e') {
-                    block {
-                      buildStepFailure('FAILURE')
-                      failure('FAILURE')
-                      unstable('UNSTABLE')
-                    }
-                    parameters {
-                      propertiesFile(component.envFile)
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        // If e2e job results in `SUCCESS`, promote release candidate
         conditionalSteps {
           condition {
             status('SUCCESS', 'SUCCESS')
