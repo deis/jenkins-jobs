@@ -132,6 +132,34 @@ Publish───────────────────────┐
 └─────────────────────────────┘
 ```
 
+### When Workflow-CLI is tagged
+```
+Trigger─────────────────────────────────┐
+│                                       │   - triggered by `v1.2.3` git tag push webhook
+│       "workflow-cli-release"          │   - pass this to downstream job(s)
+│                                       │
+└──────────┬────────────────────────────┘
+           │
+           ▼
+Build and Release - defaults────────────┐
+│                                       │   - check out TAG of source code
+│      "workflow-cli-build-tag"         │   - build cross-compiled default (linux, darwin and windows; amd64, 386) binaries
+│       TAG=v1.2.4                      │   - upload binaries
+│                                       │
+└──────────┬────────────────────────────┘
+           │
+           ▼
+Build and Release - darwin amd64────────┐
+│                                       │   - check out TAG of source code
+│ "workflow-cli-build-tag-darwin-amd64" |   - build darwin amd64 binary with CGO_ENABLED=1 on OSX slave
+│  TAG=v1.2.4                           │   - upload darwin amd64 binary
+│                                       │
+└───────────────────────────────────────┘
+
+Note: There are also "workflow-cli-build-stable(-darwin-amd64)" variants of the two downstream jobs above, but these
+are currently only triggered manually.
+```
+
 ## License
 
 Copyright 2013, 2014, 2015, 2016 Engine Yard, Inc.
