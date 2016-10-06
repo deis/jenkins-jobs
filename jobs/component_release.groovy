@@ -73,9 +73,10 @@ repos.each { Map repo ->
             echo "Locating release candidate based on tag commit '\${commit}'..."
             result="\$(locate-release-candidate ${component.name} "\${commit}" "\${tag}")"
 
+            mkdir -p ${defaults.tmpPath}
             mkdir -p "\$(dirname ${component.envFile})"
             { echo "\${result}"; \
-              echo "CLI_VERSION=\${CLI_VERSION}"; } >> ${component.envFile}
+              echo "CLI_VERSION=\${CLI_VERSION}"; } | tee -a ${component.envFile} ${defaults.envFile}
           """.stripIndent()
         }
 
@@ -96,6 +97,28 @@ repos.each { Map repo ->
                   }
                   parameters {
                     propertiesFile(component.envFile)
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (repo.chart) {
+          conditionalSteps {
+            condition {
+              status('SUCCESS', 'SUCCESS')
+            }
+            steps {
+              downstreamParameterized {
+                trigger("${repo.chart}-chart-publish") {
+                  block {
+                    buildStepFailure('FAILURE')
+                    failure('FAILURE')
+                    unstable('UNSTABLE')
+                  }
+                  parameters {
+                    propertiesFile(defaults.envFile)
                   }
                 }
               }
