@@ -58,3 +58,22 @@ get-status-color() {
 
   echo "${color}"
 }
+
+format-test-job-message() {
+  issueWarning="${1}"
+
+  message=''
+  if [ -n "${UPSTREAM_BUILD_URL}" ]; then
+    message="Upstream Build: ${UPSTREAM_BUILD_URL}"
+  fi
+  if [ -n "${COMMIT_AUTHOR_EMAIL}" ]; then
+    message="${message}
+    Commit Author: ${COMMIT_AUTHOR_EMAIL}"
+  fi
+  if [ -n "${COMPONENT_REPO}" ] && $issueWarning; then
+    message="${message}
+    *Note: This implies component '${COMPONENT_REPO}' has not been promoted as a release candidate!*"
+  fi
+
+  echo "${message}"
+}

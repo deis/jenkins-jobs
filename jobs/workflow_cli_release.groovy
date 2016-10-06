@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 def repoName = 'workflow-cli'
 
@@ -40,10 +40,7 @@ job("${repoName}-release") {
   }
 
   publishers {
-    slackNotifications {
-      notifyFailure()
-      notifyRepeatedFailure()
-    }
+    slackNotify(channel: repos[repoName].slackChannel, statuses: ['FAILURE'])
   }
 
   logRotator {
@@ -62,6 +59,9 @@ job("${repoName}-release") {
     buildName('${GIT_BRANCH} ${TAG} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
+    credentialsBinding {
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+    }
   }
 
   steps {
@@ -112,10 +112,7 @@ downstreamJobs.each{ Map thisJob ->
     }
 
     publishers {
-      slackNotifications {
-        notifyFailure()
-        notifyRepeatedFailure()
-      }
+      slackNotify([channel: repos[repoName].slackChannel, statuses: ['FAILURE']])
     }
 
     logRotator {
@@ -186,10 +183,7 @@ downstreamJobs.each{ Map thisJob ->
     }
 
     publishers {
-      slackNotifications {
-        notifyFailure()
-        notifyRepeatedFailure()
-      }
+      slackNotify([channel: repos[repoName].slackChannel, statuses: ['FAILURE']])
     }
 
     logRotator {

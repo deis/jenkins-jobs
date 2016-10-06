@@ -83,6 +83,7 @@ repos = [
     runE2e: true],
 
   [ name: 'workflow-cli',
+    slackChannel: '#workflow',
     buildJobs: false],
 
   [ name: 'workflow-e2e',

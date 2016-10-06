@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 job('release-candidate-promote') {
   description """
@@ -15,10 +15,7 @@ job('release-candidate-promote') {
   }
 
   publishers {
-    slackNotifications {
-      notifyFailure()
-      notifyRepeatedFailure()
-    }
+    slackNotify(channel: '${UPSTREAM_SLACK_CHANNEL}', statuses: ['FAILURE'])
   }
 
   parameters {
@@ -29,6 +26,7 @@ job('release-candidate-promote') {
     stringParam('COMPONENT_NAME', '', 'Component name')
     stringParam('COMPONENT_SHA', '', 'Commit sha used for candidate image tag')
     stringParam('RELEASE_TAG', '', 'Release tag value for retagging candidate image')
+    stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, 'Upstream/Component Slack channel')
   }
 
   wrappers {
@@ -38,6 +36,7 @@ job('release-candidate-promote') {
     credentialsBinding {
       string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
       string("QUAY_PASSWORD", "8317a529-10f7-40b5-abd4-a42f242f22f0")
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
 

@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 job('component-release-publish') {
   description """
@@ -24,10 +24,8 @@ job('component-release-publish') {
   }
 
   publishers {
-    slackNotifications {
-      notifyFailure()
-      notifyRepeatedFailure()
-    }
+    slackNotify(channel: '${UPSTREAM_SLACK_CHANNEL}', statuses: ['FAILURE'])
+
     git {
       pushOnlyIfSuccess()
       branch('origin', 'master')
@@ -37,12 +35,16 @@ job('component-release-publish') {
   parameters {
     stringParam('COMPONENT', '', "Component name, e.g. 'controller'")
     stringParam('RELEASE', '', "Release string, e.g. 'v1.2.3'")
+    stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream/Component Slack channel")
   }
 
   wrappers {
     buildName('${COMPONENT} ${RELEASE} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
+    credentialsBinding {
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+    }
   }
 
   steps {
