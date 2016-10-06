@@ -25,7 +25,6 @@ job(name) {
 
   publishers {
     slackNotifications {
-      customMessage(defaults.testJob["reportMsg"])
       notifyFailure()
       includeTestSummary()
      }

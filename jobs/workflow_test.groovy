@@ -12,10 +12,6 @@ evaluate(new File("${workspace}/common.groovy"))
   name = defaults.testJob[config.type]
   repoName = 'charts'
 
-  commitAuthorMsg = 'Commit Author: ${COMMIT_AUTHOR_EMAIL}'
-  testReportMsg = defaults.testJob["reportMsg"]
-  upstreamJobMsg = "Upstream job: \${UPSTREAM_BUILD_URL}"
-
   job(name) {
     description """
       <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a
@@ -28,52 +24,55 @@ evaluate(new File("${workspace}/common.groovy"))
     }
 
     publishers {
-      slackNotifications {
-        // TODO: re-enable once integrationToken can make use of Jenkins'
-        // secure credentials handling, for broadcasting to specific channels:
-        // https://github.com/jenkinsci/slack-plugin/pull/247
-        // teamDomain(defaults.slack['teamDomain'])
-        // integrationToken('${SLACK_INTEGRATION_TOKEN}')
-        // projectChannel('#${UPSTREAM_SLACK_CHANNEL}')
-        customMessage([commitAuthorMsg, testReportMsg, upstreamJobMsg].join('\n'))
-        notifySuccess()
-        notifyFailure()
-        notifyRepeatedFailure()
-        showCommitList()
-        includeTestSummary()
-       }
-
       archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
-       retainLongStdout(false)
-       allowEmptyResults(true)
+        retainLongStdout(false)
+        allowEmptyResults(true)
       }
 
       archiveArtifacts {
-       pattern('${BUILD_NUMBER}/logs/**')
-       onlyIfSuccessful(false)
-       fingerprint(false)
-       allowEmpty(true)
+        pattern('${BUILD_NUMBER}/logs/**')
+        onlyIfSuccessful(false)
+        fingerprint(false)
+        allowEmpty(true)
       }
 
-      if (isPR) {
-        def statuses = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
-        postBuildScripts {
-         onlyIfBuildSucceeds(false)
-         steps {
-           statuses.each { buildStatus, commitStatus ->
-             conditionalSteps {
-               condition {
-                  status(buildStatus, buildStatus)
-                  steps {
-                   shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
+      def statusesToNotify = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
+      postBuildScripts {
+        onlyIfBuildSucceeds(false)
+        steps {
+          statusesToNotify.each { buildStatus, commitStatus ->
+            conditionalSteps {
+              condition {
+                status(buildStatus, buildStatus)
+                steps {
+                  // Dispatch Slack notification
+                  def channel = '${UPSTREAM_SLACK_CHANNEL}'
+                  shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
                     """
-                      update-commit-status \
-                        ${commitStatus} \
-                        \${COMPONENT_REPO} \
-                        \${ACTUAL_COMMIT} \
-                        \${BUILD_URL} \
-                        "${name} job ${buildStatus}"
+                      # format message depending on values present in env
+                      message=''
+                      if [ -n "\${UPSTREAM_BUILD_URL}" ]; then
+                        message="Upstream Build: \${UPSTREAM_BUILD_URL}"
+                      fi
+                      if [ -n "\${COMMIT_AUTHOR_EMAIL}" ]; then
+                        message="\${message}
+                        Commit Author: \${COMMIT_AUTHOR_EMAIL}"
+                      fi
+
+                      slack-notify ${channel} ${buildStatus} "\${message}"
                     """.stripIndent().trim()
+
+                  // Update GitHub PR
+                  if (isPR) {
+                    shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
+                      """
+                        update-commit-status \
+                          ${commitStatus} \
+                          \${COMPONENT_REPO} \
+                          \${ACTUAL_COMMIT} \
+                          \${BUILD_URL} \
+                          "${name} job ${buildStatus}"
+                      """.stripIndent().trim()
                   }
                 }
               }
@@ -100,7 +99,7 @@ evaluate(new File("${workspace}/common.groovy"))
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
       }
       stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
-      stringParam('UPSTREAM_SLACK_CHANNEL', '', "Upstream Slack channel")
+      stringParam('UPSTREAM_SLACK_CHANNEL', '#testing', "Upstream Slack channel")
       stringParam('COMPONENT_REPO', '', "Component repo name")
       stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
       stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
@@ -108,7 +107,7 @@ evaluate(new File("${workspace}/common.groovy"))
       stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:canary', "The e2e-runner image")
       stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")
       stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
-      stringParam('COMMIT_AUTHOR_EMAIL', 'n/a', "Commit author email address")
+      stringParam('COMMIT_AUTHOR_EMAIL', '', "Commit author email address")
       stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
       stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
     }
@@ -131,6 +130,7 @@ evaluate(new File("${workspace}/common.groovy"))
       credentialsBinding {
         string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
         string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+        string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       }
     }
 
