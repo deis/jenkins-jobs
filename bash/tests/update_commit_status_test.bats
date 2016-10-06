@@ -39,7 +39,16 @@ strip-ws() {
     Updating commit '\'${git_commit}\'' in repo '\'${repo_name}\'' with the following data:
     '${expected_data}'
   '
-  
+
+  [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "update-commit-status: commit empty" {
+  run update-commit-status
+
+  expected_output='Commit value is empty; cannot update status.'
+
   [ "${status}" -eq 0 ]
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
