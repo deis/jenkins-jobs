@@ -17,8 +17,6 @@ job('component-release-publish') {
     }
   }
 
-  concurrentBuild()
-
   logRotator {
     daysToKeep defaults.daysToKeep
   }
