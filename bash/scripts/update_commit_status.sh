@@ -8,11 +8,6 @@ update-commit-status() {
   target_url="${4}"
   description="${5}"
 
-  if [ -z "${git_commit}" ]; then
-    echo "Commit value is empty; cannot update status."
-    return 0
-  fi
-
   data='
     {"state":"'"${commit_status}"'",
     "target_url":"'"${target_url}"'",

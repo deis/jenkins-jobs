@@ -43,12 +43,3 @@ strip-ws() {
   [ "${status}" -eq 0 ]
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
-
-@test "update-commit-status: commit empty" {
-  run update-commit-status
-
-  expected_output='Commit value is empty; cannot update status.'
-
-  [ "${status}" -eq 0 ]
-  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
-}
