@@ -46,20 +46,11 @@ evaluate(new File("${workspace}/common.groovy"))
                 status(buildStatus, buildStatus)
                 steps {
                   // Dispatch Slack notification
-                  def channel = '${UPSTREAM_SLACK_CHANNEL}'
+                  def issueWarning = (isMaster && buildStatus == 'FAILURE')
                   shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
                     """
-                      # format message depending on values present in env
-                      message=''
-                      if [ -n "\${UPSTREAM_BUILD_URL}" ]; then
-                        message="Upstream Build: \${UPSTREAM_BUILD_URL}"
-                      fi
-                      if [ -n "\${COMMIT_AUTHOR_EMAIL}" ]; then
-                        message="\${message}
-                        Commit Author: \${COMMIT_AUTHOR_EMAIL}"
-                      fi
-
-                      slack-notify ${channel} ${buildStatus} "\${message}"
+                      message="\$(format-test-job-message ${issueWarning})"
+                      slack-notify \${UPSTREAM_SLACK_CHANNEL} ${buildStatus} "\${message}"
                     """.stripIndent().trim()
 
                   // Update GitHub PR
