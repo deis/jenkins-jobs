@@ -66,12 +66,14 @@ evaluate(new File("${workspace}/common.groovy"))
                   if (isPR) {
                     shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
                       """
-                        update-commit-status \
-                          ${commitStatus} \
-                          \${COMPONENT_REPO} \
-                          \${ACTUAL_COMMIT} \
-                          \${BUILD_URL} \
-                          "${name} job ${buildStatus}"
+                        if [ -n "\${ACTUAL_COMMIT}" ]; then
+                          update-commit-status \
+                            ${commitStatus} \
+                            \${COMPONENT_REPO} \
+                            \${ACTUAL_COMMIT} \
+                            \${BUILD_URL} \
+                            "${name} job ${buildStatus}"
+                        fi
                       """.stripIndent().trim()
                   }
                 }
@@ -138,12 +140,14 @@ evaluate(new File("${workspace}/common.groovy"))
       if (isPR) { // update commit with pending status while tests run
         shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
           """
-            update-commit-status \
-              "pending" \
-              \${COMPONENT_REPO} \
-              \${ACTUAL_COMMIT} \
-              \${BUILD_URL} \
-              "Running e2e tests..."
+            if [ -n "\${ACTUAL_COMMIT}" ]; then
+              update-commit-status \
+                "pending" \
+                \${COMPONENT_REPO} \
+                \${ACTUAL_COMMIT} \
+                \${BUILD_URL} \
+                "Running e2e tests..."
+            fi
           """.stripIndent().trim()
 
         shell new File("${workspace}/bash/scripts/setup_helmc_environment.sh").text +
