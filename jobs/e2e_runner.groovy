@@ -43,7 +43,7 @@ evaluate(new File("${workspace}/common.groovy"))
 
     if (isPR) { // set up GitHubPullRequest build trigger
       triggers {
-        pullRequest {
+        githubPullRequest {
           admin('deis-admin')
           cron('H/5 * * * *')
           useGitHubHooks()

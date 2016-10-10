@@ -73,7 +73,7 @@ repos.each { Map repo ->
 
         if (isPR) { // set up GitHubPullRequest build trigger
           triggers {
-            pullRequest {
+            githubPullRequest {
               admin('deis-admin')
               cron('H/5 * * * *')
               useGitHubHooks()
