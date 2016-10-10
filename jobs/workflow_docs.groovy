@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 name = 'workflow-docs'
 downstreamJobName = 'deploy_website'

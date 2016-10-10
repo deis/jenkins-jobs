@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 job('component-promote') {
   description """
@@ -14,15 +14,12 @@ job('component-promote') {
     maxTotal(defaults.maxTotalConcurrentBuilds)
   }
 
-  logRotator {
-    daysToKeep defaults.daysToKeep
+  publishers {
+    slackNotify(channel: '${UPSTREAM_SLACK_CHANNEL}', statuses: ['FAILURE'])
   }
 
-  publishers {
-    slackNotifications {
-      notifyFailure()
-      notifyRepeatedFailure()
-    }
+  logRotator {
+    daysToKeep defaults.daysToKeep
   }
 
   parameters {
@@ -32,6 +29,7 @@ job('component-promote') {
     stringParam('QUAY_EMAIL', 'deis+jenkins@deis.com', 'Quay email address')
     stringParam('COMPONENT_NAME', '', 'Component name')
     stringParam('COMPONENT_SHA', '', 'Commit sha used for image tag')
+    stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, 'Upstream/Component slack channel')
   }
 
   wrappers {
@@ -41,6 +39,7 @@ job('component-promote') {
     credentialsBinding {
       string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
       string("QUAY_PASSWORD", "8317a529-10f7-40b5-abd4-a42f242f22f0")
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
 

@@ -93,3 +93,78 @@ strip-ws() {
   [ "${status}" -eq 1 ]
   [ "${output}" == "Usage: slack-notify channel status [message]" ]
 }
+
+@test "format-test-job-message: UPSTREAM_BUILD_URL exists" {
+  UPSTREAM_BUILD_URL="bogus.upstream.build.url"
+
+  expected_output='
+    Upstream Build: '"${UPSTREAM_BUILD_URL}"'
+  '
+
+  run format-test-job-message false
+
+  [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "format-test-job-message: COMMIT_AUTHOR_EMAIL exists" {
+  COMMIT_AUTHOR_EMAIL="commit@author.me"
+
+  expected_output='
+    Commit Author: '"${COMMIT_AUTHOR_EMAIL}"'
+  '
+
+  run format-test-job-message false
+
+  [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "format-test-job-message: COMPONENT_REPO, UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, issue warning true" {
+  COMPONENT_REPO="test-component"
+  UPSTREAM_BUILD_URL="bogus.upstream.build.url"
+  COMMIT_AUTHOR_EMAIL="commit@author.me"
+
+  expected_output='
+    Upstream Build: '"${UPSTREAM_BUILD_URL}"'
+    Commit Author: '"${COMMIT_AUTHOR_EMAIL}"'
+    *Note: This implies component '"'${COMPONENT_REPO}'"' has not been promoted as a release candidate!*
+  '
+
+  run format-test-job-message true
+  
+  [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "format-test-job-message: COMPONENT_REPO, UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, issue warning false" {
+  COMPONENT_REPO="test-component"
+  UPSTREAM_BUILD_URL="bogus.upstream.build.url"
+  COMMIT_AUTHOR_EMAIL="commit@author.me"
+
+  expected_output='
+    Upstream Build: '"${UPSTREAM_BUILD_URL}"'
+    Commit Author: '"${COMMIT_AUTHOR_EMAIL}"'
+  '
+
+  run format-test-job-message false
+
+  [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
+@test "format-test-job-message: UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, issue warning true" {
+  # No COMPONENT_REPO in env, so warning will not be issued
+  UPSTREAM_BUILD_URL="bogus.upstream.build.url"
+  COMMIT_AUTHOR_EMAIL="commit@author.me"
+
+  expected_output='
+    Upstream Build: '"${UPSTREAM_BUILD_URL}"'
+    Commit Author: '"${COMMIT_AUTHOR_EMAIL}"'
+  '
+
+  run format-test-job-message true
+
+  [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}

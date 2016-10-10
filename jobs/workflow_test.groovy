@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 [
   [type: 'master'],
@@ -45,24 +45,15 @@ evaluate(new File("${workspace}/common.groovy"))
               condition {
                 status(buildStatus, buildStatus)
                 steps {
-                  // Dispatch Slack notification
-                  def channel = '${UPSTREAM_SLACK_CHANNEL}'
+                  // Send Slack Notification
+                  def issueWarning = (isMaster && buildStatus == 'FAILURE')
                   shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
                     """
-                      # format message depending on values present in env
-                      message=''
-                      if [ -n "\${UPSTREAM_BUILD_URL}" ]; then
-                        message="Upstream Build: \${UPSTREAM_BUILD_URL}"
-                      fi
-                      if [ -n "\${COMMIT_AUTHOR_EMAIL}" ]; then
-                        message="\${message}
-                        Commit Author: \${COMMIT_AUTHOR_EMAIL}"
-                      fi
-
-                      slack-notify ${channel} ${buildStatus} "\${message}"
+                      message="\$(format-test-job-message ${issueWarning})"
+                      slack-notify \${UPSTREAM_SLACK_CHANNEL} ${buildStatus} "\${message}"
                     """.stripIndent().trim()
 
-                  // Update GitHub PR
+                  // Update GitHub PR status, if applicable
                   if (isPR) {
                     shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
                       """
@@ -101,7 +92,7 @@ evaluate(new File("${workspace}/common.groovy"))
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
       }
       stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
-      stringParam('UPSTREAM_SLACK_CHANNEL', '#testing', "Upstream Slack channel")
+      stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream Slack channel")
       stringParam('COMPONENT_REPO', '', "Component repo name")
       stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
       stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
@@ -159,7 +150,7 @@ evaluate(new File("${workspace}/common.groovy"))
 
       shell e2eRunnerJob
 
-      if (isMaster) { // send component name and sha to downstream component-promote job
+      if (isMaster) { // send component info to downstream component-promote job
         shell new File("${workspace}/bash/scripts/get_component_and_sha.sh").text +
           """
             #!/usr/bin/env bash
@@ -167,7 +158,8 @@ evaluate(new File("${workspace}/common.groovy"))
             set -eo pipefail
 
             mkdir -p ${defaults.tmpPath}
-            get-component-and-sha >> ${defaults.envFile}
+            { get-component-and-sha; \
+              echo "UPSTREAM_SLACK_CHANNEL=\${UPSTREAM_SLACK_CHANNEL}"; } >> ${defaults.envFile}
           """.stripIndent().trim()
 
         conditionalSteps {

@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 name = 'workflow-test-release'
 
@@ -24,23 +24,20 @@ job(name) {
   }
 
   publishers {
-    slackNotifications {
-      notifyFailure()
-      includeTestSummary()
-     }
+    slackNotify(channel: '#release', statuses: ['FAILURE'])
 
-     archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
-       retainLongStdout(false)
-       allowEmptyResults(true)
-     }
+    archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
+     retainLongStdout(false)
+     allowEmptyResults(true)
+    }
 
-     archiveArtifacts {
-       pattern('${BUILD_NUMBER}/logs/**')
-       onlyIfSuccessful(false)
-       fingerprint(false)
-       allowEmpty(true)
-     }
-   }
+    archiveArtifacts {
+     pattern('${BUILD_NUMBER}/logs/**')
+     onlyIfSuccessful(false)
+     fingerprint(false)
+     allowEmpty(true)
+    }
+  }
 
    concurrentBuild()
    throttleConcurrentBuilds {
@@ -76,6 +73,7 @@ job(name) {
     credentialsBinding {
       string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
       string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
 

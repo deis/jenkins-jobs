@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 repos.each { Map repo ->
   if(repo.buildJobs != false) {
@@ -33,11 +33,8 @@ repos.each { Map repo ->
       }
 
       publishers {
-        slackNotifications {
-          notifyFailure()
-          notifyRepeatedFailure()
-         }
-       }
+        slackNotify(channel: repo.slackChannel, statuses: ['FAILURE'])
+      }
 
       parameters {
         stringParam('TAG', '', 'Specific tag to release')
@@ -52,6 +49,9 @@ repos.each { Map repo ->
         buildName('${GIT_BRANCH} ${TAG} #${BUILD_NUMBER}')
         timestamps()
         colorizeOutput 'xterm'
+        credentialsBinding {
+          string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+        }
       }
 
       steps {
@@ -75,7 +75,8 @@ repos.each { Map repo ->
 
             mkdir -p "\$(dirname ${component.envFile})"
             { echo "\${result}"; \
-              echo "CLI_VERSION=\${CLI_VERSION}"; } >> ${component.envFile}
+              echo "CLI_VERSION=\${CLI_VERSION}";
+              echo "UPSTREAM_SLACK_CHANNEL=\${UPSTREAM_SLACK_CHANNEL}"; } >> ${component.envFile}
           """.stripIndent()
         }
 

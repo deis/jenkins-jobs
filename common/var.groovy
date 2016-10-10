@@ -1,6 +1,7 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/repo.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/repo.groovy"))
+evaluate(new File("${workspace}/common/dsl.groovy"))
 
 def workflowChartRelease = 'v2.6.0'
 def testJobRootName = 'workflow-test'

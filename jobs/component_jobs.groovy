@@ -1,6 +1,6 @@
 def workspace = new File(".").getAbsolutePath()
-if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
-evaluate(new File("${workspace}/common.groovy"))
+if (!new File("${workspace}/common/var.groovy").canRead()) { workspace = "${WORKSPACE}"}
+evaluate(new File("${workspace}/common/var.groovy"))
 
 repos.each { Map repo ->
   if(repo.buildJobs != false) {
@@ -36,27 +36,12 @@ repos.each { Map repo ->
           }
         }
 
-        def statusesToNotify = ['FAILURE']
         publishers {
-          postBuildScripts {
-            onlyIfBuildSucceeds(false)
-            steps {
-              statusesToNotify.each { buildStatus ->
-                conditionalSteps {
-                  condition {
-                   status(buildStatus, buildStatus)
-                    steps {
-                      def message = 'Commit Author: ${COMMIT_AUTHOR_EMAIL}'
-                      shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                        """
-                          slack-notify ${repo.slackChannel} ${buildStatus} "${message}"
-                        """.stripIndent().trim()
-                    }
-                  }
-                }
-              }
-            }
-          }
+          slackNotify([
+            channel: repo.slackChannel,
+            statuses: ['FAILURE'],
+            message: 'Commit Author: ${ghprbPullAuthorEmail:-N/A}',
+          ])
         }
 
         if (isPR) {
