@@ -29,10 +29,11 @@ job('release-candidate-promote') {
     stringParam('COMPONENT_NAME', '', 'Component name')
     stringParam('COMPONENT_SHA', '', 'Commit sha used for candidate image tag')
     stringParam('RELEASE_TAG', '', 'Release tag value for retagging candidate image')
+    stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, 'Upstream/Component Slack channel')
   }
 
   wrappers {
-    buildName('${COMPONENT_NAME} release #${BUILD_NUMBER}')
+    buildName('${COMPONENT_NAME} ${RELEASE_TAG} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {

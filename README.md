@@ -106,19 +106,20 @@ Locate Candidate──────────────┐
 └─────────────┬───────────────┘
               │
               ▼
-E2E───────────────────────────┐
-│                             │
-│   "release-candidate-e2e"   │     - run end-to-end tests against release candidate image
-│   COMPONENT_NAME=logger     │     - on success, initiate promote job
-│                             │
-└─────────────┬───────────────┘
-              │
-              ▼
 Promote───────────────────────┐
 │                             │
 │ "release-candidate-promote" │     - retag candidate image with official RELEASE_TAG (v1.2.3)
 │    COMPONENT_NAME=logger    │     - on success, initiate publish job
 │    RELEASE_TAG=v1.2.3       │
+│                             │
+└─────────────┬───────────────┘
+              │
+              ▼
+Chart Publish─────────────────┐
+│                             │
+│    "logger-chart-publish"   │     - if component has correlating helm chart...
+│     RELEASE_TAG=v1.2.3      │     - reference official image created above
+│                             │     - publish `v1.2.3`-versioned chart to charts.deis.com
 │                             │
 └─────────────┬───────────────┘
               │
