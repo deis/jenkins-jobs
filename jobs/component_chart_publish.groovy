@@ -19,19 +19,16 @@ repos.each { Map repo ->
       }
 
       publishers {
-        def statusesToNotify = ['FAILURE']
         postBuildScripts {
           onlyIfBuildSucceeds(false)
           steps {
-            statusesToNotify.each { buildStatus ->
+            defaults.statusesToNotify.each { buildStatus ->
               conditionalSteps {
                 condition {
                  status(buildStatus, buildStatus)
                   steps {
                     shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                      """
-                        slack-notify "${repo.slackChannel}" "${buildStatus}"
-                      """.stripIndent().trim()
+                      "slack-notify '${repo.slackChannel}' '${buildStatus}'"
                   }
                 }
               }

@@ -24,23 +24,35 @@ job(name) {
   }
 
   publishers {
-    slackNotifications {
-      notifyFailure()
-      includeTestSummary()
-     }
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        defaults.statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+              status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  "slack-notify '#release' '${buildStatus}'"
+              }
+            }
+          }
+        }
+      }
+    }
 
-     archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
-       retainLongStdout(false)
-       allowEmptyResults(true)
-     }
+    archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
+      retainLongStdout(false)
+      allowEmptyResults(true)
+    }
 
-     archiveArtifacts {
-       pattern('${BUILD_NUMBER}/logs/**')
-       onlyIfSuccessful(false)
-       fingerprint(false)
-       allowEmpty(true)
-     }
-   }
+    archiveArtifacts {
+      pattern('${BUILD_NUMBER}/logs/**')
+      onlyIfSuccessful(false)
+      fingerprint(false)
+      allowEmpty(true)
+    }
+  }
 
    concurrentBuild()
    throttleConcurrentBuilds {
@@ -76,6 +88,7 @@ job(name) {
     credentialsBinding {
       string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
       string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
 

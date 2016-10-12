@@ -22,9 +22,21 @@ job('component-release-publish') {
   }
 
   publishers {
-    slackNotifications {
-      notifyFailure()
-      notifyRepeatedFailure()
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        defaults.statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+              status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  "slack-notify '\${UPSTREAM_SLACK_CHANNEL}' '${buildStatus}'"
+              }
+            }
+          }
+        }
+      }
     }
     git {
       pushOnlyIfSuccess()
@@ -35,12 +47,16 @@ job('component-release-publish') {
   parameters {
     stringParam('COMPONENT', '', "Component name, e.g. 'controller'")
     stringParam('RELEASE', '', "Release string, e.g. 'v1.2.3'")
+    stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream Slack channel")
   }
 
   wrappers {
     buildName('${COMPONENT} ${RELEASE} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
+    credentialsBinding {
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+    }
   }
 
   steps {

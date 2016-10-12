@@ -92,7 +92,7 @@ evaluate(new File("${workspace}/common.groovy"))
         stringParam(repo.commitEnvVar, '', "${repo.name} commit SHA")
       }
       stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
-      stringParam('UPSTREAM_SLACK_CHANNEL', '#testing', "Upstream Slack channel")
+      stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream Slack channel")
       stringParam('COMPONENT_REPO', '', "Component repo name")
       stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
       stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
@@ -158,7 +158,8 @@ evaluate(new File("${workspace}/common.groovy"))
             set -eo pipefail
 
             mkdir -p ${defaults.tmpPath}
-            get-component-and-sha >> ${defaults.envFile}
+            { get-component-and-sha; \
+              echo "UPSTREAM_SLACK_CHANNEL=\${UPSTREAM_SLACK_CHANNEL}"; } >> ${defaults.envFile}
           """.stripIndent().trim()
 
         conditionalSteps {
