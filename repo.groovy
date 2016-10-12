@@ -99,7 +99,8 @@ repos = [
     chart: 'slugrunner'],
 
   [ name: 'workflow-cli',
-    buildJobs: false],
+    buildJobs: false,
+    slackChannel: '#controller'],
 
   [ name: 'workflow-e2e',
     components: [[name: 'workflow-e2e']],

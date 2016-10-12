@@ -40,9 +40,21 @@ job("${repoName}-release") {
   }
 
   publishers {
-    slackNotifications {
-      notifyFailure()
-      notifyRepeatedFailure()
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        defaults.statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+              status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  "slack-notify '${repos[repoName].slackChannel}' '${buildStatus}'"
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -62,6 +74,9 @@ job("${repoName}-release") {
     buildName('${GIT_BRANCH} ${TAG} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
+    credentialsBinding {
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+    }
   }
 
   steps {
@@ -112,9 +127,21 @@ downstreamJobs.each{ Map thisJob ->
     }
 
     publishers {
-      slackNotifications {
-        notifyFailure()
-        notifyRepeatedFailure()
+      postBuildScripts {
+        onlyIfBuildSucceeds(false)
+        steps {
+          defaults.statusesToNotify.each { buildStatus ->
+            conditionalSteps {
+              condition {
+                status(buildStatus, buildStatus)
+                steps {
+                  shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                    "slack-notify '${repos[repoName].slackChannel}' '${buildStatus}'"
+                }
+              }
+            }
+          }
+        }
       }
     }
 
@@ -132,6 +159,7 @@ downstreamJobs.each{ Map thisJob ->
       colorizeOutput 'xterm'
       credentialsBinding {
         string("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
+        string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       }
     }
 
@@ -186,9 +214,21 @@ downstreamJobs.each{ Map thisJob ->
     }
 
     publishers {
-      slackNotifications {
-        notifyFailure()
-        notifyRepeatedFailure()
+      postBuildScripts {
+        onlyIfBuildSucceeds(false)
+        steps {
+          defaults.statusesToNotify.each { buildStatus ->
+            conditionalSteps {
+              condition {
+                status(buildStatus, buildStatus)
+                steps {
+                  shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                    "slack-notify '${repos[repoName].slackChannel}' '${buildStatus}'"
+                }
+              }
+            }
+          }
+        }
       }
     }
 
@@ -211,6 +251,7 @@ downstreamJobs.each{ Map thisJob ->
       colorizeOutput 'xterm'
       credentialsBinding {
         string("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
+        string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       }
     }
 

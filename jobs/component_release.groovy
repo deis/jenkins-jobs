@@ -33,11 +33,23 @@ repos.each { Map repo ->
       }
 
       publishers {
-        slackNotifications {
-          notifyFailure()
-          notifyRepeatedFailure()
-         }
-       }
+        postBuildScripts {
+          onlyIfBuildSucceeds(false)
+          steps {
+            defaults.statusesToNotify.each { buildStatus ->
+              conditionalSteps {
+                condition {
+                  status(buildStatus, buildStatus)
+                  steps {
+                    shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                      "slack-notify '${repo.slackChannel}' '${buildStatus}'"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
 
       parameters {
         stringParam('TAG', '', 'Specific tag to release')
@@ -52,6 +64,9 @@ repos.each { Map repo ->
         buildName('${GIT_BRANCH} ${TAG} #${BUILD_NUMBER}')
         timestamps()
         colorizeOutput 'xterm'
+        credentialsBinding {
+          string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+        }
       }
 
       steps {
@@ -76,7 +91,8 @@ repos.each { Map repo ->
             mkdir -p ${defaults.tmpPath}
             mkdir -p "\$(dirname ${component.envFile})"
             { echo "\${result}"; \
-              echo "CLI_VERSION=\${CLI_VERSION}"; } | tee -a ${component.envFile} ${defaults.envFile}
+              echo "CLI_VERSION=\${CLI_VERSION}"; \
+              echo "UPSTREAM_SLACK_CHANNEL=${repo.slackChannel}"; } | tee -a ${component.envFile} ${defaults.envFile}
           """.stripIndent()
         }
 

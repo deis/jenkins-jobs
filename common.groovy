@@ -41,6 +41,7 @@ defaults = [
     username: 'deis-admin',
     credentialsID: '8e11254f-44f3-4ddd-bf98-2cabcb7434cd',
   ],
+  statusesToNotify: ['SUCCESS', 'FAILURE'],
 ]
 
 e2eRunnerJob = new File("${workspace}/bash/scripts/run_e2e.sh").text +
