@@ -12,9 +12,8 @@ repos.each { Map repo ->
           remote {
             github("deis/${repo.name}")
             credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
-            refspec('+refs/tags/*:refs/remotes/origin/tags/*')
           }
-          branch('*/tags/*')
+          branch('master')
         }
       }
 
