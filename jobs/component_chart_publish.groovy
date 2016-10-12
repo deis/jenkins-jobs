@@ -18,6 +18,8 @@ repos.each { Map repo ->
       }
 
       publishers {
+        wsCleanup() // Scrub workspace clean after build
+
         postBuildScripts {
           onlyIfBuildSucceeds(false)
           steps {
@@ -68,6 +70,7 @@ repos.each { Map repo ->
 
           if [ -d charts ]; then
             cd charts
+            ${defaults.helm.downloadAndInit}
 
             ## change chart values
             # update the chart version to RELEASE_TAG
@@ -78,13 +81,6 @@ repos.each { Map repo ->
             perl -i -0pe 's/"Always"/"IfNotPresent"/g' ${repo.chart}/values.yaml
             # update the dockerTag value to RELEASE_TAG
             perl -i -0pe "s/canary/\${RELEASE_TAG}/g" ${repo.chart}/values.yaml
-
-            # download helm and init
-            export HELM_OS=linux \
-              && wget http://storage.googleapis.com/kubernetes-helm/helm-"\${HELM_VERSION}"-"\${HELM_OS}"-amd64.tar.gz \
-              && tar -zxvf helm-"\${HELM_VERSION}"-"\${HELM_OS}"-amd64.tar.gz \
-              && export PATH="\${HELM_OS}-amd64:\${PATH}" \
-              && helm init -c
 
             # package release chart
             helm package ${repo.chart}

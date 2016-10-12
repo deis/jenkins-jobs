@@ -156,6 +156,33 @@ Build and Release - darwin amd64────────┐
 │  TAG=v1.2.4                           │   - upload darwin amd64 binary
 │                                       │
 └───────────────────────────────────────┘
+```
+
+### When a Workflow Helm Chart is to be released
+```
+Publish chart to staging─────────┐
+│                                │     - triggered manually with RELEASE_TAG supplied
+│  "workflow-dev-chart-publish"  │     - update chart dependencies by gathering latest releases for all component charts
+│      RELEASE_TAG=v1.2.3        │     - update index file, package and upload to the `workflow-dev` charts repo (staging)
+│                                │     - kick off downstream E2E job with WORKFLOW_TAG=$RELEASE_TAG
+└─────────────┬──────────────────┘
+              │
+              ▼
+Run E2E──────────────────────────┐
+│                                │     - find the latest workflow-e2e chart release
+│    "workflow-dev-chart-e2e"    │     - lease GKE cluster, install Workflow chart (using WORKFLOW_TAG)
+│     WORKFLOW_TAG=v1.2.3        │     - install workflow-e2e chart
+│                                │     - archive test results and report job status to appropriate channel(s)
+└─────────────┬──────────────────┘
+              │
+              ▼
+Publish chart to production──────┐
+│                                │     - triggered manually with RELEASE_TAG supplied
+│    "workflow-chart-publish"    │     - pull down approved chart from `workflow-dev` charts repo (staging)
+│      RELEASE_TAG=v1.2.3        │     - update index file, upload chart to `workflow` charts repo (production)
+│                                │
+└────────────────────────────────┘
+```
 
 Note: There are also "workflow-cli-build-stable(-darwin-amd64)" variants of the two downstream jobs above, but these
 are currently only triggered manually.
