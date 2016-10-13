@@ -28,7 +28,7 @@ job('component-promote') {
               status(buildStatus, buildStatus)
               steps {
                 shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                  "slack-notify '\${UPSTREAM_SLACK_CHANNEL}' '${buildStatus}'"
+                  "slack-notify \${UPSTREAM_SLACK_CHANNEL} '${buildStatus}'"
               }
             }
           }
@@ -48,7 +48,7 @@ job('component-promote') {
   }
 
   wrappers {
-    buildName('${COMPONENT_NAME} ${COMPONENT_SHA} #${BUILD_NUMBER}')
+    buildName('${COMPONENT_NAME} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
