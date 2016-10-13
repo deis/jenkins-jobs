@@ -31,7 +31,7 @@ job('component-release-publish') {
               status(buildStatus, buildStatus)
               steps {
                 shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                  "slack-notify '\${UPSTREAM_SLACK_CHANNEL}' '${buildStatus}'"
+                  "slack-notify \${UPSTREAM_SLACK_CHANNEL} '${buildStatus}'"
               }
             }
           }
