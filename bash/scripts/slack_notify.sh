@@ -13,6 +13,10 @@ slack-notify() {
   fi
 
   title="${JOB_NAME} - ${BUILD_DISPLAY_NAME} *${status}* (<${BUILD_URL}|Open>)"
+  # append retry link to title if FAILURE
+  if [ "${status}" == 'FAILURE' ]; then
+    title="${title} (<${BUILD_URL}/retry|Retry>)"
+  fi
 
   data='
     {"channel":"'"${channel}"'",

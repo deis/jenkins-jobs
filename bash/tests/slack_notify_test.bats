@@ -87,6 +87,36 @@ strip-ws() {
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
 
+@test "slack-notify: FAILURE" {
+  channel="test-channel"
+  buildStatus="FAILURE"
+
+  expected_color='danger'
+  expected_title="${JOB_NAME} - ${BUILD_DISPLAY_NAME} *${buildStatus}* (<${BUILD_URL}|Open>) (<${BUILD_URL}/retry|Retry>)"
+  expected_data='
+    {"channel":"'"${channel}"'",
+    "attachments": [
+      {
+        "fallback": "'"${expected_title}"'",
+        "color": "'"${expected_color}"'",
+        "pretext": "'"${expected_title}"'",
+        "text": "'""'",
+        "mrkdwn_in": ["pretext", "text"],
+        "ts": '"$(date +%s)"'
+      }
+    ]}
+  '
+  expected_output='
+    Notifying Slack with the following data:
+    '"${expected_data}"'
+  '
+
+  run slack-notify "${channel}" "${buildStatus}"
+
+  [ "${status}" -eq 0 ]
+  [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
+}
+
 @test "slack-notify: usage" {
   run slack-notify
 
