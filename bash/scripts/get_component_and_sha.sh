@@ -19,6 +19,8 @@ get-component-and-sha() {
 
       { echo COMPONENT_NAME="${component_name}"; \
         echo COMPONENT_SHA="${component_sha}"; }
+    else
+      echo SKIP_COMPONENT_PROMOTE=true
     fi
   done
 }
