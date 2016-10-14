@@ -7,20 +7,23 @@ get-component-and-sha() {
   # populate env_var_array with all <COMPONENT>_SHA env vars
   IFS=' ' read -r -a env_var_array <<< "$(compgen -A variable | grep _SHA)"
 
+  if [[ "${#env_var_array[@]}" -eq 0 ]]; then
+    echo SKIP_COMPONENT_PROMOTE=true
+    return 0
+  fi
+
   # only one env var should be non-empty
   for env_var in "${env_var_array[@]}"; do
     if [ -n "${!env_var}" ]; then
       component_name="$(echo "${env_var%_SHA}" | perl -ne 'print lc' | sed 's/_/-/g')"
       component_sha="${!env_var}"
 
-      if [ "${component_name}" == 'workflow-cli' ] || [ "${component_name}" == 'charts' ]; then
+      if [[ "${component_name}" =~ ^(charts|controller-sdk-go|workflow-cli)$ ]]; then
         echo SKIP_COMPONENT_PROMOTE=true
       fi
 
       { echo COMPONENT_NAME="${component_name}"; \
         echo COMPONENT_SHA="${component_sha}"; }
-    else
-      echo SKIP_COMPONENT_PROMOTE=true
     fi
   done
 }
