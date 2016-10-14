@@ -3,7 +3,7 @@ if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPAC
 evaluate(new File("${workspace}/common.groovy"))
 
 name = 'workflow-docs'
-downstreamJobName = 'deploy_website'
+downstreamJobName = 'deis-com-deploy'
 
 job(name) {
   description """
@@ -40,7 +40,7 @@ job(name) {
   }
 
   publishers {
-    downstream('deploy_website', 'UNSTABLE')
+    downstream('deis-com-deploy', 'UNSTABLE')
   }
 
   steps {

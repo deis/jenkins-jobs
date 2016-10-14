@@ -3,9 +3,9 @@ if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPAC
 evaluate(new File("${workspace}/common.groovy"))
 
 repo_name = 'deis.com'
-downstreamJobName = 'deploy_website'
+downstreamJobName = 'deis-com-deploy'
 
-job("deis_com_master") {
+job("deis-com-master") {
   description """
     <ol>
       <li>Watches the <a href="https://github.com/deis/${repo_name}">${repo_name}</a> repo for a commit to master</li>
@@ -32,7 +32,7 @@ job("deis_com_master") {
   }
 
   publishers {
-    downstream('deploy_website', 'UNSTABLE')
+    downstream('deis-com-deploy', 'UNSTABLE')
   }
 
   wrappers {
@@ -54,7 +54,7 @@ job("deis_com_master") {
   }
 }
 
-job("deis_com_pr") {
+job("deis-com-pr") {
   description """
     <ol>
       <li>Watches the ${repo_name} repo_name for pull requests</li>

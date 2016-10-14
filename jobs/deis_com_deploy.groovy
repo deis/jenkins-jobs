@@ -2,12 +2,12 @@ def workspace = new File(".").getAbsolutePath()
 if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
 evaluate(new File("${workspace}/common.groovy"))
 
-name = 'deploy_website'
+name = 'deis-com-deploy'
 
 job(name) {
   description """
     <ol>
-      <li>Compiles and deploys websites to <a href="https://deis.com">deis.com</a></li>
+      <li>Compiles and deploys <a href="https://deis.com">deis.com</a></li>
     </ol>
   """.stripIndent().trim()
 
