@@ -14,7 +14,7 @@ job(name) {
   scm {
     git {
       remote {
-        github('deis/deis.io')
+        github('${DEIS_IO_ORG}/deis.io')
           credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
       }
       branch('${DEIS_IO_BRANCH}')
@@ -43,6 +43,7 @@ job(name) {
       file('DEIS_IO_PROD_ENV', 'a93c6610-b155-4718-9cb5-4ed7e6ba39e6')
     }
     parameters {
+      stringParam('DEIS_IO_ORG', 'deis', 'GitHub organization to use.')
       stringParam('DEIS_IO_BRANCH', 'gh-pages', 'deis.io branch to deploy')
       stringParam('CONTAINER_ENV', '${DEIS_IO_PROD_ENV}', 'Environment file with AWS API Keys, S3 Buckets and CloudFront values')
     }
