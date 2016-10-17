@@ -1,7 +1,7 @@
 SHELLCHECK_CMD := shellcheck bash/scripts/*
 BATS_CMD := bats --tap bash/tests
 
-TEST_ENV_PREFIX := docker run --rm -v ${CURDIR}:/workdir -w /workdir quay.io/deis/shell-dev
+TEST_ENV_PREFIX := docker run --rm -v ${CURDIR}:/workdir -w /workdir quay.io/deis/shell-dev:latest
 GRADLE_TEST_CMD := docker run --name gradle-test -v ${CURDIR}:/workdir -w /workdir frekele/gradle:3.0-jdk8 ./gradlew test
 
 test-style:

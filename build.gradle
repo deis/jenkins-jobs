@@ -58,6 +58,7 @@ dependencies {
     testPlugins "${defaultJenkinsPluginHost}:slack:1.8.1"
     testPlugins "${defaultJenkinsPluginHost}:throttle-concurrents:1.9.0"
     testPlugins "${defaultJenkinsPluginHost}:timestamper:1.8.4"
+    testPlugins "${defaultJenkinsPluginHost}:ws-cleanup:0.30"
 }
 
 task resolveTestPlugins(type: Copy) {
