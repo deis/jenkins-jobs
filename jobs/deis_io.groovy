@@ -5,10 +5,10 @@ evaluate(new File("${workspace}/common.groovy"))
 repo_name = 'deis.io'
 downstreamJobName = 'deis-io-deploy'
 
-job("deis-io-master") {
+job("deis-io-merge") {
   description """
     <ol>
-      <li>Watches the <a href="https://github.com/deis/${repo_name}">${repo_name}</a> repo for a commit to master</li>
+      <li>Watches the <a href="https://github.com/deis/${repo_name}">${repo_name}</a> repo for a commit to gh-pages</li>
       <li>Kicks off downstream ${downstreamJobName} job to deploy</li>
     </ol>
   """.stripIndent().trim()
@@ -32,16 +32,27 @@ job("deis-io-master") {
   }
 
   publishers {
-    downstream('deis-com-deploy', 'UNSTABLE')
+    slackNotifications {
+      projectChannel('#marketing')
+      notifyAborted()
+      notifyFailure()
+      notifySuccess()
+    }
+    downstream("${downstreamJobName}", 'UNSTABLE')
+  }
+
+  parameters {
+    stringParam('DEIS_IO_ORG', 'deis', 'GitHub organization to use.')
+    stringParam('DEIS_IO_REPO', "${repo_name}", 'GitHub organization to use.')
+    stringParam('DEIS_IO_BRANCH', 'gh-pages', 'deis.io branch to build')
+    stringParam('CONTAINER_ENV', '${DEIS_IO_STAGING_ENV}', 'Environment file with AWS API Keys, S3 Buckets and CloudFront values')
   }
 
   wrappers {
     timestamps()
     colorizeOutput 'xterm'
-    parameters {
-      stringParam('DEIS_IO_ORG', 'deis', 'GitHub organization to use.')
-      stringParam('DEIS_IO_REPO', "${repo_name}", 'GitHub organization to use.')
-      stringParam('DEIS_IO_BRANCH', 'gh-pages', 'deis.io branch to build')
+    credentialsBinding {
+      file('DEIS_IO_STAGING_ENV', '2cfbe7b8-0e93-4e00-8c5b-1731d794d339')
     }
   }
 
@@ -108,7 +119,9 @@ job("deis-io-pr") {
   }
 
   parameters {
-    stringParam('sha1', 'master', 'Specific Git SHA to test')
+    stringParam('DEIS_IO_BRANCH', 'gh-pages', 'deis.io branch to build')
+    stringParam('CONTAINER_ENV', '${DEIS_IO_STAGING_ENV}', 'Environment file with AWS API Keys, S3 Buckets and CloudFront values')
+    stringParam('sha1', '${DEIS_IO_BRANCH}', 'Specific Git SHA to test')
   }
 
   triggers {
@@ -119,6 +132,7 @@ job("deis-io-pr") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
+      file('DEIS_IO_STAGING_ENV', '2cfbe7b8-0e93-4e00-8c5b-1731d794d339')
     }
   }
 
