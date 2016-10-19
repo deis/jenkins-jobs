@@ -30,6 +30,11 @@ repos = [
     workflowComponent: true,
     chart: 'fluentd'],
 
+  [ name: 'jenkins-node',
+    components: [[name: 'jenkins-node']],
+    slackChannel: '#testing',
+    chart: 'jenkins-node'],
+
   [ name: 'logger',
     components: [[name: 'logger']],
     slackChannel: '#logger',
