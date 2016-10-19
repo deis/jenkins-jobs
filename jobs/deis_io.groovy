@@ -16,10 +16,10 @@ job("deis-io-merge") {
   scm {
     git {
       remote {
-        github('${DEIS_IO_ORG}/${DEIS_IO_REPO}')
+        github("deis/${repo_name}")
         credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
       }
-      branch('${DEIS_IO_BRANCH}')
+      branch('gh-pages')
     }
   }
 
@@ -42,9 +42,6 @@ job("deis-io-merge") {
   }
 
   parameters {
-    stringParam('DEIS_IO_ORG', 'deis', 'GitHub organization to use.')
-    stringParam('DEIS_IO_REPO', "${repo_name}", 'GitHub organization to use.')
-    stringParam('DEIS_IO_BRANCH', 'gh-pages', 'deis.io branch to build')
     stringParam('CONTAINER_ENV', '${DEIS_IO_STAGING_ENV}', 'Environment file with AWS API Keys, S3 Buckets and CloudFront values')
   }
 
