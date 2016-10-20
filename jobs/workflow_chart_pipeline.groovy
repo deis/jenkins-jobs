@@ -104,7 +104,8 @@ job("${chartRepo.staging}-chart-publish") {
 
           # push packaged chart and updated index file to aws s3 bucket
           aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.staging}/ \
-            && aws s3 cp index.yaml s3://helm-charts/${chartRepo.staging}/index.yaml
+            && aws s3 cp index.yaml s3://helm-charts/${chartRepo.staging}/index.yaml \
+            && aws s3 cp ${chart}/values.yaml s3://helm-charts/${chartRepo.staging}/values-\${RELEASE_TAG}.yaml
         else
           echo "No 'charts' directory found at project level; nothing to publish."
         fi
@@ -270,7 +271,8 @@ job("${chartRepo.production}-chart-publish") {
 
       # push packaged chart and updated index file to aws s3 bucket
       aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.production}/ \
-        && aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml
+        && aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml \
+        && aws s3 cp s3://helm-charts/${chartRepo.staging}/values-\${RELEASE_TAG}.yaml s3://helm-charts/${chartRepo.production}/values-\${RELEASE_TAG}.yaml
     """.stripIndent().trim()
   }
 }
