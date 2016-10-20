@@ -36,6 +36,7 @@ defaults = [
     remoteRepo: 'https://github.com/deis/charts.git',
     remoteBranch: 'master',
     remoteName: 'deis',
+    version: 'v2.0.0-beta.1',
     downloadAndInit: """
       export HELM_VERSION="\${HELM_VERSION:-canary}"
       export HELM_OS=linux HELM_HOME="/home/jenkins/workspace/\${JOB_NAME}/\${BUILD_NUMBER}" \

@@ -46,7 +46,7 @@ job("${chartRepo.staging}-chart-publish") {
 
   parameters {
     stringParam('RELEASE_TAG', defaults.workflow.release, 'Release tag')
-    stringParam('HELM_VERSION', 'v2.0.0-alpha.5', 'Version of Helm to download/use')
+    stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
   }
 
   wrappers {
@@ -83,9 +83,6 @@ job("${chartRepo.staging}-chart-publish") {
             helm repo add "\${component}" "https://charts.deis.com/\${component}"
           done
 
-          # create charts dir beforehand (helm issue)
-          mkdir ${chart}/charts
-
           # fetch all dependent charts based on above
           helm dependency update ${chart}
 
@@ -100,7 +97,7 @@ job("${chartRepo.staging}-chart-publish") {
           aws s3 cp s3://helm-charts/${chartRepo.staging}/index.yaml .
 
           # update index file
-          helm repo index . --url https://charts.deis.com/${chartRepo.staging}
+          helm repo index . --url https://charts.deis.com/${chartRepo.staging} --merge ./index.yaml
 
           # push packaged chart and updated index file to aws s3 bucket
           aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.staging}/ \
@@ -177,7 +174,7 @@ job("${chartRepo.staging}-chart-e2e") {
   parameters {
     stringParam('WORKFLOW_TAG', defaults.workflow.release, 'Workflow chart docker tag')
     stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart docker tag')
-    stringParam('HELM_VERSION', 'v2.0.0-alpha.5', 'Version of Helm to download/use')
+    stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     stringParam('USE_KUBERNETES_HELM', '1', 'Flag to use kubernetes/helm (Default: yes; leave empty for no)')
     stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
     stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:canary', "The e2e-runner image")
@@ -240,7 +237,7 @@ job("${chartRepo.production}-chart-publish") {
 
   parameters {
     stringParam('RELEASE_TAG', defaults.workflow.release, 'Release tag')
-    stringParam('HELM_VERSION', 'v2.0.0-alpha.5', 'Version of Helm to download/use')
+    stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
   }
 
   wrappers {
@@ -267,7 +264,7 @@ job("${chartRepo.production}-chart-publish") {
       aws s3 cp s3://helm-charts/${chartRepo.staging}/${chart}-\${RELEASE_TAG}.tgz .
 
       # update index file
-      helm repo index . --url https://charts.deis.com/${chartRepo.production}
+      helm repo index . --url https://charts.deis.com/${chartRepo.production} --merge ./index.yaml
 
       # push packaged chart and updated index file to aws s3 bucket
       aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.production}/ \

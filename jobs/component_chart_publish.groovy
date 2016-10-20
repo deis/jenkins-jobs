@@ -44,7 +44,7 @@ repos.each { Map repo ->
 
       parameters {
         stringParam('RELEASE_TAG', '', 'Release tag')
-        stringParam('HELM_VERSION', 'v2.0.0-alpha.5', 'Version of Helm to download/use')
+        stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
       }
 
       wrappers {
@@ -89,7 +89,7 @@ repos.each { Map repo ->
             aws s3 cp s3://helm-charts/${repo.chart}/index.yaml .
 
             # update index file
-            helm repo index . --url https://charts.deis.com/${repo.chart}
+            helm repo index . --url https://charts.deis.com/${repo.chart} --merge ./index.yaml
 
             # push packaged chart and updated index file to aws s3 bucket
             aws s3 cp ${repo.chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${repo.chart}/ \
