@@ -62,7 +62,7 @@ job("${chartRepo.staging}-chart-publish") {
 
   steps {
     def components = repos.collectMany {
-      it.workflowComponent ? [it.chart] : [] }.join(' ') as String
+      it.workflowComponent ? [it.chart+':'+it.name] : [] }.join(' ') as String
 
     shell new File("${workspace}/bash/scripts/get_latest_component_release.sh").text +
       """
@@ -78,9 +78,12 @@ job("${chartRepo.staging}-chart-publish") {
 
           ## update requirements.yaml with latest tags for each component
           for component in ${components}; do
-            latest_tag="\$(get-latest-component-release "\${component}")"
-            perl -i -0pe "s/<\${component}-tag>/\${latest_tag}/g" ${chart}/requirements.yaml
-            helm repo add "\${component}" "https://charts.deis.com/\${component}"
+            IFS=':' read -r -a chartAndRepo <<< "\${component}"
+            componentChart="\${chartAndRepo[0]}"
+            componentRepo="\${chartAndRepo[1]}"
+            latest_tag="\$(get-latest-component-release "\${componentRepo}")"
+            perl -i -0pe "s/<\${componentChart}-tag>/\${latest_tag}/g" ${chart}/requirements.yaml
+            helm repo add "\${componentChart}" "https://charts.deis.com/\${componentChart}"
           done
 
           # fetch all dependent charts based on above
