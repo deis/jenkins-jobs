@@ -3,6 +3,7 @@ if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPAC
 evaluate(new File("${workspace}/common.groovy"))
 
 def repoName = 'workflow-cli'
+def repo = repos.find{ it.name == repoName }
 
 def gitInfo = [
   repo: "deis/${repoName}",
@@ -49,7 +50,7 @@ job("${repoName}-release") {
               status(buildStatus, buildStatus)
               steps {
                 shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                  "slack-notify '${repos[repoName].slackChannel}' '${buildStatus}'"
+                  "slack-notify '${repo.slackChannel}' '${buildStatus}'"
               }
             }
           }
@@ -136,7 +137,7 @@ downstreamJobs.each{ Map thisJob ->
                 status(buildStatus, buildStatus)
                 steps {
                   shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                    "slack-notify '${repos[repoName].slackChannel}' '${buildStatus}'"
+                    "slack-notify '${repo.slackChannel}' '${buildStatus}'"
                 }
               }
             }
@@ -223,7 +224,7 @@ downstreamJobs.each{ Map thisJob ->
                 status(buildStatus, buildStatus)
                 steps {
                   shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                    "slack-notify '${repos[repoName].slackChannel}' '${buildStatus}'"
+                    "slack-notify '${repo.slackChannel}' '${buildStatus}'"
                 }
               }
             }
