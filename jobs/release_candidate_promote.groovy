@@ -64,6 +64,7 @@ job('release-candidate-promote') {
           predefinedProps([
             'COMPONENT': '${COMPONENT_NAME}',
             'RELEASE': '${RELEASE_TAG}',
+            'UPSTREAM_SLACK_CHANNEL': '${UPSTREAM_SLACK_CHANNEL}',
           ])
         }
       }
