@@ -93,7 +93,17 @@ job("${chartRepo.staging}-chart-publish") {
           cat ${chart}/Chart.yaml
           cat ${chart}/values.yaml
 
-          # package release chart
+          ## package and push chart to production sans index.file (so chart may not be used)
+          helm package ${chart}
+
+          aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.production}/ \
+            && aws s3 cp ${chart}/values.yaml s3://helm-charts/${chartRepo.production}/values-\${RELEASE_TAG}.yaml
+
+          ## package and push chart to staging
+          # modify values.yaml for staging chart
+          perl -i -0pe "s/versions.deis/versions-staging.deis/g" ${chart}/values.yaml
+          perl -i -0pe "s/doctor.deis/doctor-staging.deis/g" ${chart}/values.yaml
+
           helm package ${chart}
 
           # download index file from aws s3 bucket
@@ -262,17 +272,15 @@ job("${chartRepo.production}-chart-publish") {
 
       ${defaults.helm.downloadAndInit}
 
-      # download index file from aws s3 bucket
+      # download chart and index file from aws s3 bucket
+      aws s3 cp s3://helm-charts/${chartRepo.production}/${chart}-\${RELEASE_TAG}.tgz
       aws s3 cp s3://helm-charts/${chartRepo.production}/index.yaml .
-      aws s3 cp s3://helm-charts/${chartRepo.staging}/${chart}-\${RELEASE_TAG}.tgz .
 
       # update index file
       helm repo index . --url https://charts.deis.com/${chartRepo.production} --merge ./index.yaml
 
-      # push packaged chart and updated index file to aws s3 bucket
-      aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.production}/ \
-        && aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml \
-        && aws s3 cp s3://helm-charts/${chartRepo.staging}/values-\${RELEASE_TAG}.yaml s3://helm-charts/${chartRepo.production}/values-\${RELEASE_TAG}.yaml
+      # push updated index file to aws s3 bucket
+      aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml
     """.stripIndent().trim()
   }
 }
