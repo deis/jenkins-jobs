@@ -65,12 +65,16 @@ job("${chartRepo.staging}-chart-publish") {
       it.workflowComponent ? [it.chart+':'+it.name] : [] }.join(' ') as String
 
     shell new File("${workspace}/bash/scripts/get_latest_component_release.sh").text +
+          new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
       """
+        #!/usr/bin/env bash
+
+        set -eo pipefail
         set -x
 
         if [ -d charts ]; then
           cd charts
-          ${defaults.helm.downloadAndInit}
+          download-and-init-helm
 
           ## change chart values
           # update the chart version to RELEASE_TAG
@@ -265,22 +269,43 @@ job("${chartRepo.production}-chart-publish") {
   }
 
   steps {
-    shell """
-      #!/usr/bin/env bash
+    shell new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
+      """
+        #!/usr/bin/env bash
 
-      set -eo pipefail
+        set -eo pipefail
 
-      ${defaults.helm.downloadAndInit}
+        download-and-init-helm
 
-      # download chart and index file from aws s3 bucket
-      aws s3 cp s3://helm-charts/${chartRepo.production}/${chart}-\${RELEASE_TAG}.tgz
-      aws s3 cp s3://helm-charts/${chartRepo.production}/index.yaml .
+        # download chart and index file from aws s3 bucket
+        aws s3 cp s3://helm-charts/${chartRepo.production}/${chart}-\${RELEASE_TAG}.tgz .
+        aws s3 cp s3://helm-charts/${chartRepo.production}/index.yaml .
 
-      # update index file
-      helm repo index . --url https://charts.deis.com/${chartRepo.production} --merge ./index.yaml
+        # update index file
+        helm repo index . --url https://charts.deis.com/${chartRepo.production} --merge ./index.yaml
 
-      # push updated index file to aws s3 bucket
-      aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml
-    """.stripIndent().trim()
+        # push updated index file to aws s3 bucket
+        aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml
+      """.stripIndent().trim()
+
+    conditionalSteps {
+      condition {
+        status('SUCCESS', 'SUCCESS')
+      }
+      steps {
+        downstreamParameterized {
+          trigger("helm-chart-sign") {
+            parameters {
+              predefinedProps([
+                'CHART': chart,
+                'VERSION': '${RELEASE_TAG}',
+                'CHART_REPO': chartRepo.production,
+                'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+              ])
+            }
+          }
+        }
+      }
+    }
   }
 }

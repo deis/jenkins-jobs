@@ -37,14 +37,6 @@ defaults = [
     remoteBranch: 'master',
     remoteName: 'deis',
     version: 'v2.0.0-rc.2',
-    downloadAndInit: '''
-      export HELM_VERSION="${HELM_VERSION:-canary}"
-      export HELM_OS=linux HELM_HOME="/home/jenkins/workspace/${JOB_NAME}/${BUILD_NUMBER}" \
-        && wget --quiet http://storage.googleapis.com/kubernetes-helm/helm-"${HELM_VERSION}"-"${HELM_OS}"-amd64.tar.gz \
-        && tar -zxvf helm-"${HELM_VERSION}"-"${HELM_OS}"-amd64.tar.gz \
-        && export PATH="${HELM_OS}-amd64:${PATH}" \
-        && helm init -c
-    ''',
   ],
   github: [
     username: 'deis-admin',

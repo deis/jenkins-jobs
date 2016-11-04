@@ -59,45 +59,66 @@ repos.each { Map repo ->
       }
 
       steps {
-        shell """
-          #!/usr/bin/env bash
+        shell new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
+          """
+            #!/usr/bin/env bash
 
-          set -eo pipefail
-          set -x
+            set -eo pipefail
+            set -x
 
-          # check out RELEASE_TAG tag
-          commit="\$(git checkout "\${RELEASE_TAG}" && git rev-parse HEAD)"
+            # check out RELEASE_TAG tag
+            commit="\$(git checkout "\${RELEASE_TAG}" && git rev-parse HEAD)"
 
-          if [ -d charts ]; then
-            cd charts
-            ${defaults.helm.downloadAndInit}
+            if [ -d charts ]; then
+              cd charts
+              download-and-init-helm
 
-            ## change chart values
-            # update the chart version to RELEASE_TAG
-            perl -i -0pe "s/<Will be populated by the ci before publishing the chart>/\${RELEASE_TAG}/g" ${repo.chart}/Chart.yaml
-            # update all org values to "deis"
-            perl -i -0pe 's/"deisci"/"deis"/g' ${repo.chart}/values.yaml
-            # update the image pull policy to "IfNotPresent"
-            perl -i -0pe 's/"Always"/"IfNotPresent"/g' ${repo.chart}/values.yaml
-            # update the dockerTag value to RELEASE_TAG
-            perl -i -0pe "s/canary/\${RELEASE_TAG}/g" ${repo.chart}/values.yaml
+              ## change chart values
+              # update the chart version to RELEASE_TAG
+              perl -i -0pe "s/<Will be populated by the ci before publishing the chart>/\${RELEASE_TAG}/g" ${repo.chart}/Chart.yaml
+              # update all org values to "deis"
+              perl -i -0pe 's/"deisci"/"deis"/g' ${repo.chart}/values.yaml
+              # update the image pull policy to "IfNotPresent"
+              perl -i -0pe 's/"Always"/"IfNotPresent"/g' ${repo.chart}/values.yaml
+              # update the dockerTag value to RELEASE_TAG
+              perl -i -0pe "s/canary/\${RELEASE_TAG}/g" ${repo.chart}/values.yaml
 
-            # package release chart
-            helm package ${repo.chart}
+              # package release chart
+              helm package ${repo.chart}
 
-            # download index file from aws s3 bucket
-            aws s3 cp s3://helm-charts/${repo.chart}/index.yaml .
+              # download index file from aws s3 bucket
+              aws s3 cp s3://helm-charts/${repo.chart}/index.yaml .
 
-            # update index file
-            helm repo index . --url https://charts.deis.com/${repo.chart} --merge ./index.yaml
+              # update index file
+              helm repo index . --url https://charts.deis.com/${repo.chart} --merge ./index.yaml
 
-            # push packaged chart and updated index file to aws s3 bucket
-            aws s3 cp ${repo.chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${repo.chart}/ \
-              && aws s3 cp index.yaml s3://helm-charts/${repo.chart}/index.yaml
-          else
-            echo "No 'charts' directory found at project level; nothing to publish."
-          fi
-        """.stripIndent().trim()
+              # push packaged chart and updated index file to aws s3 bucket
+              aws s3 cp ${repo.chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${repo.chart}/ \
+                && aws s3 cp index.yaml s3://helm-charts/${repo.chart}/index.yaml
+            else
+              echo "No 'charts' directory found at project level; nothing to publish."
+            fi
+          """.stripIndent().trim()
+
+        conditionalSteps {
+          condition {
+            status('SUCCESS', 'SUCCESS')
+          }
+          steps {
+            downstreamParameterized {
+              trigger("helm-chart-sign") {
+                parameters {
+                  predefinedProps([
+                    'CHART': repo.chart,
+                    'VERSION': '${RELEASE_TAG}',
+                    'CHART_REPO': repo.chart,
+                    'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+                  ])
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
