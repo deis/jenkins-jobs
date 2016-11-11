@@ -28,11 +28,12 @@ job("deis-com-master") {
   }
 
   triggers {
+    cron('H 7 * * *')
     githubPush()
   }
 
   publishers {
-    downstream('deis-com-deploy', 'UNSTABLE')
+    downstream(downstreamJobName, 'UNSTABLE')
   }
 
   wrappers {
