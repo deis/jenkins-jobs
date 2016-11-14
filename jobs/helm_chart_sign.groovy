@@ -70,5 +70,94 @@ job("helm-chart-sign") {
 
         upload-signed-chart "${CHART}-${VERSION}" "${CHART_REPO:-${CHART}}"
       '''.stripIndent().trim()
+
+    conditionalSteps {
+      condition {
+        status('SUCCESS', 'SUCCESS')
+      }
+      steps {
+        downstreamParameterized {
+          trigger("helm-chart-verify") {
+            block {
+              buildStepFailure('FAILURE')
+              failure('FAILURE')
+              unstable('UNSTABLE')
+            }
+            parameters {
+              predefinedProps([
+                'CHART': '${CHART}',
+                'VERSION': '${VERSION}',
+                'CHART_REPO': '${CHART_REPO}',
+              ])
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+job("helm-chart-verify") {
+  description "Verifies a signed Deis Helm chart"
+
+  publishers {
+    wsCleanup() // Scrub workspace clean after build
+
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        defaults.statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  "slack-notify '#testing' '${buildStatus}'"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  logRotator {
+    daysToKeep defaults.daysToKeep
+  }
+
+  parameters {
+    stringParam('CHART', '', 'Name of chart to be signed')
+    stringParam('VERSION', '', 'Specific version of the chart to be signed')
+    stringParam('CHART_REPO', '', 'Name of chart repo if other than CHART')
+    stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
+  }
+
+  wrappers {
+    buildName('${CHART} ${VERSION} #${BUILD_NUMBER}')
+    timestamps()
+    colorizeOutput 'xterm'
+    credentialsBinding {
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+    }
+  }
+
+  steps {
+    shell new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
+      '''
+        #!/usr/bin/env bash
+
+        set -eo pipefail
+
+        chart="${CHART}"
+        chart_repo="${CHART_REPO:-${chart}}"
+
+        download-and-init-helm
+
+        # fetch key from keyserver
+        gpg --keyserver pgp.mit.edu --recv-keys 1D6A97D0
+
+        helm repo add "${chart}" https://charts.deis.com/"${chart_repo}"
+        helm fetch --verify "${chart_repo}"/"${chart}" --version "${VERSION}"
+      '''.stripIndent().trim()
   }
 }
