@@ -13,15 +13,9 @@ repos.each { Map repo ->
       isPR = config.type == 'pr'
 
       name = isMaster ? repo.name : "${repo.name}-pr"
-      downstreamJobName = defaults.testJob[config.type]
 
       job(name) {
-        description """
-          <ol>
-            <li>Watches the ${repo.name} repo for a ${config.type} commit</li>
-            <li>Kicks off downstream ${downstreamJobName} job to vet changes</li>
-          </ol>
-        """.stripIndent().trim()
+        description "Watches the ${repo.name} repo for a ${config.type} commit and triggers downstream pipelines"
 
         scm {
           git {
@@ -169,7 +163,7 @@ repos.each { Map repo ->
               }
               steps {
                 downstreamParameterized {
-                  trigger(downstreamJobName) {
+                  trigger(defaults.testJob[config.type]) {
                     parameters {
                       propertiesFile(defaults.envFile)
                       predefinedProps([
@@ -184,6 +178,7 @@ repos.each { Map repo ->
             }
           } else {
             if (isMaster) {
+              // Trigger component image promotion
               repo.components.each{ Map component ->
                 downstreamParameterized {
                   trigger('component-promote') {
@@ -192,6 +187,27 @@ repos.each { Map repo ->
                         'COMPONENT_NAME': component.name,
                         'COMPONENT_SHA': '${GIT_COMMIT}',
                       ])
+                    }
+                  }
+                }
+              }
+              // Trigger component chart publish to -dev repo IF commit has changes in 'charts' sub-directory
+              if (repo.chart) {
+                conditionalSteps {
+                  condition {
+                    shell new File("${workspace}/bash/scripts/get_merge_commit_changes.sh").text +
+                      '''
+                        changes="$(get-merge-commit-changes "$(git rev-parse --short HEAD)")"
+                        echo "${changes}" | grep 'charts/'
+                      '''.stripIndent().trim()
+                  }
+                  steps {
+                    downstreamParameterized {
+                      trigger("${repo.chart}-chart-publish") {
+                        parameters {
+                          predefinedProps(['CHART_REPO_TYPE': 'dev'])
+                        }
+                      }
                     }
                   }
                 }

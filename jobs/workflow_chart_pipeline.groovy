@@ -4,10 +4,10 @@ evaluate(new File("${workspace}/common.groovy"))
 
 def repo = repos.find{ it.name == 'workflow' }
 def chart = repo.chart
-def chartRepo = [staging: "${chart}-dev", production: chart]
+def chartRepo = [dev: "${chart}-dev", staging: "${chart}-staging", production: chart]
 
-job("${chartRepo.staging}-chart-publish") {
-  description "Publishes a release candidate Workflow chart to the ${chartRepo.staging} charts repo."
+job("${chart}-chart-publish") {
+  description "Publishes a release candidate Workflow chart to the chart repo determined by CHART_REPO_TYPE."
 
   scm {
     git {
@@ -45,12 +45,13 @@ job("${chartRepo.staging}-chart-publish") {
   }
 
   parameters {
-    stringParam('RELEASE_TAG', defaults.workflow.release, 'Release tag')
+    choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
+    stringParam('RELEASE_TAG', '', 'Release tag')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
   }
 
   wrappers {
-    buildName('${RELEASE_TAG} #${BUILD_NUMBER}')
+    buildName('${RELEASE_TAG} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
@@ -66,63 +67,13 @@ job("${chartRepo.staging}-chart-publish") {
 
     shell new File("${workspace}/bash/scripts/get_latest_component_release.sh").text +
           new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
+          new File("${workspace}/bash/scripts/publish_helm_chart.sh").text +
       """
-        #!/usr/bin/env bash
+        export COMPONENT_CHART_AND_REPOS="${components}"
+        export ENV_FILE_PATH="${defaults.envFile}"
+        mkdir -p ${defaults.tmpPath}
 
-        set -eo pipefail
-        set -x
-
-        if [ -d charts ]; then
-          cd charts
-          download-and-init-helm
-
-          ## change chart values
-          # update the chart version to RELEASE_TAG
-          perl -i -0pe "s/<Will be populated by the ci before publishing the chart>/\${RELEASE_TAG}/g" ${chart}/Chart.yaml
-
-          ## update requirements.yaml with latest tags for each component
-          for component in ${components}; do
-            IFS=':' read -r -a chartAndRepo <<< "\${component}"
-            componentChart="\${chartAndRepo[0]}"
-            componentRepo="\${chartAndRepo[1]}"
-            latest_tag="\$(get-latest-component-release "\${componentRepo}")"
-            perl -i -0pe "s/<\${componentChart}-tag>/\${latest_tag}/g" ${chart}/requirements.yaml
-            helm repo add "\${componentChart}" "https://charts.deis.com/\${componentChart}"
-          done
-
-          # fetch all dependent charts based on above
-          helm dependency update ${chart}
-
-          # DEBUG:
-          cat ${chart}/Chart.yaml
-          cat ${chart}/values.yaml
-
-          ## package and push chart to production sans index.file (so chart may not be used)
-          helm package ${chart}
-
-          aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.production}/ \
-            && aws s3 cp ${chart}/values.yaml s3://helm-charts/${chartRepo.production}/values-\${RELEASE_TAG}.yaml
-
-          ## package and push chart to staging
-          # modify values.yaml for staging chart
-          perl -i -0pe "s/versions.deis/versions-staging.deis/g" ${chart}/values.yaml
-          perl -i -0pe "s/doctor.deis/doctor-staging.deis/g" ${chart}/values.yaml
-
-          helm package ${chart}
-
-          # download index file from aws s3 bucket
-          aws s3 cp s3://helm-charts/${chartRepo.staging}/index.yaml .
-
-          # update index file
-          helm repo index . --url https://charts.deis.com/${chartRepo.staging} --merge ./index.yaml
-
-          # push packaged chart and updated index file to aws s3 bucket
-          aws s3 cp ${chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${chartRepo.staging}/ \
-            && aws s3 cp index.yaml s3://helm-charts/${chartRepo.staging}/index.yaml \
-            && aws s3 cp ${chart}/values.yaml s3://helm-charts/${chartRepo.staging}/values-\${RELEASE_TAG}.yaml
-        else
-          echo "No 'charts' directory found at project level; nothing to publish."
-        fi
+        publish-helm-chart workflow \${CHART_REPO_TYPE}
       """.stripIndent().trim()
 
     conditionalSteps {
@@ -131,15 +82,16 @@ job("${chartRepo.staging}-chart-publish") {
       }
       steps {
         downstreamParameterized {
-          trigger("${repo.name}-dev-chart-e2e") {
+          trigger("${chart}-chart-e2e") {
             block {
               buildStepFailure('FAILURE')
               failure('FAILURE')
               unstable('UNSTABLE')
             }
             parameters {
+              propertiesFile(defaults.envFile)
               predefinedProps([
-                'WORKFLOW_TAG': '${RELEASE_TAG}',
+                'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
                 'HELM_VERSION': '${HELM_VERSION}',
               ])
             }
@@ -150,8 +102,8 @@ job("${chartRepo.staging}-chart-publish") {
   }
 }
 
-job("${chartRepo.staging}-chart-e2e") {
-  description "Runs e2e against candidate release candidate chart from ${chartRepo.staging} chart repo"
+job("${chart}-chart-e2e") {
+  description "Runs e2e against candidate release candidate chart from chart repo determined by CHART_REPO_TYPE."
 
   logRotator {
     daysToKeep defaults.daysToKeep
@@ -189,8 +141,9 @@ job("${chartRepo.staging}-chart-e2e") {
   }
 
   parameters {
-    stringParam('WORKFLOW_TAG', defaults.workflow.release, 'Workflow chart docker tag')
-    stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart docker tag')
+    stringParam('WORKFLOW_TAG', '', 'Workflow chart docker tag (default: empty, will pull latest)')
+    stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart docker tag (default: empty, will pull latest)')
+    choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     booleanParam('USE_KUBERNETES_HELM', true, 'Flag to use kubernetes/helm (Default: true)')
     stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
@@ -202,7 +155,7 @@ job("${chartRepo.staging}-chart-e2e") {
   }
 
   wrappers {
-    buildName('${WORKFLOW_TAG} #${BUILD_NUMBER}')
+    buildName('${WORKFLOW_TAG} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
     timeout {
       absolute(defaults.testJob["timeoutMins"])
       failBuild()
@@ -217,14 +170,11 @@ job("${chartRepo.staging}-chart-e2e") {
 
   steps {
     shell new File("${workspace}/bash/scripts/get_latest_component_release.sh").text +
-      """
-        export WORKFLOW_E2E_TAG="\$(get-latest-component-release workflow-e2e)"
-        ${e2eRunnerJob}
-      """.stripIndent().trim()
+      "${e2eRunnerJob}"
   }
 }
 
-job("${chartRepo.production}-chart-publish") {
+job("${chart}-chart-release") {
   description "Publishes official Workflow chart by copying e2e-approved chart from the `${chartRepo.staging}` repo to the `${chartRepo.production}` repo."
 
   logRotator {

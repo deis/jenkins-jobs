@@ -37,8 +37,8 @@ job("helm-chart-sign") {
       allowedNodes(['node7-ec2'])
     }
     stringParam('CHART', '', 'Name of chart to be signed')
+    choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
     stringParam('VERSION', '', 'Specific version of the chart to be signed')
-    stringParam('CHART_REPO', '', 'Name of chart repo if other than CHART')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream Slack channel")
   }
@@ -62,13 +62,15 @@ job("helm-chart-sign") {
 
         set -eo pipefail
 
+        CHART_REPO="$(echo "${CHART}-${CHART_REPO_TYPE}" | sed -e 's/-production//g')"
+
         download-and-init-helm
 
         sign-helm-chart "${CHART}" "${VERSION}"
 
         helm verify "${CHART}-${VERSION}".tgz
 
-        upload-signed-chart "${CHART}-${VERSION}" "${CHART_REPO:-${CHART}}"
+        upload-signed-chart "${CHART}-${VERSION}" "${CHART_REPO}"
       '''.stripIndent().trim()
 
     conditionalSteps {
@@ -87,7 +89,7 @@ job("helm-chart-sign") {
               predefinedProps([
                 'CHART': '${CHART}',
                 'VERSION': '${VERSION}',
-                'CHART_REPO': '${CHART_REPO}',
+                'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
               ])
             }
           }
@@ -127,8 +129,8 @@ job("helm-chart-verify") {
 
   parameters {
     stringParam('CHART', '', 'Name of chart to be signed')
+    choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
     stringParam('VERSION', '', 'Specific version of the chart to be signed')
-    stringParam('CHART_REPO', '', 'Name of chart repo if other than CHART')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
   }
 
@@ -148,16 +150,15 @@ job("helm-chart-verify") {
 
         set -eo pipefail
 
-        chart="${CHART}"
-        chart_repo="${CHART_REPO:-${chart}}"
+        CHART_REPO="$(echo "${CHART}-${CHART_REPO_TYPE}" | sed -e 's/-production//g')"
 
         download-and-init-helm
 
         # fetch key from keyserver
         gpg --keyserver pgp.mit.edu --recv-keys 1D6A97D0
 
-        helm repo add "${chart}" https://charts.deis.com/"${chart_repo}"
-        helm fetch --verify "${chart_repo}"/"${chart}" --version "${VERSION}"
+        helm repo add "${CHART}" https://charts.deis.com/"${CHART_REPO}"
+        helm fetch --verify "${CHART_REPO}"/"${CHART}" --version "${VERSION}"
       '''.stripIndent().trim()
   }
 }

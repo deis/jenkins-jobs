@@ -53,7 +53,7 @@ download-and-init-helm() {
   export HELM_OS="${HELM_OS:-linux}"
   export HELM_HOME="/home/jenkins/workspace/${JOB_NAME}/${BUILD_NUMBER}"
 
-  wget --quiet http://storage.googleapis.com/kubernetes-helm/helm-"${HELM_VERSION}"-"${HELM_OS}"-amd64.tar.gz \
+  wget --quiet https://storage.googleapis.com/kubernetes-helm/helm-"${HELM_VERSION}"-"${HELM_OS}"-amd64.tar.gz \
     && tar -zxvf helm-"${HELM_VERSION}"-"${HELM_OS}"-amd64.tar.gz \
     && export PATH="${HELM_OS}-amd64:${PATH}" \
     && helm init -c
