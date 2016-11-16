@@ -103,6 +103,7 @@ evaluate(new File("${workspace}/common.groovy"))
       stringParam('COMMIT_AUTHOR_EMAIL', '', "Commit author email address")
       stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
       stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
+      booleanParam('USE_KUBERNETES_HELM', false, 'Flag to use kubernetes/helm (Default: false)')
     }
 
     triggers {
