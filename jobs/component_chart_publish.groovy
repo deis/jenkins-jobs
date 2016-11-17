@@ -86,11 +86,16 @@ repos.each { Map repo ->
               # package release chart
               helm package ${repo.chart}
 
-              # download index file from aws s3 bucket
-              aws s3 cp s3://helm-charts/${repo.chart}/index.yaml .
+              if [ -z "\$(aws s3 ls s3://helm-charts/${repo.chart}/index.yaml)" ]; then
+                # the index file does not exist yet, so let's create it
+                helm repo index . --url https://charts.deis.com/${repo.chart}
+              else
+                # download index file from aws s3 bucket
+                aws s3 cp s3://helm-charts/${repo.chart}/index.yaml .
 
-              # update index file
-              helm repo index . --url https://charts.deis.com/${repo.chart} --merge ./index.yaml
+                # update index file
+                helm repo index . --url https://charts.deis.com/${repo.chart} --merge ./index.yaml
+              fi
 
               # push packaged chart and updated index file to aws s3 bucket
               aws s3 cp ${repo.chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${repo.chart}/ \
