@@ -192,7 +192,7 @@ job("${chartRepo.staging}-chart-e2e") {
     stringParam('WORKFLOW_TAG', defaults.workflow.release, 'Workflow chart docker tag')
     stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart docker tag')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
-    stringParam('USE_KUBERNETES_HELM', '1', 'Flag to use kubernetes/helm (Default: yes; leave empty for no)')
+    booleanParam('USE_KUBERNETES_HELM', true, 'Flag to use kubernetes/helm (Default: true)')
     stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
     stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:canary', "The e2e-runner image")
     stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")
