@@ -36,7 +36,7 @@ defaults = [
     remoteRepo: 'https://github.com/deis/charts.git',
     remoteBranch: 'master',
     remoteName: 'deis',
-    version: 'v2.0.0-rc.2',
+    version: 'v2.0.0',
   ],
   github: [
     username: 'deis-admin',
