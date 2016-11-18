@@ -103,7 +103,7 @@ evaluate(new File("${workspace}/common.groovy"))
       stringParam('COMMIT_AUTHOR_EMAIL', '', "Commit author email address")
       stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
       stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
-      booleanParam('USE_KUBERNETES_HELM', false, 'Flag to use kubernetes/helm (Default: false)')
+      booleanParam('USE_HELM_CLASSIC', false, 'Flag to use Helm Classic (Default: false)') // helmc-remove
     }
 
     triggers {
@@ -142,6 +142,7 @@ evaluate(new File("${workspace}/common.groovy"))
             fi
           """.stripIndent().trim()
 
+        // helmc-remove
         shell new File("${workspace}/bash/scripts/setup_helmc_environment.sh").text +
           """
             mkdir -p ${defaults.tmpPath}

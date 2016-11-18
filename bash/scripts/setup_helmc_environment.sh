@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
+# helmc-remove (entire file)
 setup-helmc-env() {
   if [ -n "${CHARTS_SHA}" ]; then
     helmc_remote_repo="$(get-remote-repo-url charts "${CHARTS_SHA}")"

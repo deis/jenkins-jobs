@@ -33,9 +33,9 @@ defaults = [
     webhookURL: 'a53b3a9e-d649-4cff-9997-6c24f07743c8',
   ],
   helm: [
-    remoteRepo: 'https://github.com/deis/charts.git',
-    remoteBranch: 'master',
-    remoteName: 'deis',
+    remoteRepo: 'https://github.com/deis/charts.git', // helmc-remove
+    remoteBranch: 'master', // helmc-remove
+    remoteName: 'deis', // helmc-remove
     version: 'v2.0.0',
   ],
   github: [
