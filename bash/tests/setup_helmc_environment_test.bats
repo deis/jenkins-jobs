@@ -1,5 +1,6 @@
 #!/usr/bin/env bats
 
+# helmc-remove (entire file)
 setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/setup_helmc_environment.sh"
   load stub
