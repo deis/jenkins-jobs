@@ -55,153 +55,236 @@ To do so, one would update/add the appropriate plugin in `build.gradle` and then
 
 ## Flow
 
-### When a Component PR is Created
+As a standard practice, the initial job will describe the pipeline, in the form of `downstreamParameterized` steps
+that follow the main steps of the job itself.  See the [Workflow component job](https://github.com/deis/jenkins-jobs/blob/master/jobs/component_jobs.groovy) as an example.  Most of the downstream jobs are then set up to only execute their specific job logic, and not add further downstream dependencies that might be different from what the initial job specifies.
+
+(The pipelines below can also be found in their original `.monopic` format if needing to change/update.)
+
+### Component PR/Master Pipeline
 ```
-Build────────────────────┐          - check out source code from PR commit
-│                        │          - build test Docker image
-│      "logger-pr"       │          - report build job status to GitHub PR
-│                        │          - if success, initiate E2E job
-└──────────┬─────────────┘
-           │
-           ▼
-E2E──────────────────────┐
-│                        │          - set GitHub PR status to 'Pending'
-│ "workflow-test-pr"     │          - run end-to-end tests against test image supplied
-│  COMPONENT_REPO=logger │          - report e2e result back to GitHub PR
-│                        │
-└────────────────────────┘
+                                          Component Pipeline start
+                                                (PR, master)
+
+                                        ┌───────────────────────────┐                                         ┌─────────────────────────────────┐
+                                        │                           │                                         │     Commit type: REPO_TYPE      │
+                                        │                           │ - check out source code                 │                                 │██
+                                        │    component Docker image │ - build and push Docker                 │        PR commit: 'pr',         │██
+               ┌─────────────────────   │       build/deploy job    │          image          ─────┐          │     Merge to master: 'dev'      │██
+               │                        │                           │ - on success, initiate       │          │ Official release: 'production'  │██
+               │                        │                           │     downstream job           │          │                                 │██
+               │                        │                           │                              │          │ Staging for release: 'staging'  │██
+               ▼                        └───────────────────────────┘                              │          │         (only Workflow)         │██
+                                                                                                   ▼          └─────────────────────────────────┘██
+                                                                                                                ███████████████████████████████████
+       if change to chart                                                                                       ███████████████████████████████████
+    ('charts' subdirectory)                                                         if NO change in to chart
+
+
+   ┌───────────────────────────┐                                                  ┌───────────────────────────┐
+   │                           │                                                  │                           │   - set GitHub status to 'Pending'
+   │                           │                                                  │                           │                (if PR)
+   │     component chart       │  - package chart from specified                  │                           │  - run end-to-end tests against test
+   │         publish           │              commit                              │     workflow chart e2e    │            image supplied
+   │                           │ - publish to specified chart repo                │                           │   - report result to Slack (as well
+   │                           │                                                  │                           │           as GitHub if PR)
+   │                           │                                                  │                           │
+   └───────────────────────────┘                                                  └───────────────────────────┘
+               │                                                                                │
+               │                                                                                │
+               ▼                                                                                ▼
+   ┌───────────────────────────┐                                                  ┌───────────────────────────┐
+   │                           │                                                  │                           │
+   │                           │      - package workflow chart                    │                           │          (if Master merge)
+   │     workflow chart        │ (injecting specific component chart              │                           │ - pull image from dev repo/registry
+   │         publish           │        version if supplied)                      │     component promote     │ - push/promote image to production
+   │                           │  - publish to specified chart repo               │                           │            repo/registry
+   │                           │                                                  │                           │
+   │                           │                                                  │                           │
+   └───────────────────────────┘                                                  └───────────────────────────┘
+               │
+               │
+               ▼
+   ┌───────────────────────────┐
+   │                           │  - install workflow and workflow-e2e
+   │                           │  charts via helper tools (e2e-runner,
+   │                           │  k8s-claimer)
+   │    workflow chart e2e     │  - (can set chart values for both
+   │                           │  depending on env vars)
+   │                           │  - report result to Slack (as well as
+   │                           │  GitHub if PR)
+   └───────────────────────────┘
 ```
 
-### When a Component PR is Merged to Master
+### Component Release Pipeline
 ```
-Build────────────────────┐
-│                        │          - check out source code
-│      "logger"          │          - build test Docker image
-│                        │          - on success, initiate E2E job
-└──────────┬─────────────┘
-           │
-           ▼
-E2E──────────────────────┐
-│                        │
-│  "workflow-test"       │          - run end-to-end tests against test image supplied
-│  COMPONENT_REPO=logger │          - on success, initiate promote job
-│                        │
-└──────────┬─────────────┘
-           │
-           ▼
-Promote──────────────────┐
-│                        │          - pull image from test repo
-│ "component-promote"    │          - push/promote image to production repo
-│  COMPONENT_NAME=logger │          - use the git SHA tag for both
-│                        │
-└────────────────────────┘
-```
+ Component Release Pipeline
+            start
 
-### When a Component is Tagged
-```
-Locate Candidate──────────────┐
-│                             │     - triggered by `v1.2.3` git tag push webhook
-│    "logger-release"         │     - locate release candidate associated to git tag (promoted above)
-│                             │     - send to downstream E2E job and wait for final status
-└─────────────┬───────────────┘
-              │
-              ▼
-Promote───────────────────────┐
-│                             │
-│ "release-candidate-promote" │     - retag candidate image with official RELEASE_TAG (v1.2.3)
-│    COMPONENT_NAME=logger    │     - on success, initiate publish job
-│    RELEASE_TAG=v1.2.3       │
-│                             │
-└─────────────┬───────────────┘
-              │
-              ▼
-Chart Publish─────────────────┐
-│                             │
-│    "logger-chart-publish"   │     - if component has correlating helm chart...
-│     RELEASE_TAG=v1.2.3      │     - reference official image created above
-│                             │     - publish `v1.2.3`-versioned chart to charts.deis.com
-│                             │
-└─────────────┬───────────────┘
-              │
-              ▼
-Publish───────────────────────┐
-│                             │
-│ "component-release-publish" │
-│    COMPONENT=logger         │     - publish release data to workflow-manager-api
-│    RELEASE=v1.2.3           │
-│                             │
-└─────────────────────────────┘
+┌───────────────────────────┐
+│                           │
+│                           │ - triggered by `v1.2.3` git tag
+│                           │             webhook
+│     component-release     │
+│                           │ - locate release candidate image
+│                           │     associated with git tag
+│                           │
+└───────────────────────────┘
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │
+│                           │
+│                           │  - retag candidate image with
+│ release candidate promote │   official release (v1.2.3)
+│                           │
+│                           │
+│                           │
+└───────────────────────────┘
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │
+│                           │
+│    component release      │  - publish release data to
+│         publish           │    workflow-manager-api
+│                           │
+│                           │
+│                           │
+└───────────────────────────┘
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │
+│                           │
+│     component chart       │  - package release component chart
+│         publish           │
+│                           │ - publish to both 'production' and
+│                           │          'dev' chart repos
+│                           │
+└───────────────────────────┘
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │
+│                           │
+│                           │  - sign release chart in 'production'
+│   component chart sign    │               chart repo
+│                           │
+│                           │
+│                           │
+└───────────────────────────┘
 ```
 
 ### When Workflow-CLI is tagged
 ```
-Trigger─────────────────────────────────┐
-│                                       │   - triggered by `v1.2.3` git tag push webhook
-│       "workflow-cli-release"          │   - pass this to downstream job(s)
-│                                       │
-└──────────┬────────────────────────────┘
-           │
-           ▼
-Build and Release - defaults────────────┐
-│                                       │   - check out TAG of source code
-│      "workflow-cli-build-tag"         │   - build cross-compiled default (linux, darwin and windows; amd64, 386) binaries
-│       TAG=v1.2.4                      │   - upload binaries
-│                                       │
-└──────────┬────────────────────────────┘
-           │
-           ▼
-Build and Release - darwin amd64────────┐
-│                                       │   - check out TAG of source code
-│ "workflow-cli-build-tag-darwin-amd64" |   - build darwin amd64 binary with CGO_ENABLED=1 on OSX slave
-│  TAG=v1.2.4                           │   - upload darwin amd64 binary
-│                                       │
-└───────────────────────────────────────┘
+    Workflow CLI Release
+          Pipeline
 
-Note: There are also "workflow-cli-build-stable(-darwin-amd64)" variants of the two downstream jobs above, but these
-are currently only triggered manually.
+┌───────────────────────────┐
+│                           │
+│                           │
+│                           │ - triggered by `v1.2.3` git tag
+│    workflow-cli-release   │             webhook
+│                           │
+│                           │
+│                           │
+└───────────────────────────┘
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │ - check out git tag of source
+│                           │              code
+│                           │ - build cross-compiled default
+│  workflow-cli-build-tag   │  (linux, darwin and windows;
+│                           │      amd64, 386) binaries
+│                           │       - upload binaries
+│                           │
+└───────────────────────────┘
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │
+│                           │ - check out git tag of source
+│   workflow-cli-build-     │             code
+│           tag             │   - build amd64 binary with
+│      darwin-amd64         │  CGO_ENABLED=1 on OSX slave
+│                           │ - upload darwin amd64 binary
+│                           │
+└───────────────────────────┘
+
+ Note: There are also "workflow-cli-build-stable(-darwin-amd64)"
+ variants of the two downstream jobs above, but these are currently
+ only triggered manually.
 ```
 
 ### When a Workflow Helm Chart is to be released
 ```
-Publish chart to staging─────────┐
-│                                │     - triggered manually with RELEASE_TAG supplied
-│  "workflow-chart-publish"      │     - update chart dependencies by gathering latest releases for all component charts
-│      RELEASE_TAG=v1.2.3        │     - update index file, package and upload to the `workflow-dev` charts repo (staging)
-│      CHART_REPO_TYPE=staging   │     - kick off downstream E2E job with WORKFLOW_TAG=$RELEASE_TAG
-└─────────────┬──────────────────┘
-              │
-              ▼
-Run E2E──────────────────────────┐
-│                                │     - find the latest workflow-e2e chart release
-│    "workflow-chart-e2e"        │     - lease GKE cluster, install Workflow chart (using WORKFLOW_TAG)
-│     WORKFLOW_TAG=v1.2.3        │     - install workflow-e2e chart
-│     CHART_REPO_TYPE=staging    │     - archive test results and report job status to appropriate channel(s)
-└─────────────┬──────────────────┘
-              │
-              ▼
-Publish chart to production──────┐
-│                                │     - triggered manually with RELEASE_TAG supplied
-│    "workflow-chart-release"    │     - pull down approved chart from `workflow-dev` charts repo (staging)
-│      RELEASE_TAG=v1.2.3        │     - update index file, upload chart to `workflow` charts repo (production)
-│                                │
-└─────────────┬──────────────────┘
-              │
-              ▼
-Sign chart───────────────────────┐
-│                                │     - assigns signatory node to fetch CHART w/ version VERSION
-│    "helm-chart-sign"           │     - signs chart with Deis signing key
-│     CHART=workflow             │     - uploads new `CHART-VERSION.tgz` and `CHART-VERSION.tgz.prov` files to chart repo
-│     VERSION=v1.2.3             │
-└─────────────┬──────────────────┘
-              │
-              ▼
-Verify signed chart──────────────┐
-│                                │     - assigns non-signatory node to run `helm fetch --verify CHART --version VERSION`
-│    "helm-chart-verify"         │     - (job succeeds if command succeeds)
-│     CHART=workflow             │
-│     VERSION=v1.2.3             │
-└────────────────────────────────┘
+   Workflow Chart Release
+          Pipeline
 
+┌───────────────────────────┐    - triggered manually with
+│                           │       supplied release tag
+│                           │
+│                           │  - update chart dependencies by
+│   workflow-chart-publish  │  gathering latest releases for
+│                           │       all component charts
+│                           │
+│                           │ - update index file, package and
+└───────────────────────────┘  upload to the 'staging' charts
+            │
+            │
+            ▼
+┌───────────────────────────┐    - lease GKE cluster, install
+│                           │   Workflow chart (version handed
+│                           │        down from upstream)
+│                           │
+│    workflow-chart-e2e     │    - install workflow-e2e chart
+│                           │
+│                           │     - archive test results and
+│                           │  report job status to appropriate
+└───────────────────────────┘             channel(s)
+            │
+            │
+            ▼
+┌───────────────────────────┐   - triggered manually with
+│                           │     supplied release tag
+│                           │
+│                           │  - pull down approved chart
+│  workflow-chart-release   │   from 'staging' chart repo
+│                           │
+│                           │  - update index file, upload
+│                           │ chart to 'production' charts
+└───────────────────────────┘             repo
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │
+│                           │   - fetch specific chart version
+│                           │
+│     helm-chart-sign       │    - sign chart with signing key
+│                           │
+│                           │  - upload new *.tgz and *.tgz.prov
+│                           │         files to chart repo
+└───────────────────────────┘
+            │
+            │
+            ▼
+┌───────────────────────────┐
+│                           │
+│                           │
+│                           │ - non-signatory node runs `helm fetch
+│    helm-chart-verify      │ --verify <chart> --version <version>`
+│                           │
+│                           │  - (job succeeds if command succeeds)
+│                           │
+└───────────────────────────┘
 ```
 
 ## License

@@ -9,7 +9,7 @@ evaluate(new File("${workspace}/common.groovy"))
   isPR = config.type == 'pr'
   name = isMaster ? "e2e-runner" : "e2e-runner-${config.type}"
   dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
-  downstreamJobName = defaults.testJob[config.type]
+  downstreamJobName = defaults.testJob.name
 
   job(name) {
     description """

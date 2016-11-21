@@ -5,6 +5,8 @@ evaluate(new File("${workspace}/common.groovy"))
 name = 'workflow-test-release'
 
 job(name) {
+  disabled() // delete when ready to fully deprecate
+
   description """
     <p>Runs a given workflow-[RELEASE]-e2e tests chart against a workflow-[RELEASE] chart candidate using e2e-runner</p>
   """.stripIndent().trim()
@@ -56,14 +58,14 @@ job(name) {
 
    concurrentBuild()
    throttleConcurrentBuilds {
-     maxTotal(defaults.maxWorkflowReleaseConcurrentBuilds)
+     maxTotal(1)
    }
 
   parameters {
     stringParam('CLI_VERSION', defaults.cli.release, "workflow-cli version")
-    stringParam('WORKFLOW_BRANCH', "release-${defaults.workflow.release}", "The branch to use for installing the workflow chart.")
-    stringParam('WORKFLOW_E2E_BRANCH', "release-${defaults.workflow.release}", "The branch to use for installing the workflow-e2e chart.")
-    stringParam('RELEASE', defaults.workflow.release, "Release string for resolving workflow-[release](-e2e) charts")
+    stringParam('WORKFLOW_BRANCH', "", "The branch to use for installing the workflow chart.") // helmc-remove
+    stringParam('WORKFLOW_E2E_BRANCH', "", "The branch to use for installing the workflow-e2e chart.") //helmc-remove
+    stringParam('RELEASE', '', "Release string for resolving workflow-[release](-e2e) charts")
     stringParam('HELM_REMOTE_REPO', defaults.helm["remoteRepo"], "The remote repo to use for fetching charts.") // helmc-remove
     stringParam('E2E_RUNNER_IMAGE', 'quay.io/deisci/e2e-runner:canary', "The e2e-runner image")
     stringParam('E2E_DIR', '/home/jenkins/workspace/$JOB_NAME/$BUILD_NUMBER', "Directory for storing workspace files")

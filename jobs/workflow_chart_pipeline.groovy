@@ -27,7 +27,7 @@ job("${chart}-chart-publish") {
   publishers {
     wsCleanup() // Scrub workspace clean after build
 
-    def statusesToNotify = [['SUCCESS', 'pending'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
+    def statusesToNotify = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
     postBuildScripts {
       onlyIfBuildSucceeds(false)
       steps {
@@ -45,7 +45,7 @@ job("${chart}-chart-publish") {
                     if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
                       update-commit-status \
                         ${commitStatus} \
-                        \${COMPONENT_REPO} \
+                        \${COMPONENT_REPO:-${repo.name}} \
                         \${ACTUAL_COMMIT} \
                         \${BUILD_URL} \
                         "${chart}-chart-publish job ${buildStatus}"
@@ -72,7 +72,7 @@ job("${chart}-chart-publish") {
     stringParam('UPSTREAM_SLACK_CHANNEL', repo.slackChannel, "Upstream Slack channel")
     stringParam('COMPONENT_REPO', repo.name, "Component repo name")
     stringParam('COMPONENT_CHART_VERSION', '', "Component chart version")
-    stringParam('ACTUAL_COMMIT', '', "Actual commit SHA for versioning chart")
+    stringParam('ACTUAL_COMMIT', '', "Actual commit SHA for versioning chart; will be tied to COMPONENT_REPO if provided")
   }
 
   wrappers {
@@ -109,11 +109,6 @@ job("${chart}-chart-publish") {
       steps {
         downstreamParameterized {
           trigger("${chart}-chart-e2e") {
-            block {
-              buildStepFailure('FAILURE')
-              failure('FAILURE')
-              unstable('UNSTABLE')
-            }
             parameters {
               propertiesFile(defaults.envFile)
               predefinedProps([
@@ -165,8 +160,13 @@ job("${chart}-chart-e2e") {
             condition {
              status(buildStatus, buildStatus)
               steps {
+                // Dispatch Slack notification
+                def issueWarning = (buildStatus == 'FAILURE')
                 shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                  "slack-notify \${UPSTREAM_SLACK_CHANNEL} '${buildStatus}'"
+                  """
+                    message="\$(format-test-job-message ${issueWarning})"
+                    slack-notify \${UPSTREAM_SLACK_CHANNEL} ${buildStatus} "\${message}"
+                  """.stripIndent().trim()
 
                 // Update GitHub PR
                 shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
@@ -174,7 +174,7 @@ job("${chart}-chart-e2e") {
                     if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
                       update-commit-status \
                         ${commitStatus} \
-                        \${COMPONENT_REPO} \
+                        \${COMPONENT_REPO:-${repo.name}} \
                         \${ACTUAL_COMMIT} \
                         \${BUILD_URL} \
                         "${chart}-chart-e2e job ${buildStatus}"
@@ -189,8 +189,8 @@ job("${chart}-chart-e2e") {
   }
 
   parameters {
-    stringParam('WORKFLOW_TAG', '', 'Workflow chart docker tag (default: empty, will pull latest)')
-    stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart docker tag (default: empty, will pull latest)')
+    stringParam('WORKFLOW_TAG', '', 'Workflow chart version (default: empty, will pull latest from given chart repo)')
+    stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart version (default: empty, will pull latest from given chart repo)')
     choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     booleanParam('USE_HELM_CLASSIC', false, 'Flag to use Helm Classic (Default: false)') // helmc-remove
@@ -200,9 +200,14 @@ job("${chart}-chart-e2e") {
     stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
     stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
     stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
+    stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
     stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream Slack channel")
+    stringParam('COMMIT_AUTHOR_EMAIL', '', "Commit author email address")
     stringParam('COMPONENT_REPO', '', "Component repo name")
     stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
+    repos.each { Map r ->
+      stringParam(r.commitEnvVar, '', "${r.name} commit SHA for setting <component>.docker_tag in Workflow chart")
+    }
   }
 
   wrappers {
@@ -221,6 +226,20 @@ job("${chart}-chart-e2e") {
   }
 
   steps {
+    // Notify GitHub PR of pending e2e run, if applicable
+    shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
+      """
+        if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
+          update-commit-status \
+            "pending" \
+            \${COMPONENT_REPO:-${repo.name}} \
+            \${ACTUAL_COMMIT} \
+            \${BUILD_URL} \
+            "Running e2e tests..."
+        fi
+      """.stripIndent().trim()
+
+    // Run tests
     shell new File("${workspace}/bash/scripts/get_latest_component_release.sh").text +
       "${e2eRunnerJob}"
   }
@@ -255,7 +274,7 @@ job("${chart}-chart-release") {
   }
 
   parameters {
-    stringParam('RELEASE_TAG', defaults.workflow.release, 'Release tag')
+    stringParam('RELEASE_TAG', '', 'Release tag')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
   }
 

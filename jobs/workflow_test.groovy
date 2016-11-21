@@ -9,13 +9,15 @@ evaluate(new File("${workspace}/common.groovy"))
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
 
-  name = defaults.testJob[config.type]
+  name = isMaster ? 'workflow-test' : 'workflow-test-pr'
   repoName = 'charts'
 
   job(name) {
+    disabled() // delete when ready to fully deprecate
+
     description """
       <p>Runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a
-      <a href="https://github.com/deis/charts/tree/master/${defaults.workflow.chartName}">${defaults.workflow.chartName}</a> chart
+      <a href="https://github.com/deis/charts/tree/master/workflow-dev">workflow-dev</a> chart
       using e2e-runner</p>
     """.stripIndent().trim()
 
@@ -78,7 +80,7 @@ evaluate(new File("${workspace}/common.groovy"))
      if (isPR) {
        concurrentBuild()
        throttleConcurrentBuilds {
-         maxTotal(defaults.maxWorkflowTestPRConcurrentBuilds)
+         maxTotal(13)
        }
      } else {
        concurrentBuild()
@@ -152,35 +154,6 @@ evaluate(new File("${workspace}/common.groovy"))
 
       shell e2eRunnerJob
 
-      if (isMaster) { // send component name and sha to downstream component-promote job
-        shell new File("${workspace}/bash/scripts/get_component_and_sha.sh").text +
-          """
-            #!/usr/bin/env bash
-
-            set -eo pipefail
-
-            mkdir -p ${defaults.tmpPath}
-            { get-component-and-sha; \
-              echo "UPSTREAM_SLACK_CHANNEL=\${UPSTREAM_SLACK_CHANNEL}"; } >> ${defaults.envFile}
-          """.stripIndent().trim()
-
-        conditionalSteps {
-          condition {
-            not {
-              shell "cat \"${defaults.envFile}\" | grep -q SKIP_COMPONENT_PROMOTE"
-            }
-          }
-          steps {
-            downstreamParameterized {
-              trigger('component-promote') {
-                parameters {
-                  propertiesFile(defaults.envFile)
-                }
-              }
-            }
-          }
-        }
-      }
     }
   }
 }

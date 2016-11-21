@@ -74,7 +74,7 @@ format-test-job-message() {
     message="${message}
     Commit Author: ${COMMIT_AUTHOR_EMAIL}"
   fi
-  if [ -n "${COMPONENT_REPO}" ] && $issueWarning; then
+  if [ -n "${COMPONENT_REPO}" ] && [ "${CHART_REPO_TYPE}" == 'dev' ] && [ "${issueWarning}" == true ]; then
     message="${message}
     *Note: This implies component '${COMPONENT_REPO}' has not been promoted as a release candidate!*"
   fi
