@@ -71,6 +71,7 @@ job(name) {
     stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
     stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
     stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
+    booleanParam('USE_HELM_CLASSIC', defaults.helm.useClassic, 'Flag to use Helm Classic (Default: false)') // helmc-remove
   }
 
   triggers {

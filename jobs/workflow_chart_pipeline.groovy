@@ -7,7 +7,7 @@ def chart = repo.chart
 def chartRepo = [dev: "${chart}-dev", staging: "${chart}-staging", production: chart]
 
 job("${chart}-chart-publish") {
-  description "Publishes a release candidate Workflow chart to the chart repo determined by CHART_REPO_TYPE."
+  description "Publishes a Workflow chart to the chart repo determined by CHART_REPO_TYPE."
 
   scm {
     git {
@@ -19,19 +19,38 @@ job("${chart}-chart-publish") {
     }
   }
 
+  concurrentBuild()
+  throttleConcurrentBuilds {
+    maxTotal(defaults.maxTotalConcurrentBuilds)
+  }
+
   publishers {
     wsCleanup() // Scrub workspace clean after build
 
+    def statusesToNotify = [['SUCCESS', 'pending'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
     postBuildScripts {
       onlyIfBuildSucceeds(false)
       steps {
-        defaults.statusesToNotify.each { buildStatus ->
+        statusesToNotify.each { buildStatus, commitStatus ->
           conditionalSteps {
             condition {
              status(buildStatus, buildStatus)
               steps {
                 shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                  "slack-notify '${repo.slackChannel}' '${buildStatus}'"
+                  "slack-notify \${UPSTREAM_SLACK_CHANNEL} '${buildStatus}'"
+
+                // Update GitHub PR
+                shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
+                  """
+                    if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
+                      update-commit-status \
+                        ${commitStatus} \
+                        \${COMPONENT_REPO} \
+                        \${ACTUAL_COMMIT} \
+                        \${BUILD_URL} \
+                        "${chart}-chart-publish job ${buildStatus}"
+                    fi
+                  """.stripIndent().trim()
               }
             }
           }
@@ -45,20 +64,25 @@ job("${chart}-chart-publish") {
   }
 
   parameters {
-    choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
+    choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
     stringParam('RELEASE_TAG', '', 'Release tag')
     // TODO: once defaults.helm.version gets bumped to 2.1.0, switch back.  (We need canary for semver feature)
     // stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     stringParam('HELM_VERSION', 'canary', 'Version of Helm to download/use')
+    stringParam('UPSTREAM_SLACK_CHANNEL', repo.slackChannel, "Upstream Slack channel")
+    stringParam('COMPONENT_REPO', repo.name, "Component repo name")
+    stringParam('COMPONENT_CHART_VERSION', '', "Component chart version")
+    stringParam('ACTUAL_COMMIT', '', "Actual commit SHA for versioning chart")
   }
 
   wrappers {
-    buildName('${RELEASE_TAG} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
+    buildName('${RELEASE_TAG} ${COMPONENT_REPO} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
       string("AWS_ACCESS_KEY_ID", '57e64439-4521-4a4f-9315-eac10ecdea75')
       string("AWS_SECRET_ACCESS_KEY", '313da896-1579-41fa-9c70-c6b13d938e9c')
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
@@ -95,6 +119,9 @@ job("${chart}-chart-publish") {
               predefinedProps([
                 'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
                 'HELM_VERSION': '${HELM_VERSION}',
+                'ACTUAL_COMMIT': '${ACTUAL_COMMIT}',
+                'COMPONENT_REPO': '${COMPONENT_REPO}',
+                'UPSTREAM_SLACK_CHANNEL': '${UPSTREAM_SLACK_CHANNEL}',
               ])
             }
           }
@@ -111,6 +138,11 @@ job("${chart}-chart-e2e") {
     daysToKeep defaults.daysToKeep
   }
 
+  concurrentBuild()
+  throttleConcurrentBuilds {
+    maxTotal(defaults.maxWorkflowTestConcurrentBuilds)
+  }
+
   publishers {
     archiveJunit('${BUILD_NUMBER}/logs/junit*.xml') {
       retainLongStdout(false)
@@ -124,16 +156,30 @@ job("${chart}-chart-e2e") {
       allowEmpty(true)
     }
 
+    def statusesToNotify = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
     postBuildScripts {
       onlyIfBuildSucceeds(false)
       steps {
-        defaults.statusesToNotify.each { buildStatus ->
+        statusesToNotify.each { buildStatus, commitStatus ->
           conditionalSteps {
             condition {
-              status(buildStatus, buildStatus)
+             status(buildStatus, buildStatus)
               steps {
                 shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
-                  "slack-notify '${repo.slackChannel}' '${buildStatus}'"
+                  "slack-notify \${UPSTREAM_SLACK_CHANNEL} '${buildStatus}'"
+
+                // Update GitHub PR
+                shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
+                  """
+                    if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
+                      update-commit-status \
+                        ${commitStatus} \
+                        \${COMPONENT_REPO} \
+                        \${ACTUAL_COMMIT} \
+                        \${BUILD_URL} \
+                        "${chart}-chart-e2e job ${buildStatus}"
+                    fi
+                  """.stripIndent().trim()
               }
             }
           }
@@ -145,7 +191,7 @@ job("${chart}-chart-e2e") {
   parameters {
     stringParam('WORKFLOW_TAG', '', 'Workflow chart docker tag (default: empty, will pull latest)')
     stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart docker tag (default: empty, will pull latest)')
-    choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
+    choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     booleanParam('USE_HELM_CLASSIC', false, 'Flag to use Helm Classic (Default: false)') // helmc-remove
     stringParam('GINKGO_NODES', '15', "Number of parallel executors to use when running e2e tests")
@@ -154,10 +200,13 @@ job("${chart}-chart-e2e") {
     stringParam('E2E_DIR_LOGS', '${E2E_DIR}/logs', "Directory for storing logs. This directory is mounted into the e2e-runner container")
     stringParam('CLUSTER_REGEX', '', 'K8s cluster regex (name) to supply when requesting cluster')
     stringParam('CLUSTER_VERSION', '', 'K8s cluster version to supply when requesting cluster')
+    stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream Slack channel")
+    stringParam('COMPONENT_REPO', '', "Component repo name")
+    stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
   }
 
   wrappers {
-    buildName('${WORKFLOW_TAG} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
+    buildName('${WORKFLOW_TAG} ${COMPONENT_REPO} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
     timeout {
       absolute(defaults.testJob["timeoutMins"])
       failBuild()
@@ -166,6 +215,7 @@ job("${chart}-chart-e2e") {
     colorizeOutput 'xterm'
     credentialsBinding {
       string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
@@ -251,7 +301,7 @@ job("${chart}-chart-release") {
               predefinedProps([
                 'CHART': chart,
                 'VERSION': '${RELEASE_TAG}',
-                'CHART_REPO': chartRepo.production,
+                'CHART_REPO_TYPE': 'production',
                 'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
               ])
             }

@@ -60,6 +60,11 @@ job('release-candidate-promote') {
 
     downstreamParameterized {
       trigger('component-release-publish') {
+        block {
+          buildStepFailure('FAILURE')
+          failure('FAILURE')
+          unstable('UNSTABLE')
+        }
         parameters {
           predefinedProps([
             'COMPONENT': '${COMPONENT_NAME}',

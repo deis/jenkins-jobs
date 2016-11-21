@@ -154,6 +154,30 @@ repos.each { Map repo ->
             shell script
           }
 
+          // Trigger component chart publish to -dev/-pr repo IF commit has changes in 'charts' sub-directory
+          if (repo.chart) {
+            conditionalSteps {
+              condition {
+                shell new File("${workspace}/bash/scripts/get_merge_commit_changes.sh").text +
+                  '''
+                    changes="$(get-merge-commit-changes "$(git rev-parse --short HEAD)")"
+                    echo "${changes}" | grep 'charts/'
+                  '''.stripIndent().trim()
+              }
+              steps {
+                chartRepoType = isMaster ? 'dev' : 'pr'
+                downstreamParameterized {
+                  trigger("${repo.chart}-chart-publish") {
+                    parameters {
+                      propertiesFile(defaults.envFile)
+                      predefinedProps(['CHART_REPO_TYPE': chartRepoType])
+                    }
+                  }
+                }
+              }
+            }
+          }
+
           if (repo.runE2e) {
             conditionalSteps {
               condition {
@@ -187,27 +211,6 @@ repos.each { Map repo ->
                         'COMPONENT_NAME': component.name,
                         'COMPONENT_SHA': '${GIT_COMMIT}',
                       ])
-                    }
-                  }
-                }
-              }
-              // Trigger component chart publish to -dev repo IF commit has changes in 'charts' sub-directory
-              if (repo.chart) {
-                conditionalSteps {
-                  condition {
-                    shell new File("${workspace}/bash/scripts/get_merge_commit_changes.sh").text +
-                      '''
-                        changes="$(get-merge-commit-changes "$(git rev-parse --short HEAD)")"
-                        echo "${changes}" | grep 'charts/'
-                      '''.stripIndent().trim()
-                  }
-                  steps {
-                    downstreamParameterized {
-                      trigger("${repo.chart}-chart-publish") {
-                        parameters {
-                          predefinedProps(['CHART_REPO_TYPE': 'dev'])
-                        }
-                      }
                     }
                   }
                 }

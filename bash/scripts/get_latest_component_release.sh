@@ -14,7 +14,7 @@ get-latest-component-release() {
   wfm_api_url="https://versions.deis.com/v3/versions/stable/deis-${component_to_curl}/latest"
   echo "Getting latest ${component} release via url: ${wfm_api_url}" >&2
 
-  latest_release="$(curl -f "${wfm_api_url}" | jq '.version.version' | tr -d '"')"
+  latest_release="$(curl -sf "${wfm_api_url}" | jq '.version.version' | tr -d '"')"
 
   echo "${latest_release}"
 }
