@@ -5,7 +5,7 @@ run-e2e() {
   local default_env_file="${1}"
 
   # begin helmc-remove
-  if [ -n "${RELEASE}" ]; then
+  if [ -n "${RELEASE}" ] && [ "${USE_HELM_CLASSIC}" == true ]; then
     export WORKFLOW_CHART="workflow-${RELEASE}"
     export WORKFLOW_E2E_CHART="workflow-${RELEASE}-e2e"
   fi
