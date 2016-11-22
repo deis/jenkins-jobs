@@ -121,6 +121,7 @@ repos.each { Map repo ->
         }
 
         if (repo.chart) {
+          // Trigger component release chart publish job to 'production' chart repo
           conditionalSteps {
             condition {
               status('SUCCESS', 'SUCCESS')
@@ -135,6 +136,7 @@ repos.each { Map repo ->
                   }
                   parameters {
                     propertiesFile(defaults.envFile)
+                    predefinedProps(['CHART_REPO_TYPE': 'production'])
                   }
                 }
               }

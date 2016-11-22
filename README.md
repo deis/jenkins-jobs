@@ -156,36 +156,52 @@ Build and Release - darwin amd64────────┐
 │  TAG=v1.2.4                           │   - upload darwin amd64 binary
 │                                       │
 └───────────────────────────────────────┘
+
+Note: There are also "workflow-cli-build-stable(-darwin-amd64)" variants of the two downstream jobs above, but these
+are currently only triggered manually.
 ```
 
 ### When a Workflow Helm Chart is to be released
 ```
 Publish chart to staging─────────┐
 │                                │     - triggered manually with RELEASE_TAG supplied
-│  "workflow-dev-chart-publish"  │     - update chart dependencies by gathering latest releases for all component charts
+│  "workflow-chart-publish"      │     - update chart dependencies by gathering latest releases for all component charts
 │      RELEASE_TAG=v1.2.3        │     - update index file, package and upload to the `workflow-dev` charts repo (staging)
-│                                │     - kick off downstream E2E job with WORKFLOW_TAG=$RELEASE_TAG
+│      CHART_REPO_TYPE=staging   │     - kick off downstream E2E job with WORKFLOW_TAG=$RELEASE_TAG
 └─────────────┬──────────────────┘
               │
               ▼
 Run E2E──────────────────────────┐
 │                                │     - find the latest workflow-e2e chart release
-│    "workflow-dev-chart-e2e"    │     - lease GKE cluster, install Workflow chart (using WORKFLOW_TAG)
+│    "workflow-chart-e2e"        │     - lease GKE cluster, install Workflow chart (using WORKFLOW_TAG)
 │     WORKFLOW_TAG=v1.2.3        │     - install workflow-e2e chart
-│                                │     - archive test results and report job status to appropriate channel(s)
+│     CHART_REPO_TYPE=staging    │     - archive test results and report job status to appropriate channel(s)
 └─────────────┬──────────────────┘
               │
               ▼
 Publish chart to production──────┐
 │                                │     - triggered manually with RELEASE_TAG supplied
-│    "workflow-chart-publish"    │     - pull down approved chart from `workflow-dev` charts repo (staging)
+│    "workflow-chart-release"    │     - pull down approved chart from `workflow-dev` charts repo (staging)
 │      RELEASE_TAG=v1.2.3        │     - update index file, upload chart to `workflow` charts repo (production)
 │                                │
+└─────────────┬──────────────────┘
+              │
+              ▼
+Sign chart───────────────────────┐
+│                                │     - assigns signatory node to fetch CHART w/ version VERSION
+│    "helm-chart-sign"           │     - signs chart with Deis signing key
+│     CHART=workflow             │     - uploads new `CHART-VERSION.tgz` and `CHART-VERSION.tgz.prov` files to chart repo
+│     VERSION=v1.2.3             │
+└─────────────┬──────────────────┘
+              │
+              ▼
+Verify signed chart──────────────┐
+│                                │     - assigns non-signatory node to run `helm fetch --verify CHART --version VERSION`
+│    "helm-chart-verify"         │     - (job succeeds if command succeeds)
+│     CHART=workflow             │
+│     VERSION=v1.2.3             │
 └────────────────────────────────┘
-```
 
-Note: There are also "workflow-cli-build-stable(-darwin-amd64)" variants of the two downstream jobs above, but these
-are currently only triggered manually.
 ```
 
 ## License

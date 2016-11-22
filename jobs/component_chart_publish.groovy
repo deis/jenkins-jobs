@@ -4,8 +4,10 @@ evaluate(new File("${workspace}/common.groovy"))
 
 repos.each { Map repo ->
   if (repo.chart) {
-    job("${repo.chart}-chart-publish") {
-      description "Publishes a new ${repo.name} chart release."
+    def chart = repo.chart
+
+    job("${chart}-chart-publish") {
+      description "Publishes a new ${chart} chart release to the chart repo determined by CHART_REPO_TYPE."
 
       scm {
         git {
@@ -43,12 +45,13 @@ repos.each { Map repo ->
       }
 
       parameters {
-        stringParam('RELEASE_TAG', '', 'Release tag')
+        choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
+        stringParam('RELEASE_TAG', '', 'Release tag (Default: empty, will use latest git tag for repo)')
         stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
       }
 
       wrappers {
-        buildName('${RELEASE_TAG} #${BUILD_NUMBER}')
+        buildName('${RELEASE_TAG} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
         timestamps()
         colorizeOutput 'xterm'
         credentialsBinding {
@@ -60,65 +63,56 @@ repos.each { Map repo ->
 
       steps {
         shell new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
+              new File("${workspace}/bash/scripts/publish_helm_chart.sh").text +
           """
-            #!/usr/bin/env bash
-
-            set -eo pipefail
             set -x
-
-            # check out RELEASE_TAG tag
-            commit="\$(git checkout "\${RELEASE_TAG}" && git rev-parse HEAD)"
-
-            if [ -d charts ]; then
-              cd charts
-              download-and-init-helm
-
-              ## change chart values
-              # update the chart version to RELEASE_TAG
-              perl -i -0pe "s/<Will be populated by the ci before publishing the chart>/\${RELEASE_TAG}/g" ${repo.chart}/Chart.yaml
-              # update all org values to "deis"
-              perl -i -0pe 's/"deisci"/"deis"/g' ${repo.chart}/values.yaml
-              # update the image pull policy to "IfNotPresent"
-              perl -i -0pe 's/"Always"/"IfNotPresent"/g' ${repo.chart}/values.yaml
-              # update the dockerTag value to RELEASE_TAG
-              perl -i -0pe "s/canary/\${RELEASE_TAG}/g" ${repo.chart}/values.yaml
-
-              # package release chart
-              helm package ${repo.chart}
-
-              if [ -z "\$(aws s3 ls s3://helm-charts/${repo.chart}/index.yaml)" ]; then
-                # the index file does not exist yet, so let's create it
-                helm repo index . --url https://charts.deis.com/${repo.chart}
-              else
-                # download index file from aws s3 bucket
-                aws s3 cp s3://helm-charts/${repo.chart}/index.yaml .
-
-                # update index file
-                helm repo index . --url https://charts.deis.com/${repo.chart} --merge ./index.yaml
-              fi
-
-              # push packaged chart and updated index file to aws s3 bucket
-              aws s3 cp ${repo.chart}-\${RELEASE_TAG}.tgz s3://helm-charts/${repo.chart}/ \
-                && aws s3 cp index.yaml s3://helm-charts/${repo.chart}/index.yaml
-            else
-              echo "No 'charts' directory found at project level; nothing to publish."
-            fi
+            publish-helm-chart ${chart} \${CHART_REPO_TYPE}
           """.stripIndent().trim()
 
         conditionalSteps {
+          // Trigger downstream signing job IF previous shell step succeeded AND official release
           condition {
-            status('SUCCESS', 'SUCCESS')
+            and {
+              status('SUCCESS', 'SUCCESS')
+            } {
+              and {
+                shell 'test -n "${RELEASE_TAG}"'
+              }
+            }
           }
           steps {
             downstreamParameterized {
               trigger("helm-chart-sign") {
                 parameters {
                   predefinedProps([
-                    'CHART': repo.chart,
+                    'CHART': chart,
                     'VERSION': '${RELEASE_TAG}',
-                    'CHART_REPO': repo.chart,
+                    'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
                     'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
                   ])
+                }
+              }
+            }
+          }
+        }
+        // Trigger downstream workflow-chart-publish job if -dev chart repo
+        conditionalSteps {
+          condition {
+            and {
+              status('SUCCESS', 'SUCCESS')
+            } {
+              and {
+                stringsMatch('${CHART_REPO_TYPE}', 'dev', false) // 'false' for ignoreCase boolean arg
+              }
+            }
+            steps {
+              downstreamParameterized {
+                trigger("workflow-chart-publish") {
+                  parameters {
+                    predefinedProps([
+                      'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
+                    ])
+                  }
                 }
               }
             }
