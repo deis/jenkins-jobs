@@ -40,7 +40,7 @@ publish-helm-chart() {
 
     # push packaged chart and updated index file to aws s3 bucket
     aws s3 cp "${chart}-${chart_version}".tgz "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/ \
-      && aws s3 cp index.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/index.yaml \
+      && aws s3 cp --cache-control max_age=0 index.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/index.yaml \
       && aws s3 cp "${chart}"/values.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}/values-${chart_version}".yaml
   else
     echo "No 'charts' directory found at project level; nothing to publish."
