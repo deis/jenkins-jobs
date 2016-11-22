@@ -47,7 +47,9 @@ job("${chart}-chart-publish") {
   parameters {
     choiceParam('CHART_REPO_TYPE', ['dev', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
     stringParam('RELEASE_TAG', '', 'Release tag')
-    stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
+    // TODO: once defaults.helm.version gets bumped to 2.1.0, switch back.  (We need canary for semver feature)
+    // stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
+    stringParam('HELM_VERSION', 'canary', 'Version of Helm to download/use')
   }
 
   wrappers {
