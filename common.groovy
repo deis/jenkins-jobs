@@ -2,7 +2,7 @@ def workspace = new File(".").getAbsolutePath()
 if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
 evaluate(new File("${workspace}/repo.groovy"))
 
-def workflowChartRelease = 'v2.8.0'
+def workflowChartRelease = 'v2.9.0'
 def testJobRootName = 'workflow-test'
 
 defaults = [
