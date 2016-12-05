@@ -103,6 +103,7 @@ repos.each { Map repo ->
             status('SUCCESS', 'SUCCESS')
           }
           steps {
+            // promote candidate image to 'prod' (deis) image registries
             repo.components.each{ Map component ->
               downstreamParameterized {
                 trigger('release-candidate-promote') {
@@ -117,16 +118,23 @@ repos.each { Map repo ->
                 }
               }
             }
-          }
-        }
 
-        if (repo.chart) {
-          // Trigger component release chart publish job to 'production' chart repo
-          conditionalSteps {
-            condition {
-              status('SUCCESS', 'SUCCESS')
-            }
-            steps {
+            if (repo.chart) {
+              // Trigger component release chart publish job to 'dev' chart repo
+              downstreamParameterized {
+                trigger("${repo.chart}-chart-publish") {
+                  block {
+                    buildStepFailure('FAILURE')
+                    failure('FAILURE')
+                    unstable('UNSTABLE')
+                  }
+                  parameters {
+                    propertiesFile(defaults.envFile)
+                    predefinedProps(['CHART_REPO_TYPE': 'dev'])
+                  }
+                }
+              }
+              // Trigger component release chart publish job to 'production' chart repo
               downstreamParameterized {
                 trigger("${repo.chart}-chart-publish") {
                   block {

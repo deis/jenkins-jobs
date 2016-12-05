@@ -37,6 +37,7 @@ defaults = [
     remoteBranch: 'master', // helmc-remove
     remoteName: 'deis', // helmc-remove
     version: 'v2.0.0',
+    useClassic: false, // helmc-remove
   ],
   github: [
     username: 'deis-admin',

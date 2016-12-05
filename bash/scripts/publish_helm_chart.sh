@@ -11,9 +11,18 @@ publish-helm-chart() {
   local chart="${1}"
   local repo_type="${2}"
 
-  # check out RELEASE_TAG tag (if empty, just stays on master commit)
-  short_sha="${SHORT_SHA:-$(git checkout -q "${RELEASE_TAG}" && git rev-parse --short HEAD)}"
-  git_tag="${GIT_TAG:-$(git describe --abbrev=0 --tags)}"
+  # give ACTUAL_COMMIT precedence
+  if [ -n "${ACTUAL_COMMIT}" ]; then
+    SHORT_SHA="${ACTUAL_COMMIT:0:7}"
+  fi
+
+  # if repo_type not 'staging', check out RELEASE_TAG tag (if empty, just stays on master commit)
+  if [ "${repo_type}" != 'staging' ]; then
+    git checkout -q "${RELEASE_TAG}"
+  fi
+
+  short_sha="${SHORT_SHA:-$(git rev-parse --short HEAD)}"
+  git_tag="${RELEASE_TAG:-$(git describe --abbrev=0 --tags)}"
   timestamp="${TIMESTAMP:-$(date -u +%Y%m%d%H%M%S)}"
   chart_repo="$(echo "${chart}-${repo_type}" | sed -e 's/-production//g')"
 
@@ -22,10 +31,14 @@ publish-helm-chart() {
     download-and-init-helm
 
     chart_version="${git_tag}"
+    # if dev/pr chart, will use incremented patch version (v1.2.3 -> v1.2.4) and add prerelease build info
+    incremented_patch_version="$(( ${chart_version: -1} +1))"
     if [ "${chart_repo}" == "${chart}-dev" ]; then
-      # treat this as a dev chart: increment patch version (v1.2.3 -> v1.2.4) and add prerelease build info
-      incremented_patch_version="$(( ${chart_version: -1} +1))"
-      chart_version="${chart_version%?}${incremented_patch_version}-${timestamp}-sha.${short_sha}"
+      chart_version="${chart_version%?}${incremented_patch_version}-dev-${timestamp}-sha.${short_sha}"
+    elif [ "${chart_repo}" == "${chart}-pr" ]; then
+      # TODO: add timestamp once https://github.com/Masterminds/semver/issues/34 is resolved
+      # chart_version="${chart_version%?}${incremented_patch_version}-${timestamp}-sha.${short_sha}"
+      chart_version="${chart_version%?}${incremented_patch_version}-sha.${short_sha}"
     fi
 
     update-chart "${chart}" "${chart_version}" "${chart_repo}"
@@ -49,7 +62,7 @@ publish-helm-chart() {
 
 # update-chart updates a given chart, using the provided chart, chart_version
 # and chart_repo values.  If the chart is 'workflow', a space-delimited list of
-# component charts is expected to be present in a WORKFLOW_COMPONENTS env var
+# component charts is expected to be present in a COMPONENT_CHART_AND_REPOS env var
 update-chart() {
   local chart="${1}"
   local chart_version="${2}"
@@ -60,7 +73,8 @@ update-chart() {
 
   if [ "${chart}" != 'workflow' ]; then
     ## make component chart updates
-    if [ "${chart_repo}" != "${chart}-dev" ]; then
+    if [ "${chart_repo}" == "${chart}" ]; then
+      ## chart repo is production repo; update values appropriately
       # update all org values to "deis"
       perl -i -0pe 's/"deisci"/"deis"/g' "${chart}"/values.yaml
       # update the image pull policy to "IfNotPresent"
@@ -68,6 +82,8 @@ update-chart() {
       # update the dockerTag value to chart_version
       perl -i -0pe "s/canary/${chart_version}/g" "${chart}"/values.yaml
     fi
+    # send chart version on for use in downstream jobs
+    echo "COMPONENT_CHART_VERSION=${chart_version}" >> "${ENV_FILE_PATH:-/dev/null}"
   else
     ## make workflow chart updates
     # update requirements.yaml with correct chart version and chart repo for each component
@@ -79,15 +95,31 @@ update-chart() {
 
       component_chart_version="${latest_tag}"
       component_chart_repo="${component_chart}"
-      if [ "${chart_version}" != "${git_tag}" ]; then
-        # chart version has build data; is -dev variant
-        component_chart_version=">=${latest_tag}"
+      # if COMPONENT_REPO matches this component repo and COMPONENT_CHART_VERSION is non-empty/non-null,
+      # this signifies we need to set component chart version to correlate with PR artifact
+      # shellcheck disable=SC2153
+      if [ "${COMPONENT_REPO}" == "${component_repo}" ] && [ -n "${COMPONENT_CHART_VERSION}" ] && [ "${chart_repo}" == "${chart}-pr" ]; then
+        component_chart_version="${COMPONENT_CHART_VERSION}"
+        component_chart_repo="${component_chart}-pr"
+      elif [ "${chart_version}" != "${git_tag}" ]; then
+        # workflow chart version has build data; is -dev variant. assign component version/repo accordingly
+        component_chart_version=">=${latest_tag}-dev"
         component_chart_repo="${component_chart}-dev"
       fi
+
       perl -i -0pe 's/<'"${component_chart}"'-tag>/"'"${component_chart_version}"'"/g' "${chart}"/requirements.yaml
       perl -i -0pe 's='"${DEIS_CHARTS_BASE_URL}/${component_chart}\n"'='"${DEIS_CHARTS_BASE_URL}/${component_chart_repo}\n"'=g' "${chart}"/requirements.yaml
       helm repo add "${component_chart_repo}" "${DEIS_CHARTS_BASE_URL}/${component_chart_repo}"
+
+      # DEBUG
+      helm search "${component_chart_repo}"/"${component_chart}" -l
     done
+
+    # DEBUG
+    helm repo list
+
+    # display resulting requirements.yaml to verify component chart versions
+    cat "${chart}"/requirements.yaml
 
     # fetch all dependent charts based on above
     helm dependency update "${chart}"
