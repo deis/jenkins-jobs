@@ -103,17 +103,19 @@ repos.each { Map repo ->
             status('SUCCESS', 'SUCCESS')
           }
           steps {
-            // promote candidate image to 'prod' (deis) image registries
-            repo.components.each{ Map component ->
-              downstreamParameterized {
-                trigger('release-candidate-promote') {
-                  block {
-                    buildStepFailure('FAILURE')
-                    failure('FAILURE')
-                    unstable('UNSTABLE')
-                  }
-                  parameters {
-                    propertiesFile(component.envFile)
+            if (repo.imageBuild) {
+              // promote candidate image to 'prod' (deis) image registries
+              repo.components.each{ Map component ->
+                downstreamParameterized {
+                  trigger('release-candidate-promote') {
+                    block {
+                      buildStepFailure('FAILURE')
+                      failure('FAILURE')
+                      unstable('UNSTABLE')
+                    }
+                    parameters {
+                      propertiesFile(component.envFile)
+                    }
                   }
                 }
               }
