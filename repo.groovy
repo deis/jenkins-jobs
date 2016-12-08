@@ -4,6 +4,7 @@ repos = [
     slackChannel: '#builder',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'builder'],
 
   [ name: 'charts',
@@ -14,6 +15,7 @@ repos = [
     slackChannel: '#controller',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'controller'],
 
   [ name: 'dockerbuilder',
@@ -21,6 +23,7 @@ repos = [
     slackChannel: '#builder',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'dockerbuilder'],
 
   [ name: 'fluentd',
@@ -28,11 +31,13 @@ repos = [
     slackChannel: '#logger',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'fluentd'],
 
   [ name: 'jenkins-node',
     components: [[name: 'jenkins-node']],
     slackChannel: '#testing',
+    imageBuilde: true,
     chart: 'jenkins-node'],
 
   [ name: 'logger',
@@ -40,6 +45,7 @@ repos = [
     slackChannel: '#logger',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'logger'],
 
   [ name: 'minio',
@@ -47,6 +53,7 @@ repos = [
     slackChannel: '#object-store',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'minio'],
 
   [ name: 'monitor',
@@ -54,6 +61,7 @@ repos = [
     slackChannel: '#monitor',
     runE2e: false,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'monitor'],
 
   [ name: 'nsq',
@@ -61,6 +69,7 @@ repos = [
     slackChannel: '#logger',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'nsqd'],
 
   [ name: 'postgres',
@@ -68,6 +77,7 @@ repos = [
     slackChannel: '#postgres',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'database'],
 
   [ name: 'redis',
@@ -75,6 +85,7 @@ repos = [
     slackChannel: '#logger',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'redis'],
 
   [ name: 'registry',
@@ -82,6 +93,7 @@ repos = [
     slackChannel: '#registry',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'registry'],
 
   [ name: 'registry-proxy',
@@ -89,6 +101,7 @@ repos = [
     slackChannel: '#registry',
     runE2e: true,
     workflowComponent: true,
+    imageBuild: false,
     chart: 'registry-proxy'],
 
   [ name: 'registry-token-refresher',
@@ -96,6 +109,7 @@ repos = [
     slackChannel: '#registry',
     runE2e: false,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'registry-token-refresher'],
 
   [ name: 'router',
@@ -103,6 +117,7 @@ repos = [
     slackChannel: '#router',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'router'],
 
   [ name: 'slugbuilder',
@@ -110,6 +125,7 @@ repos = [
     slackChannel: '#builder',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'slugbuilder'],
 
   [ name: 'slugrunner',
@@ -117,6 +133,7 @@ repos = [
     slackChannel: '#builder',
     runE2e: true,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'slugrunner'],
 
   [ name: 'workflow',
@@ -132,6 +149,7 @@ repos = [
     components: [[name: 'workflow-e2e']],
     slackChannel: '#testing',
     runE2e: true,
+    imageBuilde: true,
     chart: 'workflow-e2e'],
 
   [ name: 'workflow-manager',
@@ -139,6 +157,7 @@ repos = [
     slackChannel: '#wfm',
     runE2e: false,
     workflowComponent: true,
+    imageBuilde: true,
     chart: 'workflow-manager'],
 ]
 

@@ -134,13 +134,17 @@ repos.each { Map repo ->
 
               git_commit="\$(get-actual-commit ${repo.name} \${ghprbActualCommit})"
 
-              make bootstrap || true
+              if [ "${repo.imageBuild}" == false ]; then
+                echo "${repo.name} has been designated as requiring no Docker image build; will forgo building/pushing component image..."
+              else
+                make bootstrap || true
 
-              export IMAGE_PREFIX=deisci VERSION="git-\${git_commit:0:7}"
-              docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
-              DEIS_REGISTRY='' make docker-build ${dockerPush}
-              docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
-              DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
+                export IMAGE_PREFIX=deisci VERSION="git-\${git_commit:0:7}"
+                docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
+                DEIS_REGISTRY='' make docker-build ${dockerPush}
+                docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
+                DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
+              fi
 
               # populate env file for passing to downstream job
               mkdir -p ${defaults.tmpPath}
@@ -178,7 +182,7 @@ repos.each { Map repo ->
             }
           }
 
-          if (repo.runE2e) {
+          if (repo.runE2e && repo.imageBuild) {
             conditionalSteps {
               condition {
                 not {
@@ -201,7 +205,7 @@ repos.each { Map repo ->
               }
             }
           } else {
-            if (isMaster) {
+            if (isMaster && repo.imageBuild) {
               // Trigger component image promotion
               repo.components.each{ Map component ->
                 downstreamParameterized {
