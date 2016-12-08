@@ -84,13 +84,6 @@ repos = [
     workflowComponent: true,
     chart: 'registry'],
 
-  [ name: 'registry-proxy',
-    components: [[name: 'registry-proxy']],
-    slackChannel: '#registry',
-    runE2e: true,
-    workflowComponent: true,
-    chart: 'registry-proxy'],
-
   [ name: 'registry-token-refresher',
     components: [[name: 'registry-token-refresher']],
     slackChannel: '#registry',
