@@ -22,7 +22,7 @@ repos.each { Map repo ->
       publishers {
         wsCleanup() // Scrub workspace clean after build
 
-        def statusesToNotify = [['SUCCESS', 'pending'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
+        def statusesToNotify = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
         postBuildScripts {
           onlyIfBuildSucceeds(false)
           steps {
@@ -86,60 +86,6 @@ repos.each { Map repo ->
             set -x
             publish-helm-chart ${chart} \${CHART_REPO_TYPE}
           """.stripIndent().trim()
-
-        conditionalSteps {
-          // Trigger downstream signing job IF previous shell step succeeded AND official release
-          condition {
-            and {
-              status('SUCCESS', 'SUCCESS')
-            } {
-              and {
-                shell 'test -n "${RELEASE_TAG}"' } {
-                stringsMatch('${CHART_REPO_TYPE}', 'production', false)
-              }
-            }
-          }
-          steps {
-            downstreamParameterized {
-              trigger("helm-chart-sign") {
-                parameters {
-                  predefinedProps([
-                    'CHART': chart,
-                    'VERSION': '${RELEASE_TAG}',
-                    'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
-                    'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
-                  ])
-                }
-              }
-            }
-          }
-        }
-        // Trigger downstream workflow-chart-publish job if -dev or -pr chart repo
-        conditionalSteps {
-          condition {
-            and { status('SUCCESS', 'SUCCESS')} {
-              or {
-                stringsMatch('${CHART_REPO_TYPE}', 'dev', false) } {
-                stringsMatch('${CHART_REPO_TYPE}', 'pr', false)
-              }
-            }
-          }
-          steps {
-            downstreamParameterized {
-              trigger("workflow-chart-publish") {
-                parameters {
-                  propertiesFile(defaults.envFile)
-                  predefinedProps([
-                    'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
-                    'ACTUAL_COMMIT': '${ACTUAL_COMMIT}',
-                    'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
-                    'COMPONENT_REPO': repo.name,
-                  ])
-                }
-              }
-            }
-          }
-        }
       }
     }
   }

@@ -11,8 +11,10 @@ publish-helm-chart() {
   local chart="${1}"
   local repo_type="${2}"
 
-  # give ACTUAL_COMMIT precedence
-  if [ -n "${ACTUAL_COMMIT}" ]; then
+  # give ACTUAL_COMMIT precedence for use in chart versioning, assuming COMPONENT_REPO is empty/null
+  # otherwise, ACTUAL_COMMIT is tied to the COMPONENT_REPO for use in assembling the workflow chart below
+  # shellcheck disable=SC2153
+  if [ -n "${ACTUAL_COMMIT}" ] && [ -z "${COMPONENT_REPO}" ]; then
     SHORT_SHA="${ACTUAL_COMMIT:0:7}"
   fi
 
@@ -114,6 +116,10 @@ update-chart() {
       # DEBUG
       helm search "${component_chart_repo}"/"${component_chart}" -l
     done
+
+    # TEMP FIX: remove when registry-proxy no longer under deis (https://github.com/deis/workflow/issues/644 closed)
+    perl -i -0pe 's/<registry-proxy-tag>/"v1.1.1"/g' "${chart}"/requirements.yaml
+    helm repo add registry-proxy "${DEIS_CHARTS_BASE_URL}/registry-proxy"
 
     # DEBUG
     helm repo list

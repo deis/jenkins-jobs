@@ -6,7 +6,7 @@ name = "storagetype_e2e"
 
 job(name) {
   description """
-    <p>Nightly Job runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/${defaults.workflow.chartName}">${defaults.workflow.chartName}</a> chart configured to GCS by default </p>
+    <p>Nightly Job runs the <a href="https://github.com/deis/workflow-e2e">e2e tests</a> against a <a href="https://github.com/deis/charts/tree/master/workflow-dev">workflow-dev</a> chart configured to GCS by default </p>
   """.stripIndent().trim()
 
   scm {

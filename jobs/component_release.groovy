@@ -98,12 +98,11 @@ repos.each { Map repo ->
 
         shell main
 
+        // Downstream jobs/pipeline START
+        // Trigger job to promote candidate image to 'prod' (deis) image registries
         conditionalSteps {
-          condition {
-            status('SUCCESS', 'SUCCESS')
-          }
+          condition { status('SUCCESS', 'SUCCESS') }
           steps {
-            // promote candidate image to 'prod' (deis) image registries
             repo.components.each{ Map component ->
               downstreamParameterized {
                 trigger('release-candidate-promote') {
@@ -118,9 +117,14 @@ repos.each { Map repo ->
                 }
               }
             }
+          }
+        }
 
+        // Trigger jobs to publish chart to both 'dev' and 'production' chart repos
+        conditionalSteps {
+          condition { status('SUCCESS', 'SUCCESS') }
+          steps {
             if (repo.chart) {
-              // Trigger component release chart publish job to 'dev' chart repo
               downstreamParameterized {
                 trigger("${repo.chart}-chart-publish") {
                   block {
@@ -134,7 +138,6 @@ repos.each { Map repo ->
                   }
                 }
               }
-              // Trigger component release chart publish job to 'production' chart repo
               downstreamParameterized {
                 trigger("${repo.chart}-chart-publish") {
                   block {
@@ -146,6 +149,25 @@ repos.each { Map repo ->
                     propertiesFile(defaults.envFile)
                     predefinedProps(['CHART_REPO_TYPE': 'production'])
                   }
+                }
+              }
+            }
+          }
+        }
+
+        // Trigger downstream signing job
+        conditionalSteps {
+          condition { status('SUCCESS', 'SUCCESS') }
+          steps {
+            downstreamParameterized {
+              trigger("helm-chart-sign") {
+                parameters {
+                  predefinedProps([
+                    'CHART': repo.chart,
+                    'VERSION': '${TAG}',
+                    'CHART_REPO_TYPE': 'production',
+                    'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+                  ])
                 }
               }
             }

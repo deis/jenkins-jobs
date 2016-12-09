@@ -150,10 +150,11 @@ strip-ws() {
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
 
-@test "format-test-job-message: COMPONENT_REPO, UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, issue warning true" {
+@test "format-test-job-message: COMPONENT_REPO, UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, CHART_REPO_TYPE is dev, issueWarning true" {
   COMPONENT_REPO="test-component"
   UPSTREAM_BUILD_URL="bogus.upstream.build.url"
   COMMIT_AUTHOR_EMAIL="commit@author.me"
+  CHART_REPO_TYPE="dev"
 
   expected_output='
     Upstream Build: '"${UPSTREAM_BUILD_URL}"'
@@ -167,7 +168,7 @@ strip-ws() {
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
 
-@test "format-test-job-message: COMPONENT_REPO, UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, issue warning false" {
+@test "format-test-job-message: COMPONENT_REPO, UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, CHART_REPO_TYPE not dev, issueWarning false" {
   COMPONENT_REPO="test-component"
   UPSTREAM_BUILD_URL="bogus.upstream.build.url"
   COMMIT_AUTHOR_EMAIL="commit@author.me"
@@ -183,7 +184,7 @@ strip-ws() {
   [ "$(strip-ws "${output}")" == "$(strip-ws "${expected_output}")" ]
 }
 
-@test "format-test-job-message: UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, issue warning true" {
+@test "format-test-job-message: UPSTREAM_BUILD_URL and COMMIT_AUTHOR_EMAIL exist, issueWarning is true" {
   # No COMPONENT_REPO in env, so warning will not be issued
   UPSTREAM_BUILD_URL="bogus.upstream.build.url"
   COMMIT_AUTHOR_EMAIL="commit@author.me"

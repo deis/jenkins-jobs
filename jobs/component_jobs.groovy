@@ -79,10 +79,10 @@ repos.each { Map repo ->
               extensions {
                 commitStatus {
                   context('ci/jenkins/pr')
-                  triggeredStatus("Triggering ${repo.name} build/deploy...")
-                  startedStatus("Starting ${repo.name} build/deploy...")
-                  completedStatus('SUCCESS', "Merge with caution! Test job(s) may still be in progress...")
-                  completedStatus('FAILURE', 'Build/deploy returned failure(s).')
+                  triggeredStatus("Triggering ${repo.name} build/test pipeline...")
+                  startedStatus("Starting ${repo.name} build/test pipeline...")
+                  completedStatus('SUCCESS', "${repo.name} build/test pipeline SUCCESS!")
+                  completedStatus('FAILURE', "${repo.name} build/test pipeline FAILURE.")
                   completedStatus('ERROR', 'Something went wrong.')
                 }
               }
@@ -142,11 +142,14 @@ repos.each { Map repo ->
               docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
               DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
 
-              # populate env file for passing to downstream job
+              # populate env file for passing to downstream job(s)
               mkdir -p ${defaults.tmpPath}
               { echo COMMIT_AUTHOR_EMAIL="\$(echo "\${git_commit}" | git --no-pager show -s --format='%ae')"; \
                 echo ACTUAL_COMMIT="\${git_commit}"; \
                 echo ${repo.commitEnvVar}="\${git_commit}"; \
+                echo COMPONENT_NAME="${repo.name}"; \
+                echo COMPONENT_SHA="\${git_commit}"; \
+                echo UPSTREAM_SLACK_CHANNEL="${repo.slackChannel}"; \
                 echo "\$(find-required-commits "\${git_commit}")"; \
                 echo "\$(check-skip-e2e "\${git_commit}")"; } > ${defaults.envFile}
             """.stripIndent().trim()
@@ -154,23 +157,39 @@ repos.each { Map repo ->
             shell script
           }
 
-          // Trigger component chart publish to -dev/-pr repo IF commit has changes in 'charts' sub-directory
+          def chartRepoType = isMaster ? 'dev' : 'pr'
+
+          // Downstream jobs/pipeline START
+          // IF commit has changes in 'charts' sub-directory, trigger the following:
           if (repo.chart) {
             conditionalSteps {
-              condition {
-                shell new File("${workspace}/bash/scripts/get_merge_commit_changes.sh").text +
-                  '''
-                    changes="$(get-merge-commit-changes "$(git rev-parse --short HEAD)")"
-                    echo "${changes}" | grep 'charts/'
-                  '''.stripIndent().trim()
-              }
+              condition { shell checkForChartChanges }
               steps {
-                chartRepoType = isMaster ? 'dev' : 'pr'
+                // Trigger component chart publish
                 downstreamParameterized {
                   trigger("${repo.chart}-chart-publish") {
+                    block {
+                      buildStepFailure('FAILURE')
+                      failure('FAILURE')
+                      unstable('UNSTABLE')
+                    }
                     parameters {
                       propertiesFile(defaults.envFile)
                       predefinedProps(['CHART_REPO_TYPE': chartRepoType])
+                    }
+                  }
+                }
+
+                // Trigger workflow chart publish (will pickup latest component chart published prior)
+                // (job triggers e2e if succcessful)
+                downstreamParameterized {
+                  trigger("workflow-chart-publish") {
+                    parameters {
+                      propertiesFile(defaults.envFile)
+                      predefinedProps([
+                        'CHART_REPO_TYPE': chartRepoType,
+                        'COMPONENT_REPO': repo.name,
+                      ])
                     }
                   }
                 }
@@ -178,39 +197,50 @@ repos.each { Map repo ->
             }
           }
 
+          // Trigger e2e run if SKIP_E2E is NOT set AND there are NOT changes in the 'charts' sub-directory
           if (repo.runE2e) {
             conditionalSteps {
               condition {
-                not {
-                  shell "cat \"${defaults.envFile}\" | grep -q SKIP_E2E"
+                and {
+                  not { shell "cat \"${defaults.envFile}\" | grep -q SKIP_E2E" } } {
+                  not { shell checkForChartChanges }
                 }
               }
               steps {
                 downstreamParameterized {
-                  trigger(defaults.testJob[config.type]) {
+                  trigger(defaults.testJob.name) {
+                    block {
+                      buildStepFailure('FAILURE')
+                      failure('FAILURE')
+                      unstable('UNSTABLE')
+                    }
                     parameters {
                       propertiesFile(defaults.envFile)
                       predefinedProps([
                         'UPSTREAM_BUILD_URL': '${BUILD_URL}',
-                        'UPSTREAM_SLACK_CHANNEL': "${repo.slackChannel}",
-                        'COMPONENT_REPO': "${repo.name}",
+                        'COMPONENT_REPO': repo.name,
+                        'CHART_REPO_TYPE': chartRepoType,
                       ])
                     }
                   }
                 }
               }
             }
-          } else {
-            if (isMaster) {
-              // Trigger component image promotion
-              repo.components.each{ Map component ->
+          }
+
+          // Trigger downstream component-promote job assuming e2e success
+          if (isMaster) {
+            conditionalSteps {
+              condition {
+                and { status('SUCCESS', 'SUCCESS')} {
+                  not { shell "cat \"${defaults.envFile}\" | grep -q SKIP_COMPONENT_PROMOTE" }
+                }
+              }
+              steps {
                 downstreamParameterized {
                   trigger('component-promote') {
                     parameters {
-                      predefinedProps([
-                        'COMPONENT_NAME': component.name,
-                        'COMPONENT_SHA': '${GIT_COMMIT}',
-                      ])
+                      propertiesFile(defaults.envFile)
                     }
                   }
                 }
