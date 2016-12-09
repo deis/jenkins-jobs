@@ -147,7 +147,12 @@ repos.each { Map repo ->
                   }
                   parameters {
                     propertiesFile(defaults.envFile)
-                    predefinedProps(['CHART_REPO_TYPE': 'production'])
+                    predefinedProps([
+                      'CHART_REPO_TYPE': 'production',
+                      'NODE': defaults.signingNode[0],
+                      'SIGN_CHART': true,
+                      ]
+                    )
                   }
                 }
               }
@@ -155,16 +160,16 @@ repos.each { Map repo ->
           }
         }
 
-        // Trigger downstream signing job
+        // Trigger downstream chart signature verification job
         conditionalSteps {
           condition { status('SUCCESS', 'SUCCESS') }
           steps {
             downstreamParameterized {
-              trigger("helm-chart-sign") {
+              trigger("helm-chart-verify") {
                 parameters {
+                  propertiesFile(defaults.envFile)
                   predefinedProps([
                     'CHART': repo.chart,
-                    'VERSION': '${TAG}',
                     'CHART_REPO_TYPE': 'production',
                     'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
                   ])

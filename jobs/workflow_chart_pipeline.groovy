@@ -64,19 +64,18 @@ job("${chart}-chart-publish") {
   }
 
   parameters {
-    choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
-    stringParam('RELEASE_TAG', '', 'Release tag')
+    choiceParam('CHART_REPO_TYPE', ['dev', 'pr'], 'Type of chart repo for publishing (default: dev)')
     // TODO: once defaults.helm.version gets bumped to 2.1.0, switch back.  (We need canary for semver feature)
     // stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     stringParam('HELM_VERSION', 'canary', 'Version of Helm to download/use')
     stringParam('UPSTREAM_SLACK_CHANNEL', repo.slackChannel, "Upstream Slack channel")
-    stringParam('COMPONENT_REPO', repo.name, "Component repo name")
+    stringParam('COMPONENT_REPO', '', "Component repo name")
     stringParam('COMPONENT_CHART_VERSION', '', "Component chart version")
     stringParam('ACTUAL_COMMIT', '', "Actual commit SHA for versioning chart; will be tied to COMPONENT_REPO if provided")
   }
 
   wrappers {
-    buildName('${RELEASE_TAG} ${COMPONENT_REPO} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
+    buildName('${COMPONENT_REPO} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
@@ -93,7 +92,6 @@ job("${chart}-chart-publish") {
 
     shell new File("${workspace}/bash/scripts/get_latest_component_release.sh").text +
           new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
-          new File("${workspace}/bash/scripts/publish_helm_chart.sh").text +
       """
         export COMPONENT_CHART_AND_REPOS="${components}"
         export ENV_FILE_PATH="${defaults.envFile}"
@@ -245,8 +243,106 @@ job("${chart}-chart-e2e") {
   }
 }
 
+job("${chart}-chart-stage") {
+  description "Publishes a signed Workflow chart to the 'staging' chart repo"
+
+  scm {
+    git {
+      remote {
+        github("deis/${repo.name}")
+        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+      }
+      branch('master')
+    }
+  }
+
+  concurrentBuild()
+  throttleConcurrentBuilds {
+    maxTotal(defaults.maxTotalConcurrentBuilds)
+  }
+
+  publishers {
+    wsCleanup() // Scrub workspace clean after build
+
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        defaults.statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  "slack-notify '${repo.slackChannel}' '${buildStatus}'"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  logRotator {
+    daysToKeep defaults.daysToKeep
+  }
+
+  parameters {
+    nodeParam('SIGNATORY_NODE'){
+      description('select signatory node')
+      defaultNodes([defaults.signingNode])
+      allowedNodes([defaults.signingNode])
+    }
+    stringParam('RELEASE_TAG', '', 'Release tag')
+    stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
+  }
+
+  wrappers {
+    buildName('${RELEASE_TAG} #${BUILD_NUMBER}')
+    timestamps()
+    colorizeOutput 'xterm'
+    credentialsBinding {
+      string("AWS_ACCESS_KEY_ID", '57e64439-4521-4a4f-9315-eac10ecdea75')
+      string("AWS_SECRET_ACCESS_KEY", '313da896-1579-41fa-9c70-c6b13d938e9c')
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+      string("SIGNING_KEY_PASSPHRASE", '3963b12b-bad3-429b-b1e5-e047a159bf02')
+    }
+  }
+
+  steps {
+    def components = repos.collectMany {
+      it.workflowComponent ? [it.chart+':'+it.name] : [] }.join(' ') as String
+
+    shell new File("${workspace}/bash/scripts/get_latest_component_release.sh").text +
+          new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
+      """
+        export COMPONENT_CHART_AND_REPOS="${components}"
+
+        publish-helm-chart ${chart} 'staging'
+      """.stripIndent().trim()
+
+    conditionalSteps {
+      condition { status('SUCCESS', 'SUCCESS') }
+      steps {
+        // Trigger e2e against staged release candidate chart
+        downstreamParameterized {
+          trigger("${chart}-chart-e2e") {
+            parameters {
+              propertiesFile(defaults.envFile)
+              predefinedProps([
+                'CHART_REPO_TYPE': 'staging',
+                'HELM_VERSION': '${HELM_VERSION}',
+                'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+              ])
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 job("${chart}-chart-release") {
-  description "Publishes official Workflow chart by copying e2e-approved chart from the `${chartRepo.staging}` repo to the `${chartRepo.production}` repo."
+  description "Publishes official Workflow chart by copying e2e-approved, signed chart from the `${chartRepo.staging}` repo to the `${chartRepo.production}` repo."
 
   logRotator {
     daysToKeep defaults.daysToKeep
@@ -309,13 +405,13 @@ job("${chart}-chart-release") {
         aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml
       """.stripIndent().trim()
 
-    conditionalSteps {
-      condition {
-        status('SUCCESS', 'SUCCESS')
-      }
-      steps {
+
+      conditionalSteps {
+        condition { status('SUCCESS', 'SUCCESS') }
+        steps {
+        // Trigger job to verify signature of release chart
         downstreamParameterized {
-          trigger("helm-chart-sign") {
+          trigger("helm-chart-verify") {
             parameters {
               predefinedProps([
                 'CHART': chart,

@@ -117,66 +117,69 @@ that follow the main steps of the job itself.  See the [Workflow component job](
 
 ### Component Release Pipeline
 ```
- Component Release Pipeline
-            start
 
-┌───────────────────────────┐
-│                           │
-│                           │ - triggered by `v1.2.3` git tag
-│                           │             webhook
-│     component-release     │
-│                           │ - locate release candidate image
-│                           │     associated with git tag
-│                           │
-└───────────────────────────┘
-            │
-            │
-            ▼
-┌───────────────────────────┐
-│                           │
-│                           │
-│                           │  - retag candidate image with
-│ release candidate promote │   official release (v1.2.3)
-│                           │
-│                           │
-│                           │
-└───────────────────────────┘
-            │
-            │
-            ▼
-┌───────────────────────────┐
-│                           │
-│                           │
-│    component release      │  - publish release data to
-│         publish           │    workflow-manager-api
-│                           │
-│                           │
-│                           │
-└───────────────────────────┘
-            │
-            │
-            ▼
-┌───────────────────────────┐
-│                           │
-│                           │
-│     component chart       │  - package release component chart
-│         publish           │
-│                           │ - publish to both 'production' and
-│                           │          'dev' chart repos
-│                           │
-└───────────────────────────┘
-            │
-            │
-            ▼
-┌───────────────────────────┐
-│                           │
-│                           │
-│                           │  - sign release chart in 'production'
-│   component chart sign    │               chart repo
-│                           │
-│                           │
-│                           │
-└───────────────────────────┘
+
+
+   Component Release Pipeline
+              start
+
+  ┌───────────────────────────┐
+  │                           │
+  │                           │ - triggered by `v1.2.3` git tag
+  │                           │             webhook
+  │     component-release     │
+  │                           │ - locate release candidate image
+  │                           │     associated with git tag
+  │                           │
+  └───────────────────────────┘
+               │
+               │
+               ▼
+  ┌───────────────────────────┐
+  │                           │
+  │                           │
+  │                           │  - retag candidate image with
+  │ release candidate promote │   official release (v1.2.3)
+  │                           │
+  │                           │
+  │                           │
+  └───────────────────────────┘
+               │
+               │
+               ▼
+  ┌───────────────────────────┐
+  │                           │
+  │                           │
+  │    component release      │  - publish release data to
+  │         publish           │    workflow-manager-api
+  │                           │
+  │                           │
+  │                           │
+  └───────────────────────────┘
+               │
+               │
+               ▼
+  ┌───────────────────────────┐
+  │                           │
+  │                           │ - publish signed and packaged chart
+  │     component chart       │           to 'production'
+  │         publish           │
+  │                           │   - publish packaged chart 'dev'
+  │                           │             chart repos
+  │                           │
+  └───────────────────────────┘
+               │
+               │
+               ▼
+  ┌───────────────────────────┐
+  │                           │
+  │                           │
+  │                           │    - verifies signature of chart in
+  │  component chart verify   │        'production' chart repo
+  │                           │
+  │                           │
+  │                           │
+  └───────────────────────────┘
 ```
 
 ### When Workflow-CLI is tagged
@@ -225,64 +228,53 @@ that follow the main steps of the job itself.  See the [Workflow component job](
 
 ### When a Workflow Helm Chart is to be released
 ```
+
    Workflow Chart Release
           Pipeline
-
-┌───────────────────────────┐    - triggered manually with
-│                           │       supplied release tag
+                                - triggered manually with supplied release
+┌───────────────────────────┐                      tag
 │                           │
-│                           │  - update chart dependencies by
-│   workflow-chart-publish  │  gathering latest releases for
-│                           │       all component charts
+│                           │    - update chart dependencies by gathering
+│                           │    latest releases for all component charts
+│   workflow-chart-stage    │
+│                           │  - upload signed and packaged candidate chart
+│                           │     (sans index file) to 'production' repo
 │                           │
-│                           │ - update index file, package and
-└───────────────────────────┘  upload to the 'staging' charts
-            │
-            │
-            ▼
-┌───────────────────────────┐    - lease GKE cluster, install
-│                           │   Workflow chart (version handed
-│                           │        down from upstream)
+└───────────────────────────┘    - upload packaged candidate chart (with
+             │                     index file) to 'staging' charts repo
+             │
+             ▼
+┌───────────────────────────┐
+│                           │   - lease GKE cluster, install Workflow chart
+│                           │     (version handed down from upstream) from
+│                           │                  'staging' repo
+│    workflow-chart-e2e     │
+│                           │           - install workflow-e2e chart
 │                           │
-│    workflow-chart-e2e     │    - install workflow-e2e chart
+│                           │   - archive test results and report job status
+└───────────────────────────┘            to appropriate channel(s)
+             │
+             │
+             ▼
+┌───────────────────────────┐
+│                           │  - triggered manually with supplied release
+│                           │                     tag
 │                           │
-│                           │     - archive test results and
-│                           │  report job status to appropriate
-└───────────────────────────┘             channel(s)
-            │
-            │
-            ▼
-┌───────────────────────────┐   - triggered manually with
-│                           │     supplied release tag
+│  workflow-chart-release   │   - pull down approved, signed chart from
+│                           │           'production' chart repo
 │                           │
-│                           │  - pull down approved chart
-│  workflow-chart-release   │   from 'staging' chart repo
-│                           │
-│                           │  - update index file, upload
-│                           │ chart to 'production' charts
-└───────────────────────────┘             repo
-            │
-            │
-            ▼
+│                           │ - update index file, upload to 'production'
+└───────────────────────────┘      charts repo, making it officially
+             │                           fetchable/installable
+             │
+             ▼
 ┌───────────────────────────┐
 │                           │
-│                           │   - fetch specific chart version
+│                           │ - verifies signature of chart from 'production'
+│                           │                      repo
+│    helm-chart-verify      │
+│                           │      - (job succeeds if command succeeds)
 │                           │
-│     helm-chart-sign       │    - sign chart with signing key
-│                           │
-│                           │  - upload new *.tgz and *.tgz.prov
-│                           │         files to chart repo
-└───────────────────────────┘
-            │
-            │
-            ▼
-┌───────────────────────────┐
-│                           │
-│                           │
-│                           │ - non-signatory node runs `helm fetch
-│    helm-chart-verify      │ --verify <chart> --version <version>`
-│                           │
-│                           │  - (job succeeds if command succeeds)
 │                           │
 └───────────────────────────┘
 ```
