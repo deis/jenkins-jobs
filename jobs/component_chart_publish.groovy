@@ -5,6 +5,7 @@ evaluate(new File("${workspace}/common.groovy"))
 repos.each { Map repo ->
   if (repo.chart) {
     def chart = repo.chart
+
     def jobName = "${chart}-chart-publish"
     job(jobName) {
       description "Publishes a new ${chart} chart release to the chart repo determined by CHART_REPO_TYPE."
@@ -59,10 +60,16 @@ repos.each { Map repo ->
       }
 
       parameters {
-        choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')
+        nodeParam('NODE') {
+          description("select node (must be ${defaults.signingNode} if chart is to be signed)")
+          defaultNodes(defaults.nodes)
+          allowedNodes(defaults.nodes + defaults.signingNode)
+        }
+        choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'production'], 'Type of chart repo for publishing (default: dev)')
         stringParam('RELEASE_TAG', '', 'Release tag (Default: empty, will use latest git tag for repo)')
         stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
         stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
+        booleanParam('SIGN_CHART', false, "Sign chart? (default: false/no)")
       }
 
       wrappers {
@@ -74,16 +81,15 @@ repos.each { Map repo ->
           string("AWS_SECRET_ACCESS_KEY", '313da896-1579-41fa-9c70-c6b13d938e9c')
           string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
           string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+          string("SIGNING_KEY_PASSPHRASE", '3963b12b-bad3-429b-b1e5-e047a159bf02')
         }
       }
 
       steps {
         shell new File("${workspace}/bash/scripts/helm_chart_actions.sh").text +
-              new File("${workspace}/bash/scripts/publish_helm_chart.sh").text +
           """
             export ENV_FILE_PATH="${defaults.envFile}"
             mkdir -p ${defaults.tmpPath}
-            set -x
             publish-helm-chart ${chart} \${CHART_REPO_TYPE}
           """.stripIndent().trim()
       }

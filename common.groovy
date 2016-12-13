@@ -4,6 +4,9 @@ evaluate(new File("${workspace}/repo.groovy"))
 
 
 defaults = [
+  // default, ubuntu-based jenkins nodes
+  nodes: ['node1-ec2', 'node2-ec2', 'node3-ec2', 'node4-ec2', 'node8-kubernetes'],
+  signingNode: ['node7-ec2'],
   tmpPath: '/tmp/${JOB_NAME}/${BUILD_NUMBER}',
   envFile: '/tmp/${JOB_NAME}/${BUILD_NUMBER}/env.properties',
   daysToKeep: 14,
