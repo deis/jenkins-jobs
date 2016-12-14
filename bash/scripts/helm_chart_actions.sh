@@ -78,9 +78,7 @@ publish-helm-chart() {
     if [ "${chart_repo}" == "${chart}-dev" ]; then
       chart_version="${chart_version%?}${incremented_patch_version}-dev-${timestamp}-sha.${short_sha}"
     elif [ "${chart_repo}" == "${chart}-pr" ]; then
-      # TODO: add timestamp once https://github.com/Masterminds/semver/issues/34 is resolved
-      # chart_version="${chart_version%?}${incremented_patch_version}-${timestamp}-sha.${short_sha}"
-      chart_version="${chart_version%?}${incremented_patch_version}-sha.${short_sha}"
+      chart_version="${chart_version%?}${incremented_patch_version}-${timestamp}-sha.${short_sha}"
     fi
 
     update-chart "${chart}" "${chart_version}" "${chart_repo}"

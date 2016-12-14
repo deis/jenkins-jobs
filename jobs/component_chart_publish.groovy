@@ -92,6 +92,27 @@ repos.each { Map repo ->
             mkdir -p ${defaults.tmpPath}
             publish-helm-chart ${chart} \${CHART_REPO_TYPE}
           """.stripIndent().trim()
+
+        // Trigger workflow chart publish (will pickup latest component chart published above)
+        // (job triggers e2e if succcessful)
+        downstreamParameterized {
+          trigger("workflow-chart-publish") {
+            block {
+              buildStepFailure('FAILURE')
+              failure('FAILURE')
+              unstable('UNSTABLE')
+            }
+            parameters {
+              propertiesFile(defaults.envFile)
+              predefinedProps([
+                'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
+                'COMPONENT_REPO': repo.name,
+                'ACTUAL_COMMIT': '${ACTUAL_COMMIT}',
+                'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+              ])
+            }
+          }
+        }
       }
     }
   }
