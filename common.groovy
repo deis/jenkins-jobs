@@ -29,7 +29,7 @@ defaults = [
     remoteRepo: 'https://github.com/deis/charts.git', // helmc-remove
     remoteBranch: 'master', // helmc-remove
     remoteName: 'deis', // helmc-remove
-    version: 'v2.0.0',
+    version: 'v2.1.0',
     useClassic: false, // helmc-remove
   ],
   github: [
