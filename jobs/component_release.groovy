@@ -134,7 +134,10 @@ repos.each { Map repo ->
                   }
                   parameters {
                     propertiesFile(defaults.envFile)
-                    predefinedProps(['CHART_REPO_TYPE': 'dev'])
+                    predefinedProps([
+                      'CHART_REPO_TYPE': 'dev',
+                      'TRIGGER_WORKFLOW_CHART_PUBLISH': 'false',
+                    ])
                   }
                 }
               }
@@ -151,8 +154,8 @@ repos.each { Map repo ->
                       'CHART_REPO_TYPE': 'production',
                       'NODE': defaults.signingNode[0],
                       'SIGN_CHART': true,
-                      ]
-                    )
+                      'TRIGGER_WORKFLOW_CHART_PUBLISH': 'false',
+                    ])
                   }
                 }
               }
