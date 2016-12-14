@@ -179,20 +179,6 @@ repos.each { Map repo ->
                     }
                   }
                 }
-
-                // Trigger workflow chart publish (will pickup latest component chart published prior)
-                // (job triggers e2e if succcessful)
-                downstreamParameterized {
-                  trigger("workflow-chart-publish") {
-                    parameters {
-                      propertiesFile(defaults.envFile)
-                      predefinedProps([
-                        'CHART_REPO_TYPE': chartRepoType,
-                        'COMPONENT_REPO': repo.name,
-                      ])
-                    }
-                  }
-                }
               }
             }
           }
