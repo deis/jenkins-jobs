@@ -65,9 +65,7 @@ job("${chart}-chart-publish") {
 
   parameters {
     choiceParam('CHART_REPO_TYPE', ['dev', 'pr'], 'Type of chart repo for publishing (default: dev)')
-    // TODO: once defaults.helm.version gets bumped to 2.1.0, switch back.  (We need canary for semver feature)
-    // stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
-    stringParam('HELM_VERSION', 'canary', 'Version of Helm to download/use')
+    stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     stringParam('UPSTREAM_SLACK_CHANNEL', repo.slackChannel, "Upstream Slack channel")
     stringParam('COMPONENT_REPO', '', "Component repo name")
     stringParam('COMPONENT_CHART_VERSION', '', "Component chart version")
