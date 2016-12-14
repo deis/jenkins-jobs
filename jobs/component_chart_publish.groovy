@@ -70,6 +70,7 @@ repos.each { Map repo ->
         stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
         stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
         booleanParam('SIGN_CHART', false, "Sign chart? (default: false/no)")
+        stringParam('TRIGGER_WORKFLOW_CHART_PUBLISH', 'true', "Trigger downstream workflow-chart-publish job (default: true)")
       }
 
       wrappers {
@@ -94,22 +95,25 @@ repos.each { Map repo ->
           """.stripIndent().trim()
 
         // Trigger workflow chart publish (will pickup latest component chart published above)
-        // (job triggers e2e if succcessful)
-        downstreamParameterized {
-          trigger("workflow-chart-publish") {
-            block {
-              buildStepFailure('FAILURE')
-              failure('FAILURE')
-              unstable('UNSTABLE')
-            }
-            parameters {
-              propertiesFile(defaults.envFile)
-              predefinedProps([
-                'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
-                'COMPONENT_REPO': repo.name,
-                'ACTUAL_COMMIT': '${ACTUAL_COMMIT}',
-                'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
-              ])
+        // IF TRIGGER_WORKFLOW_CHART_PUBLISH is true
+        conditionalSteps {
+          condition { stringsMatch('${TRIGGER_WORKFLOW_CHART_PUBLISH}', 'true', false) }
+          downstreamParameterized {
+            trigger("workflow-chart-publish") {
+              block {
+                buildStepFailure('FAILURE')
+                failure('FAILURE')
+                unstable('UNSTABLE')
+              }
+              parameters {
+                propertiesFile(defaults.envFile)
+                predefinedProps([
+                  'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
+                  'COMPONENT_REPO': repo.name,
+                  'ACTUAL_COMMIT': '${ACTUAL_COMMIT}',
+                  'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+                ])
+              }
             }
           }
         }
