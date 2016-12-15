@@ -31,6 +31,7 @@ job(name) {
          relativeTargetDirectory('workflow')
      }
      branch('master')
+     branch('*/tags/*')
    }
    git {
      remote {
