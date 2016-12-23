@@ -5,9 +5,11 @@ evaluate(new File("${workspace}/common.groovy"))
 [
   [type: 'master'],
   [type: 'pr'],
+  [type: 'release'],
 ].each { Map config ->
   isMaster = config.type == 'master'
   isPR = config.type == 'pr'
+  isRelease = config.type == 'release'
 
   name = isMaster ? 'workflow-test' : 'workflow-test-pr'
   repoName = 'charts'
