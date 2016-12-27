@@ -63,6 +63,12 @@ publish-helm-chart() {
     git checkout -q "${RELEASE_TAG}"
   fi
 
+  # if repo_type 'pr', fetch pr refs for COMPONENT_REPO_NAME and checkout SHORT_SHA
+  if [ "${repo_type}" == 'pr' ]; then
+    git fetch --tags --progress https://github.com/deis/"${COMPONENT_REPO_NAME}".git +refs/pull/*:refs/remotes/origin/pr/*
+    git checkout -q "${SHORT_SHA}"
+  fi
+
   short_sha="${SHORT_SHA:-$(git rev-parse --short HEAD)}"
   git_tag="${RELEASE_TAG:-$(git describe --abbrev=0 --tags)}"
   timestamp="${TIMESTAMP:-$(date -u +%Y%m%d%H%M%S)}"
