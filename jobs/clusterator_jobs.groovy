@@ -3,6 +3,7 @@ if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPAC
 evaluate(new File("${workspace}/common.groovy"))
 
 job("clusterator-create") {
+  disabled() // delete this file when ready to fully remove job
   description "Create a set number of clusters in the deis leasable project. This job runs Monday-Friday at 7AM."
 
   logRotator {
@@ -45,6 +46,7 @@ job("clusterator-create") {
 }
 
 job("clusterator-delete") {
+  disabled() // delete this file when ready to fully remove job
   description "Clean up clusters in the deis leasable project. This job runs Monday-Friday at 7PM."
 
   logRotator {
