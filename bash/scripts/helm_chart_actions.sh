@@ -65,7 +65,7 @@ publish-helm-chart() {
 
   # if repo_type 'pr', fetch pr refs for COMPONENT_REPO_NAME and checkout SHORT_SHA
   if [ "${repo_type}" == 'pr' ]; then
-    git fetch --tags --progress https://github.com/deis/"${COMPONENT_REPO_NAME}".git +refs/pull/*:refs/remotes/origin/pr/*
+    git fetch --tags --progress https://github.com/deis/"${COMPONENT_REPO_NAME:-workflow}".git +refs/pull/*:refs/remotes/origin/pr/*
     git checkout -q "${SHORT_SHA}"
   fi
 
