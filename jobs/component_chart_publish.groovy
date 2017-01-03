@@ -91,6 +91,8 @@ repos.each { Map repo ->
           """
             export ENV_FILE_PATH="${defaults.envFile}"
             mkdir -p ${defaults.tmpPath}
+
+            export COMPONENT_REPO_NAME="${repo.name}"
             publish-helm-chart ${chart} \${CHART_REPO_TYPE}
           """.stripIndent().trim()
 
