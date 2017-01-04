@@ -9,7 +9,7 @@ build-darwin-cli-binary() {
 
   # set up go/docker env
   export GOPATH="${WORKSPACE}/golang"
-  export PATH=$PATH:$GOPATH/bin
+  export PATH=$GOPATH/bin:/usr/local/bin:$PATH
   eval "$(docker-machine env default)"
 
   # clean workspace and bootstrap
