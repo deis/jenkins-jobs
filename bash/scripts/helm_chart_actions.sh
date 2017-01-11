@@ -65,8 +65,20 @@ publish-helm-chart() {
 
   # if repo_type 'pr', fetch pr refs for COMPONENT_REPO_NAME and checkout SHORT_SHA
   if [ "${repo_type}" == 'pr' ]; then
-    git fetch --tags --progress https://github.com/deis/"${COMPONENT_REPO_NAME}".git +refs/pull/*:refs/remotes/origin/pr/*
-    git checkout -q "${SHORT_SHA}"
+    local repo_name
+    if [ "${chart}" != 'workflow' ]; then
+      # default is component chart PR; env var set by upstream component job
+      repo_name="${COMPONENT_REPO_NAME}"
+    elif [ -z "${COMPONENT_REPO}" ]; then
+      # workflow chart PR (and not triggered by upstream component job)
+      repo_name="workflow"
+    fi
+
+    if [ -n "${repo_name}" ]; then
+      echo "Fetching PR changes from repo '${repo_name}' at commit ${SHORT_SHA}" 1>&2
+      git fetch --tags --progress https://github.com/deis/"${repo_name}".git +refs/pull/*:refs/remotes/origin/pr/*
+      git checkout -q "${SHORT_SHA}"
+    fi
   fi
 
   short_sha="${SHORT_SHA:-$(git rev-parse --short HEAD)}"
