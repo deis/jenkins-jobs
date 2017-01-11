@@ -318,7 +318,8 @@ setup-publish-chart-workspace() {
 "v3.0.3" https://charts.deis.com/database'
 
   expected_output=''"${expected_requirements_yaml}"'
-Signing packaged chart '"'workflow'"' with key '"'Deis, Inc. (Helm chart signing key)'"' from keyring '"'/.gnupg/secring.gpg'"'...'
+Signing packaged chart '"'workflow'"' with key '"'Deis, Inc. (Helm chart signing key)'"' from keyring '"'/.gnupg/secring.gpg'"'...
+Chart repo type is staging; setting --cache-control max_age=0 on the chart artifact to prevent caching.'
 
   [ "${status}" -eq 0 ]
   [ "${output}" == "${expected_output}" ]
