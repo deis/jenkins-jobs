@@ -15,9 +15,15 @@ run-e2e() {
     cat "${default_env_file}" >> "${E2E_DIR}"/env.file
   fi
 
-  docker pull "${E2E_RUNNER_IMAGE}" # bust the cache as tag may be canary
+  local image_tag="canary"
+  if [ -n "${E2E_RUNNER_SHA}" ]; then
+    image_tag="git-${E2E_RUNNER_SHA:0:7}"
+  fi
+  image="quay.io/deisci/e2e-runner:${image_tag}"
+
+  docker pull "${image}" # bust the cache as tag may be canary
   docker run \
     -u jenkins:jenkins \
     --env-file="${E2E_DIR}"/env.file \
-    -v "${E2E_DIR_LOGS}":/home/jenkins/logs:rw "${E2E_RUNNER_IMAGE}"
+    -v "${E2E_DIR_LOGS}":/home/jenkins/logs:rw "${image}"
 }
