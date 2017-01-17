@@ -4,13 +4,6 @@ set -eo pipefail
 run-e2e() {
   local default_env_file="${1}"
 
-  # begin helmc-remove
-  if [ -n "${RELEASE}" ] && [ "${USE_HELM_CLASSIC}" == true ]; then
-    export WORKFLOW_CHART="workflow-${RELEASE}"
-    export WORKFLOW_E2E_CHART="workflow-${RELEASE}-e2e"
-  fi
-  # end helmc-remove
-
   export CLI_VERSION="${CLI_VERSION:-latest}"
   if [ -n "${WORKFLOW_CLI_SHA}" ]; then
     export CLI_VERSION="${WORKFLOW_CLI_SHA:0:7}"
