@@ -40,10 +40,9 @@ repos.each { Map repo ->
                   condition {
                    status(buildStatus, buildStatus)
                     steps {
-                      def message = 'Commit Author: ${COMMIT_AUTHOR_EMAIL}'
                       shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
                         """
-                          slack-notify ${repo.slackChannel} ${buildStatus} "${message}"
+                          slack-notify "${repo.slackChannel}" "${buildStatus}"
                         """.stripIndent().trim()
                     }
                   }
@@ -120,7 +119,7 @@ repos.each { Map repo ->
             new File("${workspace}/bash/scripts/skip_e2e_check.sh").text,
           ].join('\n')
 
-          repo.components.each{ Map component ->
+          repo.components.each { Map component ->
             cdComponentDir = component.name == repo.name ?: "cd ${component.name}"
             dockerPush = isPR ? 'docker-immutable-push' : 'docker-push'
 
@@ -144,14 +143,15 @@ repos.each { Map repo ->
 
               # populate env file for passing to downstream job(s)
               mkdir -p ${defaults.tmpPath}
+              mkdir -p "\$(dirname ${component.envFile})"
               { echo COMMIT_AUTHOR_EMAIL="\$(echo "\${git_commit}" | git --no-pager show -s --format='%ae')"; \
                 echo ACTUAL_COMMIT="\${git_commit}"; \
                 echo ${repo.commitEnvVar}="\${git_commit}"; \
-                echo COMPONENT_NAME="${repo.name}"; \
+                echo COMPONENT_NAME="${component.name}"; \
                 echo COMPONENT_SHA="\${git_commit}"; \
                 echo UPSTREAM_SLACK_CHANNEL="${repo.slackChannel}"; \
                 echo "\$(find-required-commits "\${git_commit}")"; \
-                echo "\$(check-skip-e2e "\${git_commit}")"; } > ${defaults.envFile}
+                echo "\$(check-skip-e2e "\${git_commit}")"; } | tee -a ${component.envFile} ${defaults.envFile}
             """.stripIndent().trim()
 
             shell script
@@ -216,17 +216,19 @@ repos.each { Map repo ->
 
           // Trigger downstream component-promote job assuming e2e success
           if (isMaster) {
-            conditionalSteps {
-              condition {
-                and { status('SUCCESS', 'SUCCESS')} {
-                  not { shell "cat \"${defaults.envFile}\" | grep -q SKIP_COMPONENT_PROMOTE" }
+            repo.components.each { Map component ->
+              conditionalSteps {
+                condition {
+                  and { status('SUCCESS', 'SUCCESS')} {
+                    not { shell "cat \"${defaults.envFile}\" | grep -q SKIP_COMPONENT_PROMOTE" }
+                  }
                 }
-              }
-              steps {
-                downstreamParameterized {
-                  trigger('component-promote') {
-                    parameters {
-                      propertiesFile(defaults.envFile)
+                steps {
+                  downstreamParameterized {
+                    trigger('component-promote') {
+                      parameters {
+                        propertiesFile(component.envFile)
+                      }
                     }
                   }
                 }
