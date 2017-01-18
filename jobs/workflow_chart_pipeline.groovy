@@ -19,6 +19,10 @@ job("${chart}-chart-publish") {
     }
   }
 
+  triggers {
+    githubPush()
+  }
+
   concurrentBuild()
   throttleConcurrentBuilds {
     maxTotal(defaults.maxTotalConcurrentBuilds)
