@@ -114,16 +114,17 @@ publish-helm-chart() {
     # update index file
     helm repo index . --url "${DEIS_CHARTS_BASE_URL}/${chart_repo}" --merge ./index.yaml
 
-    # set cache-control for chart artifact if staging repo
-    local cache_control
+    # push chart artifact to chart repo (aws s3 bucket)
     if [ "${repo_type}" == "staging" ]; then
+      # set cache-control for chart artifact if staging repo
       echo "Chart repo type is staging; setting --cache-control max_age=0 on the chart artifact to prevent caching."
-      cache_control="--cache-control max_age=0"
+      aws s3 cp --cache-control max_age=0 "${chart}-${chart_version}".tgz "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/
+    else
+      aws s3 cp "${chart}-${chart_version}".tgz "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/
     fi
 
-    # push packaged chart and updated index file to aws s3 bucket
-    aws s3 cp "${cache_control}" "${chart}-${chart_version}".tgz "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/ \
-      && aws s3 cp --cache-control max_age=0 index.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/index.yaml \
+    # push updated index file and values.yaml to aws s3 bucket
+    aws s3 cp --cache-control max_age=0 index.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/index.yaml \
       && aws s3 cp "${chart}"/values.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}/values-${chart_version}".yaml
   else
     echo "No 'charts' directory found at project level; nothing to publish."
