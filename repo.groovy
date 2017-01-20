@@ -23,6 +23,12 @@ repos = [
     workflowComponent: true,
     chart: 'dockerbuilder'],
 
+  [ name: 'e2e-runner',
+    components: [[name: 'e2e-runner']],
+    slackChannel: '#testing',
+    runE2e: true,
+    workflowComponent: false],
+
   [ name: 'fluentd',
     components: [[name: 'fluentd']],
     slackChannel: '#logger',
