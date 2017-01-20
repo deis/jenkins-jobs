@@ -137,7 +137,8 @@ repos.each { Map repo ->
 
               export IMAGE_PREFIX=deisci VERSION="git-\${git_commit:0:7}"
               docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
-              DEIS_REGISTRY='' make docker-build ${dockerPush}
+              # build once with "docker --pull --no-cache" to avoid stale layers
+              DEIS_REGISTRY='' DOCKER_BUILD_FLAGS="--pull --no-cache" make docker-build ${dockerPush}
               docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
               DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
 
