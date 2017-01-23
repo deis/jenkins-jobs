@@ -2,7 +2,6 @@ def workspace = new File(".").getAbsolutePath()
 if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPACE}"}
 evaluate(new File("${workspace}/repo.groovy"))
 
-
 defaults = [
   // default, ubuntu-based jenkins nodes
   nodes: ['node1-ec2', 'node2-ec2', 'node3-ec2', 'node4-ec2', 'node8-kubernetes'],
