@@ -23,8 +23,9 @@ run-e2e() {
   fi
 
   docker pull "${image}" # bust the cache as tag may be canary
+  # shellcheck disable=SC2086
   docker run \
     -u jenkins:jenkins \
     --env-file="${E2E_DIR}"/env.file \
-    -v "${E2E_DIR_LOGS}":/home/jenkins/logs:rw "${image}" "${docker_run_args}"
+    -v "${E2E_DIR_LOGS}":/home/jenkins/logs:rw "${image}" ${docker_run_args}
 }
