@@ -57,32 +57,11 @@ job(name) {
 
     postBuildScripts {
       onlyIfBuildSucceeds(false)
-      
-      // Clean up buckets created during e2e run
-      def gcsScript = "sh -c 'echo \${GCS_KEY_JSON} | base64 -d - > /tmp/key.json "
-          gcsScript += "&& gcloud auth activate-service-account -q --key-file /tmp/key.json "
-          gcsScript += "&& for bucket in ${bucketNames.builder} ${bucketNames.database} ${bucketNames.registry}; do "
-          gcsScript += "gsutil -m rm -r gs://\${bucket}; done'"
 
       steps {
-          shell """
-            #!/usr/bin/env bash
-
-            set -eo pipefail
-
-            echo 'Cleaning up buckets created during test, if any...'
-            if [ "\${STORAGE_TYPE}" == "s3" ]; then
-              for bucket in ${bucketNames.builder} ${bucketNames.database} ${bucketNames.registry}; do
-                aws s3 rm s3://\${bucket} --recursive 2>&1 >/dev/null
-                aws s3 rb s3://\${bucket} --force 2>&1 >/dev/null
-              done
-            elif [ "\${STORAGE_TYPE}" == "gcs" ]; then
-              docker run --rm -a stderr \
-                -e GCS_KEY_JSON=\"\${GCS_KEY_JSON}\" \
-                -e BUILD_NUMBER=\${BUILD_NUMBER} google/cloud-sdk ${gcsScript} 2>&1 >/dev/null
-            fi
-            echo 'Buckets removed.'
-          """.stripIndent().trim()
+        // Clean up buckets created during e2e run
+        shell new File("${workspace}/bash/scripts/off_cluster_storage.sh").text +
+          "cleanup \"${bucketNames.builder} ${bucketNames.database} ${bucketNames.registry}\""
       }
 
       // Dispatch Slack notification
