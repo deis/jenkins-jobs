@@ -181,10 +181,17 @@ update-chart() {
       perl -i -0pe 's/<'"${component_chart}"'-tag>/"'"${component_chart_version}"'"/g' "${chart}"/requirements.yaml
       perl -i -0pe 's='"${DEIS_CHARTS_BASE_URL}/${component_chart}\n"'='"${DEIS_CHARTS_BASE_URL}/${component_chart_repo}\n"'=g' "${chart}"/requirements.yaml
       helm repo add "${component_chart_repo}" "${DEIS_CHARTS_BASE_URL}/${component_chart_repo}"
+
+      # DEBUG
+      helm search "${component_chart_repo}"/"${component_chart}" -l
     done
 
-    # add kube-incubator chart repo which contains kube-registry-proxy chart dependency
-    helm repo add kube-incubator https://kubernetes-charts-incubator.storage.googleapis.com/
+    # TEMP FIX: remove when registry-proxy no longer under deis (https://github.com/deis/workflow/issues/644 closed)
+    perl -i -0pe 's/<registry-proxy-tag>/"v1.1.1"/g' "${chart}"/requirements.yaml
+    helm repo add registry-proxy "${DEIS_CHARTS_BASE_URL}/registry-proxy"
+
+    # DEBUG
+    helm repo list
 
     # display resulting requirements.yaml to verify component chart versions
     cat "${chart}"/requirements.yaml
