@@ -16,6 +16,16 @@ teardown() {
   run get-merge-commit-changes 'foo1234'
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" == "Returning changes from merge commit 'foo1234' using the commit range: abc1234..def5678" ]
+  [ "${lines[0]}" == "Returning changes from commit 'foo1234' using the commit range: abc1234..def5678" ]
   [ "${lines[1]}" == "Merge: abc1234 def5678" ]
+}
+
+@test "get-merge-commit-changes : non-merge commit" {
+  stub git "echo 'foo'"
+
+  run get-merge-commit-changes 'foo1234'
+
+  [ "${status}" -eq 0 ]
+  [ "${lines[0]}" == "Returning changes from commit 'foo1234' using the commit range: foo1234" ]
+  [ "${lines[1]}" == "foo" ]
 }
