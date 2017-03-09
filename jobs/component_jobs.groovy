@@ -206,7 +206,7 @@ repos.each { Map repo ->
                       predefinedProps([
                         'UPSTREAM_BUILD_URL': '${BUILD_URL}',
                         'COMPONENT_REPO': repo.name,
-                        'CHART_REPO_TYPE': chartRepoType,
+                        'CHART_REPO_TYPE': 'dev', // ensure downstream test job installs Workflow from 'dev' repo instead of 'pr' (which may have broken chart)
                       ])
                     }
                   }
