@@ -10,6 +10,12 @@ run-e2e() {
     export CLI_VERSION="${WORKFLOW_CLI_SHA:0:7}"
   fi
 
+  # if COMPONENT_REPO and ACTUAL_COMMIT non-null, set COMPONENT_SHA=\${ACTUAL_COMMIT}
+  # for injecting proper component artifact into chart install
+  if [ -n "${COMPONENT_REPO}" ] && [ -n "${ACTUAL_COMMIT}" ]; then
+    export $(echo "${COMPONENT_REPO}" | perl -ne 'print uc' | sed 's/-/_/g')_SHA="${ACTUAL_COMMIT}"
+  fi
+
   mkdir -p "${E2E_DIR_LOGS}"
   env > "${E2E_DIR}"/env.file
   if [ -e "${default_env_file}" ]; then
