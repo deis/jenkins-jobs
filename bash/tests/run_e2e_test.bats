@@ -48,3 +48,16 @@ teardown() {
   [ -e "${E2E_DIR_LOGS}" ]
   [[ "$(cat "${E2E_DIR}/env.file")" == *"CLI_VERSION=abc1234"* ]]
 }
+
+
+@test "run-e2e : COMPONENT_REPO and ACTUAL_COMMIT set" {
+  COMPONENT_REPO=workflow-e2e
+  ACTUAL_COMMIT="abc1234def5678"
+
+  run run-e2e "bogus/default/env/file"
+
+  [ "${status}" -eq 0 ]
+  [ "${output}" == "" ]
+  [ -e "${E2E_DIR_LOGS}" ]
+  [[ "$(cat "${E2E_DIR}/env.file")" == *"WORKFLOW_E2E_SHA=abc1234"* ]]
+}
