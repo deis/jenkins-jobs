@@ -90,6 +90,23 @@ setup-publish-chart-workspace() {
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
 }
 
+@test "publish-helm-chart: component dev with dependencies" {
+  chart='router'
+  repo_type='dev'
+  setup-publish-chart-workspace "${chart}"
+
+  echo '"deisci" "Always" canary' > "${WORKDIR}/${chart}/values.yaml"
+  echo '<locked-dependency-tag> https://charts.com/locked-dependency' > "${WORKDIR}/${chart}/requirements.yaml"
+
+  run publish-helm-chart "${chart}" "${repo_type}"
+
+  [ "${status}" -eq 0 ]
+  [ "${output}" == "fetching all dependency charts for ${chart} per requirements file..." ]
+  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
+}
+
 @test "publish-helm-chart: component pr" {
   COMPONENT_REPO_NAME='router'
   chart='router'

@@ -155,6 +155,14 @@ update-chart() {
     fi
     # send chart version on for use in downstream jobs
     echo "COMPONENT_CHART_VERSION=${chart_version}" >> "${ENV_FILE_PATH:-/dev/null}"
+
+    # fetch all dependency charts based on requirements, if any
+    if [ -f "${chart}/requirements.yaml" ]; then
+      echo "fetching all dependency charts for ${chart} per requirements file..." 1>&2
+      # use 'build' instead of 'update' as it will respect requirements.lock if exists
+      # and act identical to 'update' if not.
+      helm dependency build "${chart}"
+    fi
   else
     ## make workflow chart updates
     # update requirements.yaml with correct chart version and chart repo for each component
