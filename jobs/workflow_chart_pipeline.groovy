@@ -46,11 +46,11 @@ job("${chart}-chart-publish") {
                 // Update GitHub PR
                 shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
                   """
-                    if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
+                    if [ "\${CHART_REPO_TYPE}" == 'pr' ] && [ -n "\${WORKFLOW_SHA}" ]; then
                       update-commit-status \
                         ${commitStatus} \
-                        \${COMPONENT_REPO:-${repo.name}} \
-                        \${ACTUAL_COMMIT} \
+                        workflow \
+                        \${WORKFLOW_SHA} \
                         \${BUILD_URL} \
                         "${chart}-chart-publish job ${buildStatus}"
                     fi
@@ -71,9 +71,13 @@ job("${chart}-chart-publish") {
     choiceParam('CHART_REPO_TYPE', ['dev', 'pr'], 'Type of chart repo for publishing (default: dev)')
     stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
     stringParam('UPSTREAM_SLACK_CHANNEL', repo.slackChannel, "Upstream Slack channel")
-    stringParam('COMPONENT_REPO', '', "Component repo name")
-    stringParam('COMPONENT_CHART_VERSION', '', "Component chart version")
-    stringParam('ACTUAL_COMMIT', '', "Actual commit SHA for versioning chart; will be tied to COMPONENT_REPO if provided")
+    stringParam('COMPONENT_REPO', '', "Name of specific component repo (tied to COMPONENT_CHART_VERSION below) to be injected when building Workflow chart dependencies")
+    stringParam('COMPONENT_CHART_VERSION', '', "Version of component chart (tied to COMPONENT_REPO above) to be injected when building Workflow chart dependencies")
+    stringParam('GITHUB_STATUS_COMMIT', '', "Component commit SHA for updating GitHub commit status")
+    repos.each { Map r ->
+      stringParam(r.commitEnvVar, '', r.commitEnvVar == repo.commitEnvVar ?
+        "${repo.name} commit SHA for git checkout and for chart versioning" : "${r.name} commit SHA for setting <component>.docker_tag in Workflow chart")
+    }
   }
 
   wrappers {
@@ -99,7 +103,14 @@ job("${chart}-chart-publish") {
         export ENV_FILE_PATH="${defaults.envFile}"
         mkdir -p ${defaults.tmpPath}
 
-        publish-helm-chart workflow \${CHART_REPO_TYPE}
+        # checkout PR commit if repo_type 'pr' and value of commit env var non-null
+        if [ "\${CHART_REPO_TYPE}" == 'pr' ] && [ -n "\${${repo.commitEnvVar}}" ]; then
+          echo "Fetching PR changes from repo '${repo.name}' at commit \${${repo.commitEnvVar}}" 1>&2
+          git fetch -q --tags --progress https://github.com/deis/${repo.name}.git +refs/pull/*:refs/remotes/origin/pr/*
+          git checkout "\${${repo.commitEnvVar}}"
+        fi
+
+        publish-helm-chart ${repo.chart} \${CHART_REPO_TYPE} \${WORKFLOW_SHA}
       """.stripIndent().trim()
 
     conditionalSteps {
@@ -114,10 +125,14 @@ job("${chart}-chart-publish") {
               predefinedProps([
                 'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
                 'HELM_VERSION': '${HELM_VERSION}',
-                'ACTUAL_COMMIT': '${ACTUAL_COMMIT}',
-                'COMPONENT_REPO': '${COMPONENT_REPO}',
+                'GITHUB_STATUS_REPO': '${COMPONENT_REPO}',
+                'GITHUB_STATUS_COMMIT': '${GITHUB_STATUS_COMMIT}',
                 'UPSTREAM_SLACK_CHANNEL': '${UPSTREAM_SLACK_CHANNEL}',
-              ])
+                ])
+              // pass all COMPONENT_SHA values on
+              repos.each { Map r ->
+                predefinedProp(r.commitEnvVar, "\${${r.commitEnvVar}}")
+              }
             }
           }
         }
@@ -171,11 +186,11 @@ job("${chart}-chart-e2e") {
                 // Update GitHub PR
                 shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
                   """
-                    if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
+                    if [ "\${CHART_REPO_TYPE}" == 'pr' ] && [ -n "\${GITHUB_STATUS_COMMIT}" ]; then
                       update-commit-status \
                         ${commitStatus} \
-                        \${COMPONENT_REPO:-${repo.name}} \
-                        \${ACTUAL_COMMIT} \
+                        \${GITHUB_STATUS_REPO:-${repo.name}} \
+                        \${GITHUB_STATUS_COMMIT} \
                         \${BUILD_URL} \
                         "${chart}-chart-e2e job ${buildStatus}"
                     fi
@@ -202,15 +217,15 @@ job("${chart}-chart-e2e") {
     stringParam('UPSTREAM_BUILD_URL', '', "Upstream build url")
     stringParam('UPSTREAM_SLACK_CHANNEL', defaults.slack.channel, "Upstream Slack channel")
     stringParam('COMMIT_AUTHOR_EMAIL', '', "Commit author email address")
-    stringParam('COMPONENT_REPO', '', "Component repo name")
-    stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
+    stringParam('GITHUB_STATUS_REPO', '', "Component repo name for updating GitHub commit status")
+    stringParam('GITHUB_STATUS_COMMIT', '', "Component commit SHA for updating GitHub commit status")
     repos.each { Map r ->
       stringParam(r.commitEnvVar, '', "${r.name} commit SHA for setting <component>.docker_tag in Workflow chart")
     }
   }
 
   wrappers {
-    buildName('${WORKFLOW_TAG} ${COMPONENT_REPO} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
+    buildName('${WORKFLOW_TAG} ${GITHUB_STATUS_REPO} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
     timeout {
       absolute(defaults.testJob["timeoutMins"])
       failBuild()
@@ -228,11 +243,11 @@ job("${chart}-chart-e2e") {
     // Notify GitHub PR of pending e2e run, if applicable
     shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
       """
-        if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
+        if [ -n "\${GITHUB_STATUS_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
           update-commit-status \
             "pending" \
-            \${COMPONENT_REPO:-${repo.name}} \
-            \${ACTUAL_COMMIT} \
+            \${GITHUB_STATUS_REPO:-${repo.name}} \
+            \${GITHUB_STATUS_COMMIT} \
             \${BUILD_URL} \
             "Running e2e tests..."
         fi
@@ -394,6 +409,8 @@ job("${chart}-chart-release") {
         set -eo pipefail
 
         download-and-init-helm
+
+        git checkout -q "\${RELEASE_TAG}"
 
         # download chart and index file from aws s3 bucket
         aws s3 cp s3://helm-charts/${chartRepo.production}/${chart}-\${RELEASE_TAG}.tgz .

@@ -145,11 +145,13 @@ repos.each { Map repo ->
               # populate env file for passing to downstream job(s)
               mkdir -p ${defaults.tmpPath}
               mkdir -p "\$(dirname ${component.envFile})"
+
               { echo COMMIT_AUTHOR_EMAIL="\$(echo "\${git_commit}" | git --no-pager show -s --format='%ae')"; \
-                echo ACTUAL_COMMIT="\${git_commit}"; \
                 echo ${repo.commitEnvVar}="\${git_commit}"; \
                 echo COMPONENT_NAME="${component.name}"; \
                 echo COMPONENT_SHA="\${git_commit}"; \
+                echo GITHUB_STATUS_REPO="${repo.name}"; \
+                echo GITHUB_STATUS_COMMIT="\${git_commit}"; \
                 echo UPSTREAM_SLACK_CHANNEL="${repo.slackChannel}"; \
                 echo "\$(find-required-commits "\${git_commit}")"; \
                 echo "\$(check-skip-e2e "\${git_commit}")"; } | tee -a ${component.envFile} ${defaults.envFile}
@@ -205,7 +207,6 @@ repos.each { Map repo ->
                       propertiesFile(defaults.envFile)
                       predefinedProps([
                         'UPSTREAM_BUILD_URL': '${BUILD_URL}',
-                        'COMPONENT_REPO': repo.name,
                         'CHART_REPO_TYPE': chartRepoType,
                       ])
                     }
@@ -215,7 +216,7 @@ repos.each { Map repo ->
             }
           }
 
-          // Trigger downstream component-promote job assuming e2e success
+          // Trigger downstream component-promote job assuming e2e success and master build
           if (isMaster) {
             repo.components.each { Map component ->
               conditionalSteps {

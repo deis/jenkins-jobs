@@ -21,7 +21,6 @@ teardown() {
 }
 
 setup-publish-chart-workspace() {
-  SHORT_SHA='abc1234'
   RELEASE_TAG='v1.2.3'
   EXPECTED_PRERELEASE_TAG='v1.2.4'
   TIMESTAMP="$(date -u +%Y%m%d%H%M%S)"
@@ -82,11 +81,12 @@ setup-publish-chart-workspace() {
 
   echo '"deisci" "Always" canary' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   [ "${status}" -eq 0 ]
-  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
-  [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "${output}" == "" ]
+  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.abc1234" ]
+  [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
 }
 
@@ -115,28 +115,30 @@ setup-publish-chart-workspace() {
 
   echo '"deisci" "Always" canary' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "Fetching PR changes from repo 'router' at commit abc1234" ]
-  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.${SHORT_SHA}" ]
-  [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "${output}" == "" ]
+  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
+  [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
 }
 
-@test "publish-helm-chart: component pr, ACTUAL_COMMIT set" {
-  ACTUAL_COMMIT='ghi78912345'
+@test "publish-helm-chart: component pr, provided commit empty" {
   COMPONENT_REPO_NAME='router'
   chart='router'
   repo_type='pr'
   setup-publish-chart-workspace "${chart}"
 
+  # as provide commit (SHORT_SHA) is empty, should invoke `git` to get HEAD commit
+  stub git "echo 'ghi7891'"
+
   echo '"deisci" "Always" canary' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" ''
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "Fetching PR changes from repo 'router' at commit ghi7891" ]
+  [ "${output}" == "" ]
   [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.ghi7891" ]
   [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.ghi7891" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
@@ -187,47 +189,21 @@ setup-publish-chart-workspace() {
 
   echo 'versions.deis.com doctor.deis.com' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   expected_requirements_yaml='">=v3.0.3-dev" https://charts.deis.com/registry-dev
 ">=v3.0.3-dev" https://charts.deis.com/registry-proxy-dev
 ">=v3.0.3-dev" https://charts.deis.com/database-dev'
 
   [ "${status}" -eq 0 ]
-  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/${chart}/requirements.yaml")" == "${expected_requirements_yaml}" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == 'versions-staging.deis.com doctor-staging.deis.com' ]
-  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.abc1234" ]
 }
 
-@test "publish-helm-chart: workflow dev; COMPONENT_REPO and ACTUAL_COMMIT in env" {
-  COMPONENT_REPO=registry-proxy
-  ACTUAL_COMMIT='ghi78912345'
-  chart='workflow'
-  repo_type='dev'
-  setup-publish-chart-workspace "${chart}"
-  COMPONENT_CHART_AND_REPOS="registry:registry registry-proxy:registry-proxy database:postgres"
 
-  echo '<registry-tag> https://charts.deis.com/registry
-<registry-proxy-tag> https://charts.deis.com/registry-proxy
-<database-tag> https://charts.deis.com/database' > "${WORKDIR}/${chart}/requirements.yaml"
-
-  echo 'versions.deis.com doctor.deis.com' > "${WORKDIR}/${chart}/values.yaml"
-
-  run publish-helm-chart "${chart}" "${repo_type}"
-
-  expected_requirements_yaml='">=v3.0.3-dev" https://charts.deis.com/registry-dev
-">=v3.0.3-dev" https://charts.deis.com/registry-proxy-dev
-">=v3.0.3-dev" https://charts.deis.com/database-dev'
-
-  [ "${status}" -eq 0 ]
-  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
-  [ "$(cat "${WORKDIR}/${chart}/requirements.yaml")" == "${expected_requirements_yaml}" ]
-  [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == 'versions-staging.deis.com doctor-staging.deis.com' ]
-  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
-}
-
-@test "publish-helm-chart: workflow pr; no COMPONENT_REPO, COMPONENT_CHART_VERSION or ACTUAL_COMMIT" {
+@test "publish-helm-chart: workflow pr; no COMPONENT_REPO or COMPONENT_CHART_VERSION" {
   chart='workflow'
   repo_type='pr'
   setup-publish-chart-workspace "${chart}"
@@ -239,41 +215,23 @@ setup-publish-chart-workspace() {
 
   echo 'versions.deis.com doctor.deis.com' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   expected_requirements_yaml='">=v3.0.3-dev" https://charts.deis.com/registry-dev
 ">=v3.0.3-dev" https://charts.deis.com/registry-proxy-dev
 ">=v3.0.3-dev" https://charts.deis.com/database-dev'
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" == "Fetching PR changes from repo 'workflow' at commit abc1234" ]
-  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/${chart}/requirements.yaml")" == "${expected_requirements_yaml}" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == 'versions-staging.deis.com doctor-staging.deis.com' ]
-  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
 }
 
-@test "publish-helm-chart: workflow pr; ACTUAL_COMMIT in env" {
-  ACTUAL_COMMIT='ghi78912345'
-  chart='workflow'
-  repo_type='pr'
-  setup-publish-chart-workspace "${chart}"
-
-  echo 'versions.deis.com doctor.deis.com' > "${WORKDIR}/${chart}/values.yaml"
-
-  run publish-helm-chart "${chart}" "${repo_type}"
-
-  [ "${status}" -eq 0 ]
-  [ "${lines[0]}" == "Fetching PR changes from repo 'workflow' at commit ghi7891" ]
-  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.ghi7891" ]
-  [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == 'versions-staging.deis.com doctor-staging.deis.com' ]
-  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.ghi7891" ]
-}
-
-@test "publish-helm-chart: workflow pr; COMPONENT_REPO, COMPONENT_CHART_VERSION and ACTUAL_COMMIT in env" {
+@test "publish-helm-chart: workflow pr; COMPONENT_REPO, COMPONENT_CHART_VERSION in env" {
   COMPONENT_REPO=registry-proxy
   COMPONENT_CHART_VERSION="v3.0.4-sha.jkl5678"
-  ACTUAL_COMMIT='ghi78912345'
+
   chart='workflow'
   repo_type='pr'
   setup-publish-chart-workspace "${chart}"
@@ -285,18 +243,17 @@ setup-publish-chart-workspace() {
 
   echo 'versions.deis.com doctor.deis.com' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   expected_requirements_yaml='">=v3.0.3-dev" https://charts.deis.com/registry-dev
 "'"${COMPONENT_CHART_VERSION}"'" https://charts.deis.com/registry-proxy-pr
 ">=v3.0.3-dev" https://charts.deis.com/database-dev'
 
   [ "${status}" -eq 0 ]
-  [ "${lines[0]}" != "Fetching PR changes from repo 'workflow' at commit abc1234" ]
-  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/${chart}/requirements.yaml")" == "${expected_requirements_yaml}" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == 'versions-staging.deis.com doctor-staging.deis.com' ]
-  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.${SHORT_SHA}" ]
+  [ "$(cat "${WORKDIR}/env.file")" == "WORKFLOW_TAG=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
 }
 
 @test "publish-helm-chart: workflow staging" {
@@ -312,7 +269,7 @@ setup-publish-chart-workspace() {
 
   echo 'versions.deis.com doctor.deis.com' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   expected_requirements_yaml='"v3.0.3" https://charts.deis.com/registry
 "v3.0.3" https://charts.deis.com/registry-proxy
@@ -342,7 +299,7 @@ Chart repo type is staging; setting --cache-control max_age=0 on the chart artif
 
   echo 'versions.deis.com doctor.deis.com' > "${WORKDIR}/${chart}/values.yaml"
 
-  run publish-helm-chart "${chart}" "${repo_type}"
+  run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   expected_requirements_yaml='"v3.0.3" https://charts.deis.com/registry
 "v3.0.3" https://charts.deis.com/registry-proxy

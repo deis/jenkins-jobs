@@ -45,47 +45,29 @@ download-and-init-helm() {
 }
 
 # publish-helm-chart publishes the given chart to the chart repo determined
-# by the given repo_type.  Will also attempt to sign chart if SIGN_CHART is true OR
-# repo_type is 'staging'
+# by the given repo_type, using the commit provided for versioning.
+# Will also attempt to sign chart if SIGN_CHART is true OR repo_type is 'staging'
+#
+# usage: publish-helm-chart <chart name> <repo type> <commit for versioning>
+#
 publish-helm-chart() {
   local chart="${1}"
   local repo_type="${2}"
+  local commit="${3}"
 
-  # give ACTUAL_COMMIT precedence for use in chart versioning, assuming COMPONENT_REPO is empty/null
-  # otherwise, ACTUAL_COMMIT is tied to the COMPONENT_REPO for use in assembling the workflow chart below
-  # shellcheck disable=SC2153
-  if [ -n "${ACTUAL_COMMIT}" ] && [ -z "${COMPONENT_REPO}" ]; then
-    SHORT_SHA="${ACTUAL_COMMIT:0:7}"
+  # variable declarations
+  local short_sha
+  if [ -n "${commit}" ]; then
+    short_sha="${commit:0:7}"
+  else
+    short_sha="$(git rev-parse --short HEAD)"
   fi
 
-  # if repo_type not 'staging', check out RELEASE_TAG tag (if empty, just stays on master commit)
-  if [ "${repo_type}" != 'staging' ]; then
-    git checkout -q "${RELEASE_TAG}"
-  fi
-
-  # if repo_type 'pr', fetch pr refs for COMPONENT_REPO_NAME and checkout SHORT_SHA
-  if [ "${repo_type}" == 'pr' ]; then
-    local repo_name
-    if [ "${chart}" != 'workflow' ]; then
-      # default is component chart PR; env var set by upstream component job
-      repo_name="${COMPONENT_REPO_NAME}"
-    elif [ -z "${COMPONENT_REPO}" ]; then
-      # workflow chart PR (and not triggered by upstream component job)
-      repo_name="workflow"
-    fi
-
-    if [ -n "${repo_name}" ]; then
-      echo "Fetching PR changes from repo '${repo_name}' at commit ${SHORT_SHA}" 1>&2
-      git fetch --tags --progress https://github.com/deis/"${repo_name}".git +refs/pull/*:refs/remotes/origin/pr/*
-      git checkout -q "${SHORT_SHA}"
-    fi
-  fi
-
-  short_sha="${SHORT_SHA:-$(git rev-parse --short HEAD)}"
   git_tag="${RELEASE_TAG:-$(git describe --abbrev=0 --tags)}"
   timestamp="${TIMESTAMP:-$(date -u +%Y%m%d%H%M%S)}"
   chart_repo="$(echo "${chart}-${repo_type}" | sed -e 's/-production//g')"
 
+  # chart assembly
   if [ -d "${PWD}"/charts ]; then
     cd "${PWD}"/charts
     download-and-init-helm
@@ -134,6 +116,9 @@ publish-helm-chart() {
 # update-chart updates a given chart, using the provided chart, chart_version
 # and chart_repo values.  If the chart is 'workflow', a space-delimited list of
 # component charts is expected to be present in a COMPONENT_CHART_AND_REPOS env var
+#
+# usage: update-chart <chart name> <chart version> <chart repo name>
+#
 update-chart() {
   local chart="${1}"
   local chart_version="${2}"
@@ -181,11 +166,13 @@ update-chart() {
         component_chart_version="${COMPONENT_CHART_VERSION}"
         component_chart_repo="${component_chart}-pr"
       elif [ "${chart_version}" != "${git_tag}" ]; then
-        # workflow chart version has build data; is -dev variant. assign component version/repo accordingly
+        # workflow chart version has build data; is -dev variant.
+        # assign component version/repo accordingly
         component_chart_version=">=${latest_tag}-dev"
         component_chart_repo="${component_chart}-dev"
       fi
 
+      # update chart version and chart repo in workflow/requirements.yaml
       perl -i -0pe 's/<'"${component_chart}"'-tag>/"'"${component_chart_version}"'"/g' "${chart}"/requirements.yaml
       perl -i -0pe 's='"${DEIS_CHARTS_BASE_URL}/${component_chart}\n"'='"${DEIS_CHARTS_BASE_URL}/${component_chart_repo}\n"'=g' "${chart}"/requirements.yaml
       helm repo add "${component_chart_repo}" "${DEIS_CHARTS_BASE_URL}/${component_chart_repo}"
@@ -217,6 +204,7 @@ update-chart() {
         && aws s3 cp "${chart}"/values.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart}/values-${chart_version}".yaml
     fi
 
+    # if chart repo name does not match chart (i.e. workflow(-dev/-pr/-staging) != workflow), consider it non-production
     if [ "${chart_repo}" != "${chart}" ]; then
       # modify workflow-manager/doctor urls in values.yaml to point to staging
       perl -i -0pe "s/versions.deis/versions-staging.deis/g" "${chart}"/values.yaml
