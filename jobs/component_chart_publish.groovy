@@ -38,11 +38,11 @@ repos.each { Map repo ->
                     // Update GitHub PR
                     shell new File("${workspace}/bash/scripts/update_commit_status.sh").text +
                       """
-                        if [ -n "\${ACTUAL_COMMIT}" ] && [ "\${CHART_REPO_TYPE}" == 'pr' ]; then
+                        if [ "\${CHART_REPO_TYPE}" == 'pr' ] && [ -n "\${${repo.commitEnvVar}}" ]; then
                           update-commit-status \
                             ${commitStatus} \
                             ${repo.name} \
-                            \${ACTUAL_COMMIT} \
+                            \${${repo.commitEnvVar}} \
                             \${BUILD_URL} \
                             "${jobName} job ${buildStatus}"
                         fi
@@ -68,9 +68,12 @@ repos.each { Map repo ->
         choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'production'], 'Type of chart repo for publishing (default: dev)')
         stringParam('RELEASE_TAG', '', 'Release tag (Default: empty, will use latest git tag for repo)')
         stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
-        stringParam('ACTUAL_COMMIT', '', "Component commit SHA")
         booleanParam('SIGN_CHART', false, "Sign chart? (default: false/no)")
         stringParam('TRIGGER_WORKFLOW_CHART_PUBLISH', 'true', "Trigger downstream workflow-chart-publish job (default: true)")
+        repos.each { Map r ->
+          stringParam(r.commitEnvVar, '', r.commitEnvVar == repo.commitEnvVar ?
+            "${repo.name} commit SHA for git checkout and chart versioning" : "${r.name} commit SHA for setting <component>.docker_tag in Workflow chart")
+        }
       }
 
       wrappers {
@@ -92,8 +95,14 @@ repos.each { Map repo ->
             export ENV_FILE_PATH="${defaults.envFile}"
             mkdir -p ${defaults.tmpPath}
 
-            export COMPONENT_REPO_NAME="${repo.name}"
-            publish-helm-chart ${chart} \${CHART_REPO_TYPE}
+            # checkout PR commit if repo_type 'pr' and value of commit env var non-null
+            if [ "\${CHART_REPO_TYPE}" == 'pr' ] && [ -n "\${${repo.commitEnvVar}}" ]; then
+              echo "Fetching PR changes from repo '${repo.name}' at commit \${${repo.commitEnvVar}}" 1>&2
+              git fetch -q --tags --progress https://github.com/deis/${repo.name}.git +refs/pull/*:refs/remotes/origin/pr/*
+              git checkout "\${${repo.commitEnvVar}}"
+            fi
+
+            publish-helm-chart ${chart} \${CHART_REPO_TYPE} \${${repo.commitEnvVar}}
           """.stripIndent().trim()
 
         // Trigger workflow chart publish (will pickup latest component chart published above)
@@ -112,10 +121,14 @@ repos.each { Map repo ->
                   propertiesFile(defaults.envFile)
                   predefinedProps([
                     'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
-                    'COMPONENT_REPO': repo.name,
-                    'ACTUAL_COMMIT': '${ACTUAL_COMMIT}',
                     'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+                    'COMPONENT_REPO': repo.name,
+                    'GITHUB_STATUS_COMMIT': "\${${repo.commitEnvVar}}",
                   ])
+                  // pass all COMPONENT_SHA values on
+                  repos.each { Map r ->
+                    predefinedProp(r.commitEnvVar, "\${${r.commitEnvVar}}")
+                  }
                 }
               }
             }
