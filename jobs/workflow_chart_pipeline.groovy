@@ -85,8 +85,8 @@ job("${chart}-chart-publish") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("AWS_ACCESS_KEY_ID", '57e64439-4521-4a4f-9315-eac10ecdea75')
-      string("AWS_SECRET_ACCESS_KEY", '313da896-1579-41fa-9c70-c6b13d938e9c')
+      string("AZURE_STORAGE_ACCOUNT", defaults.azure.storageAccount)
+      string("AZURE_STORAGE_KEY", defaults.azure.storageAccountKeyID)
       string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
@@ -317,8 +317,8 @@ job("${chart}-chart-stage") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("AWS_ACCESS_KEY_ID", '57e64439-4521-4a4f-9315-eac10ecdea75')
-      string("AWS_SECRET_ACCESS_KEY", '313da896-1579-41fa-9c70-c6b13d938e9c')
+      string("AZURE_STORAGE_ACCOUNT", defaults.azure.storageAccount)
+      string("AZURE_STORAGE_KEY", defaults.azure.storageAccountKeyID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       string("SIGNING_KEY_PASSPHRASE", '3963b12b-bad3-429b-b1e5-e047a159bf02')
     }
@@ -395,8 +395,8 @@ job("${chart}-chart-release") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("AWS_ACCESS_KEY_ID", '57e64439-4521-4a4f-9315-eac10ecdea75')
-      string("AWS_SECRET_ACCESS_KEY", '313da896-1579-41fa-9c70-c6b13d938e9c')
+      string("AZURE_STORAGE_ACCOUNT", defaults.azure.storageAccount)
+      string("AZURE_STORAGE_KEY", defaults.azure.storageAccountKeyID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
@@ -412,15 +412,15 @@ job("${chart}-chart-release") {
 
         git checkout -q "\${RELEASE_TAG}"
 
-        # download chart and index file from aws s3 bucket
-        aws s3 cp s3://helm-charts/${chartRepo.production}/${chart}-\${RELEASE_TAG}.tgz .
-        aws s3 cp s3://helm-charts/${chartRepo.production}/index.yaml .
+        echo "downloading ${chart}-\${RELEASE_TAG}.tgz and index.yaml files from chart repo ${chartRepo.production}..."
+        az storage blob download -c ${chartRepo.production} -n ${chart}-\${RELEASE_TAG}.tgz -f ${chart}-\${RELEASE_TAG}.tgz
+        az storage blob download -c ${chartRepo.production} -n index.yaml -f index.yaml
 
         # update index file
         helm repo index . --url https://charts.deis.com/${chartRepo.production} --merge ./index.yaml
 
-        # push updated index file to aws s3 bucket
-        aws s3 cp index.yaml s3://helm-charts/${chartRepo.production}/index.yaml
+        echo "Uploading updated index.yaml file to chart repo ${chartRepo.production}..."
+        az storage blob upload -c ${chartRepo.production} -n index.yaml -f index.yaml
       """.stripIndent().trim()
 
 

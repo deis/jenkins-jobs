@@ -29,6 +29,10 @@ defaults = [
     username: 'deis-admin',
     credentialsID: '8e11254f-44f3-4ddd-bf98-2cabcb7434cd',
   ],
+  azure: [
+    storageAccount: 'f2a28186-f3e1-4a51-9d15-e1646bdf34e6',
+    storageAccountKeyID: 'c9cad0b0-53dd-4d38-a832-c4b29aeaf49b',
+  ],
   statusesToNotify: ['SUCCESS', 'FAILURE'],
 ]
 
