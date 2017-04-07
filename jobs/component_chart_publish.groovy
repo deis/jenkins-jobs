@@ -61,9 +61,9 @@ repos.each { Map repo ->
 
       parameters {
         nodeParam('NODE') {
-          description("select node (must be ${defaults.signingNode} if chart is to be signed)")
-          defaultNodes(defaults.nodes)
-          allowedNodes(defaults.nodes + defaults.signingNode)
+          description('Select node (must be signatory node if SIGN_CHART is \'true\'')
+          defaultNodes(['docker', 'linux'])
+          allowedNodes(['docker', 'linux', defaults.signingNode])
         }
         choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'production'], 'Type of chart repo for publishing (default: dev)')
         stringParam('RELEASE_TAG', '', 'Release tag (Default: empty, will use latest git tag for repo)')
