@@ -3,6 +3,7 @@ if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPAC
 evaluate(new File("${workspace}/common.groovy"))
 
 name = 'deis-com-deploy'
+slackChannel = '#marketing'
 
 job(name) {
   description """
@@ -50,12 +51,24 @@ job(name) {
   }
 
   publishers {
-    // Slack notifications?
-    slackNotifications {
-      projectChannel('#marketing')
-      notifyAborted()
-      notifyFailure()
-      notifySuccess()
+    def statusesToNotify = ['SUCCESS', 'FAILURE']
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  """
+                    slack-notify '${slackChannel}' "${buildStatus}"
+                  """.stripIndent().trim()
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -65,6 +78,7 @@ job(name) {
     credentialsBinding {
       file('GUTENBERG_STAGING_ENV', '7d29c809-9480-47ae-91aa-a25f43e58897')
       file('GUTENBERG_PROD_ENV', '91cd521d-e2bb-452d-9abd-863e00ff1e12')
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
     parameters {
       stringParam('WORKFLOW_DOCS_SOURCE', '${WORKSPACE}/workflow', 'Relative Workflow source')

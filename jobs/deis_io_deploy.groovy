@@ -3,6 +3,7 @@ if (!new File("${workspace}/common.groovy").canRead()) { workspace = "${WORKSPAC
 evaluate(new File("${workspace}/common.groovy"))
 
 name = 'deis-io-deploy'
+slackChannel = '#marketing'
 
 job(name) {
   description """
@@ -26,12 +27,24 @@ job(name) {
   }
 
   publishers {
-    // Slack notifications?
-    slackNotifications {
-      projectChannel('#marketing')
-      notifyAborted()
-      notifyFailure()
-      notifySuccess()
+    def statusesToNotify = ['SUCCESS', 'FAILURE']
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  """
+                    slack-notify '${slackChannel}' "${buildStatus}"
+                  """.stripIndent().trim()
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -41,6 +54,7 @@ job(name) {
     credentialsBinding {
       file('DEIS_IO_STAGING_ENV', '2cfbe7b8-0e93-4e00-8c5b-1731d794d339')
       file('DEIS_IO_PROD_ENV', 'a93c6610-b155-4718-9cb5-4ed7e6ba39e6')
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
     parameters {
       stringParam('DEIS_IO_ORG', 'deis', 'GitHub organization to use.')
