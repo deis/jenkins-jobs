@@ -4,6 +4,7 @@ evaluate(new File("${workspace}/common.groovy"))
 
 repo_name = 'deis.io'
 downstreamJobName = 'deis-io-deploy'
+slackChannel = '#marketing'
 
 job("deis-io-merge") {
   description """
@@ -32,12 +33,26 @@ job("deis-io-merge") {
   }
 
   publishers {
-    slackNotifications {
-      projectChannel('#marketing')
-      notifyAborted()
-      notifyFailure()
-      notifySuccess()
+    def statusesToNotify = ['SUCCESS', 'FAILURE']
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  """
+                    slack-notify '${slackChannel}' "${buildStatus}"
+                  """.stripIndent().trim()
+              }
+            }
+          }
+        }
+      }
     }
+
     downstream("${downstreamJobName}", 'UNSTABLE')
   }
 
@@ -50,6 +65,7 @@ job("deis-io-merge") {
     colorizeOutput 'xterm'
     credentialsBinding {
       file('DEIS_IO_STAGING_ENV', '2cfbe7b8-0e93-4e00-8c5b-1731d794d339')
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
 
@@ -130,15 +146,29 @@ job("deis-io-pr") {
     colorizeOutput 'xterm'
     credentialsBinding {
       file('DEIS_IO_STAGING_ENV', '2cfbe7b8-0e93-4e00-8c5b-1731d794d339')
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
 
   publishers {
-    slackNotifications {
-      projectChannel('#marketing')
-      notifyAborted()
-      notifyFailure()
-      notifySuccess()
+    def statusesToNotify = ['SUCCESS', 'FAILURE']
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  """
+                    slack-notify '${slackChannel}' "${buildStatus}"
+                  """.stripIndent().trim()
+              }
+            }
+          }
+        }
+      }
     }
   }
 

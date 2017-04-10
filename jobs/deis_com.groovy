@@ -4,6 +4,7 @@ evaluate(new File("${workspace}/common.groovy"))
 
 repo_name = 'deis.com'
 downstreamJobName = 'deis-com-deploy'
+slackChannel = '#marketing'
 
 job("deis-com-master") {
   description """
@@ -33,12 +34,35 @@ job("deis-com-master") {
   }
 
   publishers {
+    def statusesToNotify = ['SUCCESS', 'FAILURE']
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  """
+                    slack-notify '${slackChannel}' "${buildStatus}"
+                  """.stripIndent().trim()
+              }
+            }
+          }
+        }
+      }
+    }
+
     downstream(downstreamJobName, 'UNSTABLE')
   }
 
   wrappers {
     timestamps()
     colorizeOutput 'xterm'
+    credentialsBinding {
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+    }
     parameters {
       stringParam('DEIS_COM_BRANCH', 'master', 'deis.com branch to build')
     }
@@ -118,15 +142,29 @@ job("deis-com-pr") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
 
   publishers {
-    slackNotifications {
-      projectChannel('#marketing')
-      notifyAborted()
-      notifyFailure()
-      notifySuccess()
+    def statusesToNotify = ['SUCCESS', 'FAILURE']
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+             status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  """
+                    slack-notify '${slackChannel}' "${buildStatus}"
+                  """.stripIndent().trim()
+              }
+            }
+          }
+        }
+      }
     }
   }
 
