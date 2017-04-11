@@ -10,9 +10,7 @@ locate-release-candidate() {
   component_env_var="$(echo "${component}" | perl -ne 'print uc' | sed 's/-/_/g')"_SHA
   candidate_image=quay.io/deis/"${component}":git-"${commit:0:7}"
 
-  docker pull "${candidate_image}"
-
-  if [ $? -ne 0 ]; then
+  if ! docker pull "${candidate_image}"; then
     echo "Release candidate '${candidate_image}' cannot be located; exiting." 1>&2
     exit 1
   fi
