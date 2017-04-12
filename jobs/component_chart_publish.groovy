@@ -21,8 +21,6 @@ repos.each { Map repo ->
       }
 
       publishers {
-        wsCleanup() // Scrub workspace clean after build
-
         def statusesToNotify = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
         postBuildScripts {
           onlyIfBuildSucceeds(false)
@@ -77,6 +75,8 @@ repos.each { Map repo ->
       }
 
       wrappers {
+        preBuildCleanup() // Scrub workspace clean before build
+
         buildName('${RELEASE_TAG} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
         timestamps()
         colorizeOutput 'xterm'

@@ -6,8 +6,6 @@ job("helm-chart-verify") {
   description "Verifies a signed Deis Helm chart"
 
   publishers {
-    wsCleanup() // Scrub workspace clean after build
-
     postBuildScripts {
       onlyIfBuildSucceeds(false)
       steps {
@@ -39,6 +37,8 @@ job("helm-chart-verify") {
   }
 
   wrappers {
+    preBuildCleanup() // Scrub workspace clean before build
+
     buildName('${CHART} ${RELEASE_TAG} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
