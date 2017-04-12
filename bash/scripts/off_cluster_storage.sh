@@ -4,7 +4,6 @@ set -eo pipefail
 
 cleanup() {
   buckets=$*
-
   echo "Buckets to be removed: ${buckets}"
   if [ "${STORAGE_TYPE}" == "s3" ]; then
     echo 'Cleaning up buckets in aws/s3 created during tests...'

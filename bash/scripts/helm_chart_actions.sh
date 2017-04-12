@@ -3,7 +3,6 @@
 set -eo pipefail
 
 export DEIS_CHARTS_BASE_URL="https://charts.deis.com"
-export DEIS_CHARTS_BUCKET_BASE_URL="s3://helm-charts"
 
 # sign-and-package-helm-chart signs and packages the helm chart provided by chart,
 # expecting a signing key passphrase in SIGNING_KEY_PASSPHRASE.
@@ -85,29 +84,33 @@ publish-helm-chart() {
 
     if [ "${SIGN_CHART}" == true ]; then
       sign-and-package-helm-chart "${chart}"
-      aws s3 cp "${chart}-${chart_version}".tgz.prov "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart}"/
+      echo "Uploading chart provenance file ${chart}-${chart_version}.tgz.prov to chart repo ${chart_repo}..." >&2
+      az storage blob upload -c "${chart_repo}" \
+        -n "${chart}-${chart_version}".tgz.prov -f "${chart}-${chart_version}".tgz.prov
     else
       helm package "${chart}"
     fi
 
-    # download index file from aws s3 bucket
-    aws s3 cp "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}/index.yaml" .
+    # download index file from wabs container
+    az storage blob download -c "${chart_repo}" -n index.yaml -f index.yaml
 
     # update index file
     helm repo index . --url "${DEIS_CHARTS_BASE_URL}/${chart_repo}" --merge ./index.yaml
 
-    # push chart artifact to chart repo (aws s3 bucket)
     if [ "${repo_type}" == "staging" ]; then
       # set cache-control for chart artifact if staging repo
       echo "Chart repo type is staging; setting --cache-control max_age=0 on the chart artifact to prevent caching."
-      aws s3 cp --cache-control max_age=0 "${chart}-${chart_version}".tgz "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/
+      az storage blob upload --content-cache-control="max-age=0" -c "${chart_repo}" \
+        -n "${chart}-${chart_version}".tgz -f "${chart}-${chart_version}".tgz
     else
-      aws s3 cp "${chart}-${chart_version}".tgz "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/
+      echo "Uploading chart artifact ${chart}-${chart_version}.tgz to chart repo ${chart_repo}..." >&2
+      az storage blob upload -c "${chart_repo}" \
+        -n "${chart}-${chart_version}".tgz -f "${chart}-${chart_version}".tgz
     fi
 
-    # push updated index file and values.yaml to aws s3 bucket
-    aws s3 cp --cache-control max_age=0 index.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}"/index.yaml \
-      && aws s3 cp "${chart}"/values.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart_repo}/values-${chart_version}".yaml
+    echo "Uploading updated index.yaml and values-${chart_version}.yaml to chart repo ${chart_repo}..." >&2
+    az storage blob upload --content-cache-control="max-age=0" -c "${chart_repo}" -n index.yaml -f index.yaml \
+      && az storage blob upload -c "${chart_repo}" -n values-"${chart_version}".yaml -f "${chart}"/values.yaml
   else
     echo "No 'charts' directory found at project level; nothing to publish."
   fi
@@ -199,9 +202,10 @@ update-chart() {
       # but is ready to copy to production repo with index.file if approved)
       sign-and-package-helm-chart "${chart}"
 
-      aws s3 cp "${chart}-${chart_version}".tgz "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart}"/ \
-        && aws s3 cp "${chart}-${chart_version}".tgz.prov "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart}"/ \
-        && aws s3 cp "${chart}"/values.yaml "${DEIS_CHARTS_BUCKET_BASE_URL}/${chart}/values-${chart_version}".yaml
+      echo "Uploading ${chart}-${chart_version}.tgz(.prov) and values-${chart_version}.yaml files to chart repo ${chart_repo}..."
+      az storage blob upload -c "${chart_repo}" -n "${chart}-${chart_version}".tgz -f "${chart}-${chart_version}".tgz \
+        && az storage blob upload -c "${chart_repo}" -n "${chart}-${chart_version}".tgz.prov -f "${chart}-${chart_version}".tgz.prov \
+        && az storage blob upload -c "${chart_repo}" -n values-"${chart_version}".yaml -f "${chart}"/values.yaml
     fi
 
     # if chart repo name does not match chart (i.e. workflow(-dev/-pr/-staging) != workflow), consider it non-production

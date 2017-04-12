@@ -6,7 +6,7 @@ setup() {
 
   stub wget
   stub git
-  stub aws
+  stub az
   stub helm
   stub tar
   stub get-latest-component-release "echo 'v3.0.3'"
@@ -84,7 +84,8 @@ setup-publish-chart-workspace() {
   run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "" ]
+  [[ "${lines[0]}" == *"Uploading chart artifact ${chart}-v1.2.4"* ]]
+  [[ "${lines[1]}" == "Uploading updated index.yaml and values"*".yaml to chart repo ${chart}-${repo_type}..." ]]
   [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
@@ -101,7 +102,9 @@ setup-publish-chart-workspace() {
   run publish-helm-chart "${chart}" "${repo_type}"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "fetching all dependency charts for ${chart} per requirements file..." ]
+  [ "${lines[0]}" == "fetching all dependency charts for ${chart} per requirements file..." ]
+  [[ "${lines[1]}" == *"Uploading chart artifact ${chart}-v1.2.4"* ]]
+  [[ "${lines[2]}" == "Uploading updated index.yaml and values"*".yaml to chart repo ${chart}-${repo_type}..." ]]
   [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
   [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-dev-${TIMESTAMP}-sha.${SHORT_SHA}" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
@@ -118,7 +121,8 @@ setup-publish-chart-workspace() {
   run publish-helm-chart "${chart}" "${repo_type}" 'abc123456789'
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "" ]
+  [[ "${lines[0]}" == *"Uploading chart artifact ${chart}-v1.2.4"* ]]
+  [[ "${lines[1]}" == "Uploading updated index.yaml and values"*".yaml to chart repo ${chart}-${repo_type}..." ]]
   [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.abc1234" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
@@ -138,7 +142,8 @@ setup-publish-chart-workspace() {
   run publish-helm-chart "${chart}" "${repo_type}" ''
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "" ]
+  [[ "${lines[0]}" == *"Uploading chart artifact ${chart}-v1.2.4"* ]]
+  [[ "${lines[1]}" == "Uploading updated index.yaml and values"*".yaml to chart repo ${chart}-${repo_type}..." ]]
   [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.ghi7891" ]
   [ "$(cat "${WORKDIR}/env.file")" == "COMPONENT_CHART_VERSION=${EXPECTED_PRERELEASE_TAG}-${TIMESTAMP}-sha.ghi7891" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deisci\" \"Always\" canary" ]
@@ -156,7 +161,10 @@ setup-publish-chart-workspace() {
   run publish-helm-chart "${chart}" "${repo_type}"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "Signing packaged chart '${chart}' with key 'Deis, Inc. (Helm chart signing key)' from keyring '/.gnupg/secring.gpg'..." ]
+  [ "${lines[0]}" == "Signing packaged chart '${chart}' with key 'Deis, Inc. (Helm chart signing key)' from keyring '/.gnupg/secring.gpg'..." ]
+  [ "${lines[1]}" == "Uploading chart provenance file ${chart}-v1.2.3.tgz.prov to chart repo ${chart}..." ]
+  [ "${lines[2]}" == "Uploading chart artifact ${chart}-v1.2.3.tgz to chart repo ${chart}..." ]
+  [ "${lines[3]}" == "Uploading updated index.yaml and values-v1.2.3.yaml to chart repo ${chart}..." ]
   [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${RELEASE_TAG}" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deis\" \"IfNotPresent\" ${RELEASE_TAG}" ]
 }
@@ -172,7 +180,8 @@ setup-publish-chart-workspace() {
   run publish-helm-chart "${chart}" "${repo_type}"
 
   [ "${status}" -eq 0 ]
-  [ "${output}" == "" ]
+  [ "${lines[0]}" == "Uploading chart artifact ${chart}-v1.2.3.tgz to chart repo ${chart}..." ]
+  [ "${lines[1]}" == "Uploading updated index.yaml and values-v1.2.3.yaml to chart repo ${chart}..." ]
   [ "$(cat "${WORKDIR}/${chart}/Chart.yaml")" == "${RELEASE_TAG}" ]
   [ "$(cat "${WORKDIR}/${chart}/values.yaml")" == "\"deis\" \"IfNotPresent\" ${RELEASE_TAG}" ]
 }
@@ -277,7 +286,9 @@ setup-publish-chart-workspace() {
 
   expected_output=''"${expected_requirements_yaml}"'
 Signing packaged chart '"'workflow'"' with key '"'Deis, Inc. (Helm chart signing key)'"' from keyring '"'/.gnupg/secring.gpg'"'...
-Chart repo type is staging; setting --cache-control max_age=0 on the chart artifact to prevent caching.'
+Uploading workflow-v1.2.3.tgz(.prov) and values-v1.2.3.yaml files to chart repo workflow-staging...
+Chart repo type is staging; setting --cache-control max_age=0 on the chart artifact to prevent caching.
+Uploading updated index.yaml and values-v1.2.3.yaml to chart repo workflow-staging...'
 
   [ "${status}" -eq 0 ]
   [ "${output}" == "${expected_output}" ]
