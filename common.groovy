@@ -23,7 +23,7 @@ defaults = [
     webhookURL: 'a53b3a9e-d649-4cff-9997-6c24f07743c8',
   ],
   helm: [
-    version: 'v2.2.3',
+    version: 'v2.3.0',
   ],
   github: [
     username: 'deis-admin',
