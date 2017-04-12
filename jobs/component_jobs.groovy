@@ -178,7 +178,10 @@ repos.each { Map repo ->
                     }
                     parameters {
                       propertiesFile(defaults.envFile)
-                      predefinedProps(['CHART_REPO_TYPE': chartRepoType])
+                      predefinedProps([
+                        'CHART_REPO_TYPE': chartRepoType,
+                        'NODE': 'linux',
+                      ])
                     }
                   }
                 }
