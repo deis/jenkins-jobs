@@ -61,7 +61,7 @@ repos = [
     chart: 'minio'],
 
   [ name: 'monitor',
-    components: [[name: 'grafana'], [name: 'influxdb'], [name: 'telegraf']],
+    components: [[name: 'grafana'], [name: 'telegraf']],
     slackChannel: '#monitor',
     runE2e: false,
     workflowComponent: true,
