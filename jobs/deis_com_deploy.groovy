@@ -76,14 +76,17 @@ job(name) {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      file('GUTENBERG_STAGING_ENV', '7d29c809-9480-47ae-91aa-a25f43e58897')
-      file('GUTENBERG_PROD_ENV', '91cd521d-e2bb-452d-9abd-863e00ff1e12')
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+      string("QUAY_PASSWORD", "8317a529-10f7-40b5-abd4-a42f242f22f0")
+      string("DEIS_URL", "368837f6-a5d1-4754-af84-0645473824a6")
+      string("DEIS_USERNAME", "342bc0d5-3c82-4e5c-aa79-8b4df0cc7298")
+      string("DEIS_PASSWORD", "201494de-a097-4a60-aaa3-6d16a930dabd")
     }
     parameters {
       stringParam('WORKFLOW_DOCS_SOURCE', '${WORKSPACE}/workflow', 'Relative Workflow source')
       stringParam('DEIS_COM_SOURCE', '${WORKSPACE}/deis.com', 'Relative Deis.com source')
-      stringParam('CONTAINER_ENV', '${GUTENBERG_PROD_ENV}', 'Environment file with AWS API Keys, S3 Buckets and CloudFront values')
+      stringParam('QUAY_USERNAME', 'deis+jenkins', 'Quay account name')
+      stringParam('QUAY_EMAIL', 'deis+jenkins@deis.com', 'Quay email address')
     }
   }
 
@@ -94,7 +97,16 @@ job(name) {
       set -eo pipefail
 
       cd "${WORKSPACE}/gutenberg"
-      make prep build deploy
+
+      rm -rf build/
+
+      docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
+      make prep build build-image push
+
+      curl -sSL http://deis.io/deis-cli/install-v2.sh | bash
+      export PATH="\$(pwd):\$PATH"
+
+      make deploy
     '''.stripIndent().trim()
   }
 }
