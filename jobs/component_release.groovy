@@ -81,7 +81,7 @@ repos.each { Map repo ->
 
             set -eo pipefail
 
-            tag="\$(get-latest-tag)"
+            tag="\$(get-latest-tag ${component.name})"
             commit="\$(git checkout "\${tag}" && git rev-parse HEAD)"
             echo "Checked out tag '\${tag}' and will pass commit at HEAD (\${commit}) to downstream job."
 
