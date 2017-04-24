@@ -69,6 +69,7 @@ repos.each { Map repo ->
         stringParam('RELEASE_TAG', '', 'Release tag (Default: empty, will use latest git tag for repo)')
         stringParam('HELM_VERSION', defaults.helm.version, 'Version of Helm to download/use')
         booleanParam('SIGN_CHART', false, "Sign chart? (default: false/no)")
+        stringParam('KEYRING', '/home/jenkins/.gnupg/secring.gpg', "Location of keyring (if signing chart)")
         stringParam('TRIGGER_WORKFLOW_CHART_PUBLISH', 'true', "Trigger downstream workflow-chart-publish job (default: true)")
         repos.each { Map r ->
           stringParam(r.commitEnvVar, '', r.commitEnvVar == repo.commitEnvVar ?
@@ -105,29 +106,31 @@ repos.each { Map repo ->
             publish-helm-chart ${chart} \${CHART_REPO_TYPE} \${${repo.commitEnvVar}}
           """.stripIndent().trim()
 
-        // Trigger workflow chart publish (will pickup latest component chart published above)
-        // IF TRIGGER_WORKFLOW_CHART_PUBLISH is true
-        conditionalSteps {
-          condition { stringsMatch('${TRIGGER_WORKFLOW_CHART_PUBLISH}', 'true', false) }
-          steps {
-            downstreamParameterized {
-              trigger("workflow-chart-publish") {
-                block {
-                  buildStepFailure('FAILURE')
-                  failure('FAILURE')
-                  unstable('UNSTABLE')
-                }
-                parameters {
-                  propertiesFile(defaults.envFile)
-                  predefinedProps([
-                    'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
-                    'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
-                    'COMPONENT_REPO': repo.name,
-                    'GITHUB_STATUS_COMMIT': "\${${repo.commitEnvVar}}",
-                  ])
-                  // pass all COMPONENT_SHA values on
-                  repos.each { Map r ->
-                    predefinedProp(r.commitEnvVar, "\${${r.commitEnvVar}}")
+        if repo.workflowComponent {
+          // Trigger workflow chart publish (will pickup latest component chart published above)
+          // IF TRIGGER_WORKFLOW_CHART_PUBLISH is true
+          conditionalSteps {
+            condition { stringsMatch('${TRIGGER_WORKFLOW_CHART_PUBLISH}', 'true', false) }
+            steps {
+              downstreamParameterized {
+                trigger("workflow-chart-publish") {
+                  block {
+                    buildStepFailure('FAILURE')
+                    failure('FAILURE')
+                    unstable('UNSTABLE')
+                  }
+                  parameters {
+                    propertiesFile(defaults.envFile)
+                    predefinedProps([
+                      'CHART_REPO_TYPE': '${CHART_REPO_TYPE}',
+                      'UPSTREAM_SLACK_CHANNEL': repo.slackChannel,
+                      'COMPONENT_REPO': repo.name,
+                      'GITHUB_STATUS_COMMIT': "\${${repo.commitEnvVar}}",
+                    ])
+                    // pass all COMPONENT_SHA values on
+                    repos.each { Map r ->
+                      predefinedProp(r.commitEnvVar, "\${${r.commitEnvVar}}")
+                    }
                   }
                 }
               }
