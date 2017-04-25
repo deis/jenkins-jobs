@@ -29,8 +29,6 @@ job("${chart}-chart-publish") {
   }
 
   publishers {
-    wsCleanup() // Scrub workspace clean after build
-
     def statusesToNotify = [['SUCCESS', 'success'],['FAILURE', 'failure'],['ABORTED', 'error'],['UNSTABLE', 'failure']]
     postBuildScripts {
       onlyIfBuildSucceeds(false)
@@ -81,6 +79,8 @@ job("${chart}-chart-publish") {
   }
 
   wrappers {
+    preBuildCleanup() // Scrub workspace clean before build
+
     buildName('${COMPONENT_REPO} ${CHART_REPO_TYPE} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
@@ -278,8 +278,6 @@ job("${chart}-chart-stage") {
   }
 
   publishers {
-    wsCleanup() // Scrub workspace clean after build
-
     postBuildScripts {
       onlyIfBuildSucceeds(false)
       steps {
@@ -313,6 +311,8 @@ job("${chart}-chart-stage") {
   }
 
   wrappers {
+    preBuildCleanup() // Scrub workspace clean before build
+
     buildName('${RELEASE_TAG} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
@@ -365,8 +365,6 @@ job("${chart}-chart-release") {
   }
 
   publishers {
-    wsCleanup() // Scrub workspace clean after build
-
     postBuildScripts {
       onlyIfBuildSucceeds(false)
       steps {
@@ -391,6 +389,8 @@ job("${chart}-chart-release") {
   }
 
   wrappers {
+    preBuildCleanup() // Scrub workspace clean before build
+
     buildName('${RELEASE_TAG} #${BUILD_NUMBER}')
     timestamps()
     colorizeOutput 'xterm'
