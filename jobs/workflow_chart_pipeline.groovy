@@ -410,8 +410,6 @@ job("${chart}-chart-release") {
 
         download-and-init-helm
 
-        git checkout -q "\${RELEASE_TAG}"
-
         echo "downloading ${chart}-\${RELEASE_TAG}.tgz and index.yaml files from chart repo ${chartRepo.production}..."
         az storage blob download -c ${chartRepo.production} -n ${chart}-\${RELEASE_TAG}.tgz -f ${chart}-\${RELEASE_TAG}.tgz
         az storage blob download -c ${chartRepo.production} -n index.yaml -f index.yaml
