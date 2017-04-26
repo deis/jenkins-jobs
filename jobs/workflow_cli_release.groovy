@@ -84,7 +84,9 @@ job("${repoName}-release") {
     shell new File("${workspace}/bash/scripts/get_latest_tag.sh").text +
       """
         mkdir -p ${defaults.tmpPath}
-        echo TAG="\$(get-latest-tag)" > ${defaults.envFile}
+        tag="\$(get-latest-tag ${repoName})"
+
+        echo TAG="\${tag}" > ${defaults.envFile}
       """.stripIndent().trim()
 
     downstreamParameterized {
