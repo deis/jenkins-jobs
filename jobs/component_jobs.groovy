@@ -109,6 +109,9 @@ repos.each { Map repo ->
             string("QUAY_PASSWORD", "c67dc0a1-c8c4-4568-a73d-53ad8530ceeb")
             string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
             string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+            if (repo.tokens?.codecov) {
+              string("CODECOV_TOKEN", repo.tokens.codecov)
+            }
           }
         }
 
@@ -118,6 +121,14 @@ repos.each { Map repo ->
             new File("${workspace}/bash/scripts/find_required_commits.sh").text,
             new File("${workspace}/bash/scripts/skip_e2e_check.sh").text,
           ].join('\n')
+
+          // Populate coverage command(s) if applicable
+          def testCover = ''
+          if (repo.tokens?.codecov) {
+            testCover = repo.name == "controller" ?
+              "make upload-coverage" :
+              "make test-cover && bash <(curl -s https://codecov.io/bash)"
+          }
 
           repo.components.each { Map component ->
             cdComponentDir = component.name == repo.name ?: "cd ${component.name}"
@@ -135,14 +146,22 @@ repos.each { Map repo ->
 
               make bootstrap || true
 
+              ## Build and Push Images
+              # (Some repo 'test' targets depend on `make docker-build` be run before)
               export IMAGE_PREFIX=deisci VERSION="git-\${git_commit:0:7}"
+
               docker login -e="\$DOCKER_EMAIL" -u="\$DOCKER_USERNAME" -p="\$DOCKER_PASSWORD"
               # build once with "docker --pull --no-cache" to avoid stale layers
               DEIS_REGISTRY='' DOCKER_BUILD_FLAGS="--pull --no-cache" make docker-build ${dockerPush}
+
               docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
               DEIS_REGISTRY=quay.io/ make docker-build ${dockerPush}
 
-              # populate env file for passing to downstream job(s)
+              ## Run Test targets
+              make test
+              ${testCover}
+
+              ## Populate env file for passing context to downstream job(s)
               mkdir -p ${defaults.tmpPath}
               mkdir -p "\$(dirname ${component.envFile})"
 
