@@ -110,6 +110,15 @@ repos = [
     chart: 'registry',
   ],
 
+  // TODO: remove when https://github.com/deis/workflow/issues/766 is resolved
+  [ name: 'registry-proxy',
+    components: [[name: 'registry-proxy']],
+    slackChannel: '#registry',
+    runE2e: true,
+    workflowComponent: true,
+    chart: 'registry-proxy',
+  ],
+
   [ name: 'registry-token-refresher',
     components: [[name: 'registry-token-refresher']],
     slackChannel: '#registry',

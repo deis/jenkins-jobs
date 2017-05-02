@@ -184,10 +184,6 @@ update-chart() {
       helm search "${component_chart_repo}"/"${component_chart}" -l
     done
 
-    # TEMP FIX: remove when registry-proxy no longer under deis (https://github.com/deis/workflow/issues/644 closed)
-    perl -i -0pe 's/<registry-proxy-tag>/"v1.1.1"/g' "${chart}"/requirements.yaml
-    helm repo add registry-proxy "${DEIS_CHARTS_BASE_URL}/registry-proxy"
-
     # DEBUG
     helm repo list
 
