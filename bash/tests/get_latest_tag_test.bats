@@ -4,7 +4,8 @@ setup() {
   . "${BATS_TEST_DIRNAME}/../scripts/get_latest_tag.sh"
   load stub
   stub docker
-  stub curl "" 1 # curl for if component released fails (component not released)
+  stub curl
+  stub jq
 }
 
 teardown() {
@@ -41,7 +42,7 @@ teardown() {
 @test "main : component already released" {
   export TAG="foo-tag"
 
-  stub curl "" 0
+  stub jq "echo 'foo-tag bar-tag'" 0
 
   run get-latest-tag foo
 
