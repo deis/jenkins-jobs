@@ -198,10 +198,10 @@ update-chart() {
       # but is ready to copy to production repo with index.file if approved)
       sign-and-package-helm-chart "${chart}"
 
-      echo "Uploading ${chart}-${chart_version}.tgz(.prov) and values-${chart_version}.yaml files to chart repo ${chart_repo}..."
-      az storage blob upload -c "${chart_repo}" -n "${chart}-${chart_version}".tgz -f "${chart}-${chart_version}".tgz \
-        && az storage blob upload -c "${chart_repo}" -n "${chart}-${chart_version}".tgz.prov -f "${chart}-${chart_version}".tgz.prov \
-        && az storage blob upload -c "${chart_repo}" -n values-"${chart_version}".yaml -f "${chart}"/values.yaml
+      echo "Uploading ${chart}-${chart_version}.tgz(.prov) and values-${chart_version}.yaml files to production chart repo ${chart}, sans index.yaml..."
+      az storage blob upload -c "${chart}" -n "${chart}-${chart_version}".tgz -f "${chart}-${chart_version}".tgz \
+        && az storage blob upload -c "${chart}" -n "${chart}-${chart_version}".tgz.prov -f "${chart}-${chart_version}".tgz.prov \
+        && az storage blob upload -c "${chart}" -n values-"${chart_version}".yaml -f "${chart}"/values.yaml
     fi
 
     # if chart repo name does not match chart (i.e. workflow(-dev/-pr/-staging) != workflow), consider it non-production
