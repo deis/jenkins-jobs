@@ -60,6 +60,7 @@ job(name) {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       string("QUAY_PASSWORD", "8317a529-10f7-40b5-abd4-a42f242f22f0")
       string("DEIS_URL", "1a72f795-58c5-4832-a463-28aa2765ba14")

@@ -34,6 +34,9 @@ job(name) {
   wrappers {
     timestamps()
     colorizeOutput 'xterm'
+    credentialsBinding {
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+    }
     parameters {
       stringParam('WORKFLOW_BRANCH', 'master', 'workflow branch to build')
     }
