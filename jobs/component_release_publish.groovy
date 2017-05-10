@@ -55,6 +55,7 @@ job('component-release-publish') {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }

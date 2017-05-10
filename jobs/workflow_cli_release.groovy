@@ -253,6 +253,7 @@ downstreamJobs.each{ Map thisJob ->
       timestamps()
       colorizeOutput 'xterm'
       credentialsBinding {
+        string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
         string("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
         string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       }

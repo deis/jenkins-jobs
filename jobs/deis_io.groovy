@@ -146,6 +146,7 @@ job("deis-io-pr") {
     colorizeOutput 'xterm'
     credentialsBinding {
       file('DEIS_IO_STAGING_ENV', '2cfbe7b8-0e93-4e00-8c5b-1731d794d339')
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
