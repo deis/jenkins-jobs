@@ -108,6 +108,7 @@ job(name) {
       string("AWS_ACCESS_KEY_ID","02a5c84e-3248-4776-acc5-6b6a1fb24dfc")
       // k8s-claimer auth
       string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
+      string("CLOUD_PROVIDER", defaults.e2eRunner.provider)
     }
   }
 
