@@ -4,6 +4,116 @@ evaluate(new File("${workspace}/common.groovy"))
 
 slackChannel = '#ops'
 
+job('k8s-claimer-pr') {
+  description """
+  <p>Run the tests for k8s-claimer</p>
+  <p>
+    K8s-Claimer serves as a Kubernetes cluster leaser for running Workflow E2E tests in CI.
+  </p>
+  """.stripIndent().trim()
+
+  scm {
+    git {
+      remote {
+        github("deis/k8s-claimer")
+        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        refspec('+refs/pull/*:refs/remotes/origin/pr/*')
+      }
+      branch('${sha1}')
+    }
+  }
+
+  def statusesToNotify = ['FAILURE']
+  publishers {
+    postBuildScripts {
+      onlyIfBuildSucceeds(false)
+      steps {
+        statusesToNotify.each { buildStatus ->
+          conditionalSteps {
+            condition {
+              status(buildStatus, buildStatus)
+              steps {
+                shell new File("${workspace}/bash/scripts/slack_notify.sh").text +
+                  """
+                    slack-notify "${slackChannel}" "${buildStatus}"
+                  """.stripIndent().trim()
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  concurrentBuild()
+  throttleConcurrentBuilds {
+    maxPerNode(defaults.maxBuildsPerNode)
+    maxTotal(defaults.maxTotalConcurrentBuilds)
+  }
+
+  logRotator {
+    daysToKeep defaults.daysToKeep
+  }
+
+  triggers {
+    pullRequest {
+      admin('deis-admin')
+      cron('H/5 * * * *')
+      useGitHubHooks()
+      triggerPhrase('OK to test')
+      orgWhitelist(['deis'])
+      allowMembersOfWhitelistedOrgsAsAdmin()
+      // this plugin will update PR status no matter what,
+      // so until we fix this, here are our default messages:
+      extensions {
+        commitStatus {
+          context('ci/jenkins/pr')
+          triggeredStatus("Triggering k8s-claimer build/test pipeline...")
+          startedStatus("Starting k8s-claimer build/test pipeline...")
+          completedStatus('SUCCESS', "k8s-claimer build/test pipeline SUCCESS!")
+          completedStatus('FAILURE', "k8s-claimer build/test pipeline FAILURE.")
+          completedStatus('ERROR', 'Something went wrong.')
+        }
+      }
+    }
+  }
+
+  parameters {
+    stringParam('DOCKER_USERNAME', 'deisbot', 'Docker Hub account name')
+    stringParam('DOCKER_EMAIL', 'dummy-address@deis.com', 'Docker Hub email address')
+    stringParam('QUAY_USERNAME', 'deisci+jenkins', 'Quay account name')
+    stringParam('QUAY_EMAIL', 'deisci+jenkins@deis.com', 'Quay email address')
+    stringParam('sha1', 'master', 'Specific Git SHA to test')
+  }
+
+  triggers {
+    githubPush()
+  }
+
+  wrappers {
+    timestamps()
+    colorizeOutput 'xterm'
+    credentialsBinding {
+      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+      string("CODECOV_TOKEN", "c5689e5d-61d2-4556-9333-c1e668516c1e")
+    }
+  }
+
+  steps {
+    main = [
+      new File("${workspace}/bash/scripts/get_actual_commit.sh").text,
+      new File("${workspace}/bash/scripts/find_required_commits.sh").text,
+    ].join('\n')
+
+    shell """
+      #!/usr/bin/env bash
+      set -eo pipefail
+      make bootstrap test-cover build-cli build || true
+    """.stripIndent().trim()
+  }  
+}
+
 job('k8s-claimer-build-cli') {
   description """
   <p>Builds the k8s-claimer CLI and uploads to Azure Blob storage </p>
@@ -48,17 +158,13 @@ job('k8s-claimer-build-cli') {
     }
   }
 
-  parameters {
-    stringParam('QUAY_USERNAME', 'deis+jenkins', 'Quay account name')
-    stringParam('QUAY_EMAIL', 'deis+jenkins@deis.com', 'Quay email address')
-  }
 
   wrappers {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("AZURE_STORAGE_ACCOUNT", defaults.azure.storageAccount)
-      string("AZURE_STORAGE_KEY", defaults.azure.storageAccountKeyID)
+      string("AZURE_STORAGE_ACCOUNT", "k8sclaimercli")
+      string("AZURE_STORAGE_KEY", "0211420f-1544-4543-b7bf-0c21dddf5db1")
       string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
@@ -69,12 +175,14 @@ job('k8s-claimer-build-cli') {
       #!/usr/bin/env bash
       set -eo pipefail
 
-     make bootstrap build-cli
+      #build the CLI for darwin/linux platforms
+      make bootstrap build-cli-cross
+
+      #upload to azure blob storage
+      az storage blob upload-batch --content-cache-control="max-age=0" -s _dist -d cli
     """.stripIndent().trim()
   }
 }
-
-
 
 job('k8s-claimer-deploy') {
   description """
@@ -156,6 +264,7 @@ job('k8s-claimer-deploy') {
       export DEIS_REGISTRY=quay.io/
       docker login -e="\$QUAY_EMAIL" -u="\$QUAY_USERNAME" -p="\$QUAY_PASSWORD" quay.io
 
+      DOCKER_BUILD_FLAGS="--pull --no-cache" \
       KUBECONFIG=kubeconfig \
       ARGS=config.ssh_key=\${K8S_CLAIMER_SSH_KEY},\
       config.google.account_file=\${GOOGLE_CLOUD_ACCOUNT_FILE},\
