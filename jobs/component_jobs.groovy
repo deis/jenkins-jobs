@@ -21,7 +21,7 @@ repos.each { Map repo ->
           git {
             remote {
               github("deis/${repo.name}")
-              credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+              credentials(defaults.github.credentialsID)
               if (isPR) {
                 refspec('+refs/pull/*:refs/remotes/origin/pr/*')
               }
@@ -107,7 +107,7 @@ repos.each { Map repo ->
           credentialsBinding {
             string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
             string("QUAY_PASSWORD", "c67dc0a1-c8c4-4568-a73d-53ad8530ceeb")
-            string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+            string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
             string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
             if (repo.tokens?.codecov) {
               string("CODECOV_TOKEN", repo.tokens.codecov)

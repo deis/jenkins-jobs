@@ -13,7 +13,7 @@ job("${chart}-chart-publish") {
     git {
       remote {
         github("deis/${repo.name}")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
       }
       branch('master')
     }
@@ -87,7 +87,7 @@ job("${chart}-chart-publish") {
     credentialsBinding {
       string("AZURE_STORAGE_ACCOUNT", defaults.azure.storageAccount)
       string("AZURE_STORAGE_KEY", defaults.azure.storageAccountKeyID)
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
@@ -234,7 +234,7 @@ job("${chart}-chart-e2e") {
     colorizeOutput 'xterm'
     credentialsBinding {
       string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
@@ -266,7 +266,7 @@ job("${chart}-chart-stage") {
     git {
       remote {
         github("deis/${repo.name}")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
       }
       branch('master')
     }

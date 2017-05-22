@@ -7,7 +7,7 @@ def repo = repos.find{ it.name == repoName }
 
 def gitInfo = [
   repo: "deis/${repoName}",
-  creds: '597819a0-b0b9-4974-a79b-3a5c2322606d',
+  creds: defaults.github.credentialsID,
   refspec: '+refs/tags/*:refs/remotes/origin/tags/*',
   branch: '*/tags/*',
 ]
@@ -253,7 +253,7 @@ downstreamJobs.each{ Map thisJob ->
       timestamps()
       colorizeOutput 'xterm'
       credentialsBinding {
-        string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+        string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
         string("GCSKEY", "6561701c-b7b4-4796-83c4-9d87946799e4")
         string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       }
