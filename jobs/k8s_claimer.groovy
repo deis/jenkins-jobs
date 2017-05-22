@@ -79,10 +79,6 @@ job('k8s-claimer-pr') {
   }
 
   parameters {
-    stringParam('DOCKER_USERNAME', 'deisbot', 'Docker Hub account name')
-    stringParam('DOCKER_EMAIL', 'dummy-address@deis.com', 'Docker Hub email address')
-    stringParam('QUAY_USERNAME', 'deisci+jenkins', 'Quay account name')
-    stringParam('QUAY_EMAIL', 'deisci+jenkins@deis.com', 'Quay email address')
     stringParam('sha1', 'master', 'Specific Git SHA to test')
   }
 
@@ -96,7 +92,7 @@ job('k8s-claimer-pr') {
     credentialsBinding {
       string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
-      string("CODECOV_TOKEN", "c5689e5d-61d2-4556-9333-c1e668516c1e")
+      string("CODECOV_TOKEN", "a31b1ad5-523a-41f8-b844-6240a349c4d0")
     }
   }
 
@@ -109,7 +105,7 @@ job('k8s-claimer-pr') {
     shell """
       #!/usr/bin/env bash
       set -eo pipefail
-      make bootstrap test-cover build-cli build || true
+      make bootstrap test-cover docker-build-cli build || true
     """.stripIndent().trim()
   }  
 }
@@ -181,6 +177,12 @@ job('k8s-claimer-build-cli') {
       #upload to azure blob storage
       az storage blob upload-batch --content-cache-control="max-age=0" -s _dist -d cli
     """.stripIndent().trim()
+  }
+
+  steps {
+    downstreamParameterized {
+      trigger('k8s-claimer-deploy')
+    }
   }
 }
 
