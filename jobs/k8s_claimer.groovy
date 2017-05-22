@@ -96,7 +96,7 @@ job('k8s-claimer-pr') {
     credentialsBinding {
       string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
-      string("CODECOV_TOKEN", "c5689e5d-61d2-4556-9333-c1e668516c1e")
+      string("CODECOV_TOKEN", "a31b1ad5-523a-41f8-b844-6240a349c4d0")
     }
   }
 
