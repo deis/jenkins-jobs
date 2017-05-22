@@ -79,10 +79,6 @@ job('k8s-claimer-pr') {
   }
 
   parameters {
-    stringParam('DOCKER_USERNAME', 'deisbot', 'Docker Hub account name')
-    stringParam('DOCKER_EMAIL', 'dummy-address@deis.com', 'Docker Hub email address')
-    stringParam('QUAY_USERNAME', 'deisci+jenkins', 'Quay account name')
-    stringParam('QUAY_EMAIL', 'deisci+jenkins@deis.com', 'Quay email address')
     stringParam('sha1', 'master', 'Specific Git SHA to test')
   }
 
@@ -181,6 +177,12 @@ job('k8s-claimer-build-cli') {
       #upload to azure blob storage
       az storage blob upload-batch --content-cache-control="max-age=0" -s _dist -d cli
     """.stripIndent().trim()
+  }
+
+  steps {
+    downstreamParameterized {
+      trigger('k8s-claimer-deploy')
+    }
   }
 }
 
