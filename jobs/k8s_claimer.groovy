@@ -109,7 +109,7 @@ job('k8s-claimer-pr') {
     shell """
       #!/usr/bin/env bash
       set -eo pipefail
-      make bootstrap test-cover build-cli build || true
+      make bootstrap test-cover docker-build-cli build || true
     """.stripIndent().trim()
   }  
 }
