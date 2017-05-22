@@ -18,7 +18,7 @@ job("helm-www-merge") {
     git {
       remote {
         github("helm/helm-www")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
       }
       branch('master')
     }
@@ -60,7 +60,7 @@ job("helm-www-merge") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
@@ -139,7 +139,7 @@ job("helm-www-pr") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }

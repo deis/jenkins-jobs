@@ -52,7 +52,7 @@ job('component-promote') {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("DOCKER_PASSWORD", "0d1f268f-407d-4cd9-a3c2-0f9671df0104")
       string("QUAY_PASSWORD", "8317a529-10f7-40b5-abd4-a42f242f22f0")
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)

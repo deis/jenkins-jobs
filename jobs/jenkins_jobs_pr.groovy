@@ -16,7 +16,7 @@ job(name) {
     git {
       remote {
         github("deis/jenkins-jobs")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
         refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       }
       branch('${sha1}')
@@ -68,7 +68,7 @@ job(name) {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
     }
   }
 

@@ -27,7 +27,8 @@ defaults = [
   ],
   github: [
     username: 'deis-admin',
-    credentialsID: '393d5b89-9da5-410a-a476-94c9f4325217',
+    credentialsID: 'a2eef59f-cede-4190-a096-ea65722e2b83',
+    accessTokenCredentialsID: '393d5b89-9da5-410a-a476-94c9f4325217',
   ],
   azure: [
     storageAccount: 'f2a28186-f3e1-4a51-9d15-e1646bdf34e6',

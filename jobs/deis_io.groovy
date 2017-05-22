@@ -18,7 +18,7 @@ job("deis-io-merge") {
     git {
       remote {
         github("deis/${repo_name}")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
       }
       branch('gh-pages')
     }
@@ -91,7 +91,7 @@ job("deis-io-pr") {
     git {
       remote {
         github("deis/${repo_name}")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
         refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       }
       branch('${sha1}')
@@ -146,7 +146,7 @@ job("deis-io-pr") {
     colorizeOutput 'xterm'
     credentialsBinding {
       file('DEIS_IO_STAGING_ENV', '2cfbe7b8-0e93-4e00-8c5b-1731d794d339')
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }

@@ -14,7 +14,7 @@ repos.each { Map repo ->
         git {
           remote {
             github("deis/${repo.name}")
-            credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+            credentials(defaults.github.credentialsID)
           }
           branch('master')
         }
@@ -83,7 +83,7 @@ repos.each { Map repo ->
         credentialsBinding {
           string("AZURE_STORAGE_ACCOUNT", defaults.azure.storageAccount)
           string("AZURE_STORAGE_KEY", defaults.azure.storageAccountKeyID)
-          string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+          string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
           string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
           string("SIGNING_KEY_PASSPHRASE", '3963b12b-bad3-429b-b1e5-e047a159bf02')
         }

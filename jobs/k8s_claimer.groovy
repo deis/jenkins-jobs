@@ -16,7 +16,7 @@ job('k8s-claimer-pr') {
     git {
       remote {
         github("deis/k8s-claimer")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
         refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       }
       branch('${sha1}')
@@ -90,7 +90,7 @@ job('k8s-claimer-pr') {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       string("CODECOV_TOKEN", "a31b1ad5-523a-41f8-b844-6240a349c4d0")
     }
@@ -122,7 +122,7 @@ job('k8s-claimer-build-cli') {
     git {
       remote {
         github('deis/k8s-claimer')
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
       }
       branch('master')
     }
@@ -161,7 +161,7 @@ job('k8s-claimer-build-cli') {
     credentialsBinding {
       string("AZURE_STORAGE_ACCOUNT", "k8sclaimercli")
       string("AZURE_STORAGE_KEY", "0211420f-1544-4543-b7bf-0c21dddf5db1")
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }
@@ -200,7 +200,7 @@ job('k8s-claimer-deploy') {
     git {
       remote {
         github('deis/k8s-claimer')
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
       }
       branch('master')
     }
@@ -249,7 +249,7 @@ job('k8s-claimer-deploy') {
       string("AZURE_CLIENT_ID", "862dbc6f-2fbe-4342-a797-c6433efb6761")
       string("AZURE_CLIENT_SECRET", "3d5c3d60-8648-42f4-8401-7d96e08ca080")
       string("AZURE_TENANT_ID", "528070f3-4799-4c1a-94d6-20a16177487a")
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
       string("QUAY_PASSWORD", "8317a529-10f7-40b5-abd4-a42f242f22f0")
     }

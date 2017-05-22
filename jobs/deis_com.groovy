@@ -18,7 +18,7 @@ job("deis-com-master") {
     git {
       remote {
         github("deis/deis.com")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
       }
       branch('${DEIS_COM_BRANCH}')
     }
@@ -90,7 +90,7 @@ job("deis-com-pr") {
     git {
       remote {
         github("deis/${repo_name}")
-        credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+        credentials(defaults.github.credentialsID)
         refspec('+refs/pull/*:refs/remotes/origin/pr/*')
       }
       branch('${sha1}')
@@ -142,7 +142,7 @@ job("deis-com-pr") {
     timestamps()
     colorizeOutput 'xterm'
     credentialsBinding {
-      string("GITHUB_ACCESS_TOKEN", defaults.github.credentialsID)
+      string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
     }
   }

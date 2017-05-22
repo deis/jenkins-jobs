@@ -16,7 +16,7 @@ job(name) {
     git {
       remote {
         github('${DEIS_IO_ORG}/deis.io')
-          credentials('597819a0-b0b9-4974-a79b-3a5c2322606d')
+          credentials(defaults.github.credentialsID)
       }
       branch('${DEIS_IO_BRANCH}')
     }
