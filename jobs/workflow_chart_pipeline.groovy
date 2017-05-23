@@ -236,6 +236,7 @@ job("${chart}-chart-e2e") {
       string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
       string("GITHUB_ACCESS_TOKEN", defaults.github.accessTokenCredentialsID)
       string("SLACK_INCOMING_WEBHOOK_URL", defaults.slack.webhookURL)
+      string("CLOUD_PROVIDER", defaults.e2eRunner.provider)
     }
   }
 

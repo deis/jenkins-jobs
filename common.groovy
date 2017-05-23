@@ -35,6 +35,7 @@ defaults = [
     storageAccountKeyID: 'c9cad0b0-53dd-4d38-a832-c4b29aeaf49b',
   ],
   statusesToNotify: ['SUCCESS', 'FAILURE'],
+  "e2eRunner": [ provider: 'azure', ],
 ]
 
 e2eRunnerJob = new File("${workspace}/bash/scripts/run_e2e.sh").text +

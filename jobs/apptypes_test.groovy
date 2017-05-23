@@ -38,6 +38,7 @@ job(name) {
     colorizeOutput 'xterm'
     credentialsBinding {
       string("AUTH_TOKEN", "a62d7fe9-5b74-47e3-9aa5-2458ba32da52")
+      string("CLOUD_PROVIDER", defaults.e2eRunner.provider)
     }
   }
 
