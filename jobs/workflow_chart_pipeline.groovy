@@ -204,6 +204,7 @@ job("${chart}-chart-e2e") {
   }
 
   parameters {
+    stringParam('CLOUD_PROVIDER', defaults.e2eRunner.provider)
     stringParam('WORKFLOW_TAG', '', 'Workflow chart version (default: empty, will pull latest from given chart repo)')
     stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart version (default: empty, will pull latest from given chart repo)')
     choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'staging', 'production'], 'Type of chart repo for publishing (default: dev)')

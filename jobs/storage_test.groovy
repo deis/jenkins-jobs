@@ -37,6 +37,7 @@ job(name) {
    stringParam('WORKFLOW_TAG', '', 'Workflow chart version (default: empty, will pull latest from chart repo)')
    stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart version (default: empty, will pull latest from chart repo)')
    choiceParam('CHART_REPO_TYPE', ['dev', 'pr', 'staging', 'production'], 'Type of chart repo for fetching workflow charts (default: dev)')
+   stringParam('CLOUD_PROVIDER', defaults.e2eRunner.provider)
   }
 
   triggers {
