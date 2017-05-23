@@ -57,6 +57,7 @@ job("${chart}-upgrade-test") {
   }
 
   parameters {
+    stringParam('CLOUD_PROVIDER', defaults.e2eRunner.provider)
     stringParam('WORKFLOW_TAG', '', 'Workflow chart version to install (default: empty, will pull latest from given chart repo)')
     stringParam('WORKFLOW_E2E_TAG', '', 'Workflow-E2E chart version (default: empty, will pull latest from given chart repo)')
     stringParam('ORIGIN_WORKFLOW_REPO', 'workflow', 'Workflow chart repo to use for installing')
