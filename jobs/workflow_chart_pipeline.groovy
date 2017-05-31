@@ -220,6 +220,7 @@ job("${chart}-chart-e2e") {
     stringParam('COMMIT_AUTHOR_EMAIL', '', "Commit author email address")
     stringParam('GITHUB_STATUS_REPO', '', "Component repo name for updating GitHub commit status")
     stringParam('GITHUB_STATUS_COMMIT', '', "Component commit SHA for updating GitHub commit status")
+    booleanParam('USE_RBAC', false, "Install Workflow with RBAC enabled (default: false)")
     repos.each { Map r ->
       stringParam(r.commitEnvVar, '', "${r.name} commit SHA for setting <component>.docker_tag in Workflow chart")
     }
