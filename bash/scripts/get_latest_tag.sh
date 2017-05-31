@@ -14,11 +14,11 @@ get-latest-tag() {
     exit 1
   fi
 
-  # grab all released tags from GH
-  released_tags="$(curl -sSf "https://api.github.com/repos/deis/${component}/releases" | jq '.[].tag_name')"
+  # grab latest tag from GH
+  latest_tag="$(curl -sSf "https://api.github.com/repos/deis/${component}/releases/latest" | jq '.tag_name' | tr -d '"')"
 
-  # If tag already released, bail out
-  if [[ "${released_tags}" == *"${tag}"* ]]; then
+  # If tag not latest, bail out
+  if [ "${tag}" != "${latest_tag}" ]; then
     echo "Silly Jenkins, ${component} tag '${tag}' has already been released!  Exiting." >&2
     exit 1
   fi

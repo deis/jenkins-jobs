@@ -5,7 +5,7 @@ setup() {
   load stub
   stub docker
   stub curl
-  stub jq
+  stub jq "echo 'foo-tag'" 0
 }
 
 teardown() {
@@ -40,9 +40,7 @@ teardown() {
 }
 
 @test "main : component already released" {
-  export TAG="foo-tag"
-
-  stub jq "echo 'foo-tag bar-tag'" 0
+  export TAG="older-tag"
 
   run get-latest-tag foo
 
