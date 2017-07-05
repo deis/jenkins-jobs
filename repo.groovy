@@ -1,7 +1,7 @@
 repos = [
   [ name: 'builder',
     components: [[name: 'builder']],
-    slackChannel: '#builder',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'builder',
@@ -10,7 +10,7 @@ repos = [
 
   [ name: 'controller',
     components: [[name: 'controller']],
-    slackChannel: '#controller',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'controller',
@@ -19,7 +19,7 @@ repos = [
 
   [ name: 'dockerbuilder',
     components: [[name: 'dockerbuilder']],
-    slackChannel: '#builder',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'dockerbuilder',
@@ -34,7 +34,7 @@ repos = [
 
   [ name: 'fluentd',
     components: [[name: 'fluentd']],
-    slackChannel: '#logger',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'fluentd',
@@ -54,7 +54,7 @@ repos = [
 
   [ name: 'logger',
     components: [[name: 'logger']],
-    slackChannel: '#logger',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'logger',
@@ -63,7 +63,7 @@ repos = [
 
   [ name: 'minio',
     components: [[name: 'minio']],
-    slackChannel: '#object-store',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'minio',
@@ -72,7 +72,7 @@ repos = [
 
   [ name: 'monitor',
     components: [[name: 'grafana'], [name: 'influxdb'], [name: 'telegraf']],
-    slackChannel: '#monitor',
+    slackChannel: '#workflow',
     runE2e: false,
     workflowComponent: true,
     chart: 'monitor',
@@ -80,7 +80,7 @@ repos = [
 
   [ name: 'nsq',
     components: [[name: 'nsq']],
-    slackChannel: '#logger',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'nsqd',
@@ -88,7 +88,7 @@ repos = [
 
   [ name: 'postgres',
     components: [[name: 'postgres']],
-    slackChannel: '#postgres',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'database',
@@ -96,7 +96,7 @@ repos = [
 
   [ name: 'redis',
     components: [[name: 'redis']],
-    slackChannel: '#logger',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'redis',
@@ -104,7 +104,7 @@ repos = [
 
   [ name: 'registry',
     components: [[name: 'registry']],
-    slackChannel: '#registry',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'registry',
@@ -113,7 +113,7 @@ repos = [
   // TODO: remove when https://github.com/deis/workflow/issues/766 is resolved
   [ name: 'registry-proxy',
     components: [[name: 'registry-proxy']],
-    slackChannel: '#registry',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'registry-proxy',
@@ -121,7 +121,7 @@ repos = [
 
   [ name: 'registry-token-refresher',
     components: [[name: 'registry-token-refresher']],
-    slackChannel: '#registry',
+    slackChannel: '#workflow',
     runE2e: false,
     workflowComponent: true,
     chart: 'registry-token-refresher',
@@ -129,7 +129,7 @@ repos = [
 
   [ name: 'router',
     components: [[name: 'router']],
-    slackChannel: '#router',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'router',
@@ -138,7 +138,7 @@ repos = [
 
   [ name: 'slugbuilder',
     components: [[name: 'slugbuilder']],
-    slackChannel: '#builder',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'slugbuilder',
@@ -146,7 +146,7 @@ repos = [
 
   [ name: 'slugrunner',
     components: [[name: 'slugrunner']],
-    slackChannel: '#builder',
+    slackChannel: '#workflow',
     runE2e: true,
     workflowComponent: true,
     chart: 'slugrunner',
@@ -160,7 +160,7 @@ repos = [
 
   [ name: 'workflow-cli',
     buildJobs: false,
-    slackChannel: '#controller',
+    slackChannel: '#workflow',
   ],
 
   [ name: 'workflow-e2e',
@@ -172,7 +172,7 @@ repos = [
 
   [ name: 'workflow-manager',
     components: [[name: 'workflow-manager']],
-    slackChannel: '#wfm',
+    slackChannel: '#workflow',
     runE2e: false,
     workflowComponent: true,
     chart: 'workflow-manager',
