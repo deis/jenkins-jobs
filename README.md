@@ -20,7 +20,7 @@ The DSL representation of a given job is currently placed in the `jobs` director
 
 ## Working with Groovy
 
-For debugging general Groovy code, one may run `make groovy-console` provided one has a Java JDK or JRE installed (_version 7 or higher; see [Gradle Prerequisites][gradle-prereqs]_).  
+For debugging general Groovy code, one may run `make groovy-console` provided one has a Java JDK or JRE installed (_version 7 or higher; see [Gradle Prerequisites][gradle-prereqs]_).
 
 Alternatively, one may use the handy-dandy [Groovy Web Console](https://groovyconsole.appspot.com/).
 
@@ -40,7 +40,7 @@ _(Note: if running the non-containerized target(s), the [Gradle Prerequisites][g
 
 Regardless of target, test results may be viewed in a web browser after they finish via `make open-test-results`.
 
-**How it works:** Each job is processed against the versions of Jenkins and the Job DSL Plugin as defined in `gradle.properties`, as well as the versions of necessary plugins required by the job(s), as declared in the `dependencies` block of `build.gradle`.  
+**How it works:** Each job is processed against the versions of Jenkins and the Job DSL Plugin as defined in `gradle.properties`, as well as the versions of necessary plugins required by the job(s), as declared in the `dependencies` block of `build.gradle`.
 
 Therefore, if all jobs parse without failures, one can be reasonably confident they will build successfully on the live Jenkins instance, provided the aforementioned dependency versions are aligned.
 
@@ -48,7 +48,7 @@ This [Gradle](https://gradle.org/)-based test harness was set up using a slimmed
 
 ## Upgrading Jenkins plugins
 
-Since a test harness exists for checking that the job DSL compiles, one can also check that an upgraded/added plugin plays nicely with existing/new jobs.  
+Since a test harness exists for checking that the job DSL compiles, one can also check that an upgraded/added plugin plays nicely with existing/new jobs.
 
 To do so, one would update/add the appropriate plugin in `build.gradle` and then run `make (docker-)test-dsl` to make sure compilation is unaffected.  This is meeant to provide a higher level confidence before actually upgrading/adding plugin(s) on the live Jenkins instance.
 
@@ -278,14 +278,6 @@ that follow the main steps of the job itself.  See the [Workflow component job](
 │                           │
 └───────────────────────────┘
 ```
-
-## License
-
-Copyright 2013, 2014, 2015, 2016 Engine Yard, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at <http://www.apache.org/licenses/LICENSE-2.0>
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
 [bats]: https://github.com/sstephenson/bats
 [shellcheck]: https://github.com/koalaman/shellcheck
