@@ -61,6 +61,10 @@ job("helm-chart-verify") {
         # fetch key from keyserver
         gpg --keyserver pgp.mit.edu --recv-keys 1D6A97D0
 
+        # coerce gpg into old keyring format
+        mkdir -p "${HOME}/.gnupg"
+        touch "${HOME}/.gnupg/pubring.gpg"
+
         helm repo add "${CHART}" https://charts.deis.com/"${CHART_REPO}"
         helm fetch --verify "${CHART_REPO}"/"${CHART}" --version "${RELEASE_TAG}"
       '''.stripIndent().trim()
